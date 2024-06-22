@@ -1,20 +1,16 @@
 <script setup lang="ts">
 import { ref } from 'vue';
-import Google from '@/assets/images/auth/social-google.svg';
 import { useAuthStore } from '@/stores/auth';
 import { Form } from 'vee-validate';
 
-const checkbox = ref(false);
-const valid = ref(false);
 const show1 = ref(false);
-//const logform = ref();
-const password = ref('admin123');
-const username = ref('info@codedthemes.com');
+const password = ref('');
+const username = ref('');
 const passwordRules = ref([
-  (v: string) => !!v || 'Password is required',
-  (v: string) => (v && v.length <= 10) || 'Password must be less than 10 characters'
+  (v: string) => !!v || 'Le mot de passe est requis',
+  (v: string) => (v && v.length <= 10) || 'Le mot de passe doit comporter moins de 10 caractères'
 ]);
-const emailRules = ref([(v: string) => !!v || 'E-mail is required', (v: string) => /.+@.+\..+/.test(v) || 'E-mail must be valid']);
+const emailRules = ref([(v: string) => !!v || 'L\'e-mail est obligatoire', (v: string) => /.+@.+\..+/.test(v) || 'L\'e-mail doit être valide']);
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 function validate(values: any, { setErrors }: any) {
@@ -24,23 +20,14 @@ function validate(values: any, { setErrors }: any) {
 </script>
 
 <template>
-  <v-btn block color="primary" variant="outlined" class="text-lightText googleBtn">
-    <img :src="Google" alt="google" />
-    <span class="ml-2">Sign in with Google</span></v-btn
-  >
-  <v-row>
-    <v-col class="d-flex align-center">
-      <v-divider class="custom-devider" />
-      <v-btn variant="outlined" class="orbtn" rounded="md" size="small">OR</v-btn>
-      <v-divider class="custom-devider" />
-    </v-col>
-  </v-row>
-  <h5 class="text-h5 text-center my-4 mb-8">Sign in with Email address</h5>
   <Form @submit="validate" class="mt-7 loginForm" v-slot="{ errors, isSubmitting }">
+    <div v-if="errors.apiError" class="mt-2">
+      <v-alert color="error">{{ errors.apiError }}</v-alert>
+    </div>
     <v-text-field
       v-model="username"
       :rules="emailRules"
-      label="Email Address / Username"
+      label="Email"
       class="mt-4 mb-8"
       required
       density="comfortable"
@@ -51,7 +38,7 @@ function validate(values: any, { setErrors }: any) {
     <v-text-field
       v-model="password"
       :rules="passwordRules"
-      label="Password"
+      label="Mot de passe"
       required
       density="comfortable"
       variant="outlined"
@@ -63,31 +50,10 @@ function validate(values: any, { setErrors }: any) {
       class="pwdInput"
     ></v-text-field>
 
-    <div class="d-sm-flex align-center mt-2 mb-7 mb-sm-0">
-      <v-checkbox
-        v-model="checkbox"
-        :rules="[(v: any) => !!v || 'You must agree to continue!']"
-        label="Remember me?"
-        required
-        color="primary"
-        class="ms-n2"
-        hide-details
-      ></v-checkbox>
-      <div class="ml-auto">
-        <a href="javascript:void(0)" class="text-primary text-decoration-none">Forgot password?</a>
-      </div>
-    </div>
-    <v-btn color="secondary" :loading="isSubmitting" block class="mt-2" variant="flat" size="large" :disabled="valid" type="submit">
+    <v-btn color="secondary" :loading="isSubmitting" block class="my-6" variant="flat" size="large" type="submit">
       Sign In</v-btn
     >
-    <div v-if="errors.apiError" class="mt-2">
-      <v-alert color="error">{{ errors.apiError }}</v-alert>
-    </div>
   </Form>
-  <div class="mt-5 text-right">
-    <v-divider />
-    <v-btn variant="plain" to="/auth/register" class="mt-2 text-capitalize mr-n2">Don't Have an account?</v-btn>
-  </div>
 </template>
 <style lang="scss">
 .custom-devider {
