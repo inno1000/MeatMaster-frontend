@@ -7,7 +7,6 @@
             <v-form ref="Regform" lazy-validation class="loginForm">
 
               <v-text-field
-                  v-model="receivedQuantity"
                   variant="outlined"
                   color="primary"
                   label="Nom"
@@ -16,28 +15,39 @@
                   prepend-icon="mdi-home"
               ></v-text-field>
 
-              <v-text-field
-                  v-model="receivedQuantity"
-                  variant="outlined"
-                  color="primary"
-                  label="Adresse"
+              <v-select
+                  clearable
+                  density="comfortable"
+                  label="Ville"
+                  :items="['Ngaoundéré', 'Douala', 'Yaoundé', 'Garoua', 'Maroua', 'Bertoua', 'Maiganga']"
+                  item-title="name"
                   :rules="generalRules"
                   class="mb-4"
-                  prepend-icon="mdi-book-account"
-              ></v-text-field>
-
-              <v-text-field
-                  v-model="receivedQuantity"
+                  prepend-icon="mdi-map"
                   variant="outlined"
-                  color="primary"
-                  label="Code postal"
-                  :rules="generalRules"
-                  class="mb-4"
-                  prepend-icon="mdi-mailbox"
-              ></v-text-field>
+              ></v-select>
+
+<!--              <v-text-field-->
+<!--                  v-model="receivedQuantity"-->
+<!--                  variant="outlined"-->
+<!--                  color="primary"-->
+<!--                  label="Adresse"-->
+<!--                  :rules="generalRules"-->
+<!--                  class="mb-4"-->
+<!--                  prepend-icon="mdi-book-account"-->
+<!--              ></v-text-field>-->
+
+<!--              <v-text-field-->
+<!--                  v-model="receivedQuantity"-->
+<!--                  variant="outlined"-->
+<!--                  color="primary"-->
+<!--                  label="Code postal"-->
+<!--                  :rules="generalRules"-->
+<!--                  class="mb-4"-->
+<!--                  prepend-icon="mdi-mailbox"-->
+<!--              ></v-text-field>-->
 
               <v-text-field
-                  v-model="receivedQuantity"
                   variant="outlined"
                   color="primary"
                   label="Numéro de téléphone"
@@ -46,18 +56,17 @@
                   prepend-icon="mdi-phone"
               ></v-text-field>
 
-              <v-text-field
-                  v-model="receivedQuantity"
-                  variant="outlined"
-                  color="primary"
-                  label="Email"
-                  :rules="generalRules"
-                  class="mb-4"
-                  prepend-icon="mdi-email"
-              ></v-text-field>
+<!--              <v-text-field-->
+<!--                  v-model="receivedQuantity"-->
+<!--                  variant="outlined"-->
+<!--                  color="primary"-->
+<!--                  label="Email"-->
+<!--                  :rules="generalRules"-->
+<!--                  class="mb-4"-->
+<!--                  prepend-icon="mdi-email"-->
+<!--              ></v-text-field>-->
 
               <v-text-field
-                  v-model="receivedQuantity"
                   variant="outlined"
                   color="primary"
                   label="Heure d'ouverture"
@@ -68,7 +77,6 @@
               ></v-text-field>
 
               <v-text-field
-                  v-model="receivedQuantity"
                   variant="outlined"
                   color="primary"
                   label="Heure de fermeture"
@@ -79,7 +87,6 @@
               ></v-text-field>
 
               <v-select
-                  v-model="selectedMeatType"
                   clearable
                   multiple
                   density="comfortable"
@@ -93,10 +100,10 @@
               ></v-select>
 
               <v-select
-                  v-model="selectedMeatType"
                   clearable
                   density="comfortable"
                   label="Spécialité"
+                  multiple
                   :items="['boeuf', 'mouton', 'chèvre', 'poulet']"
                   item-title="name"
                   :rules="generalRules"
@@ -147,6 +154,7 @@ const timeRules = [
 ];
 
 import { useDate } from 'vuetify'
+import toastMessage from "@/helpers/toast";
 
 const date = useDate()
 
@@ -191,6 +199,7 @@ function submitForm() {
   setTimeout(() => {
     console.log(formData)
     loading.value = false
+    toastMessage('Enregistrement résussi')
   }, 3000)
   // Envoyer les données soumises à votre API ou effectuer toute autre action requise
 }

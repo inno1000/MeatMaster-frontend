@@ -34,11 +34,11 @@ const customizer = useCustomizerStore();
             <!--            </v-btn>-->
           </div>
         </v-container>
-        <v-container fluid class="pt-0">
-          <div>
-            <FooterPanel />
-          </div>
-        </v-container>
+<!--        <v-container fluid class="pt-0">-->
+<!--          <div>-->
+<!--            <FooterPanel />-->
+<!--          </div>-->
+<!--        </v-container>-->
       </v-main>
     </v-app>
   </v-locale-provider>

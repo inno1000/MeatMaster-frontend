@@ -31,18 +31,18 @@
     <v-row>
       <v-col v-for="(item, index) in paginatedItems" :key="index" cols="12" md="6"  class="pa-1 ma-0">
         <UiParentCard :title="item.name">
-          <div class="mt-4"><strong><v-icon icon="mdi-home"></v-icon> Adresse :</strong> {{ item.address }}</div>
+<!--          <div class="mt-4"><strong><v-icon icon="mdi-home"></v-icon> Adresse :</strong> {{ item.address }}</div>-->
+<!--          <v-divider class="my-3"></v-divider>-->
+          <div class="mt-4"><strong><v-icon class="mr-2" icon="mdi-map"></v-icon>Ville:</strong> {{ item.city }}</div>
           <v-divider class="my-3"></v-divider>
-          <div><strong><v-icon class="mr-2" icon="mdi-map"></v-icon>Ville:</strong> {{ item.city }}</div>
-          <v-divider class="my-3"></v-divider>
-          <div><strong> <v-icon class="mr-2" icon="mdi-mailbox"></v-icon>Code postal:</strong> {{ item.postal_code }}</div>
-          <v-divider class="my-3"></v-divider>
+<!--          <div><strong> <v-icon class="mr-2" icon="mdi-mailbox"></v-icon>Code postal:</strong> {{ item.postal_code }}</div>-->
+<!--          <v-divider class="my-3"></v-divider>-->
           <div><strong> <v-icon class="mr-2" icon="mdi-phone"></v-icon>Téléphone:</strong> {{ item.phone }}</div>
           <v-divider class="my-3"></v-divider>
-          <div><strong> <v-icon class="mr-2" icon="mdi-email"></v-icon>Email:</strong> <a :href="'mailto:' + item.email">{{ item.email }}</a></div>
-          <v-divider class="my-3"></v-divider>
-          <div><strong> <v-icon class="mr-2" icon="mdi-web"></v-icon>Site web:</strong> <a :href="item.website" v-if="item.website">{{ item.website }}</a><span v-else>N/A</span></div>
-          <v-divider class="my-3"></v-divider>
+<!--          <div><strong> <v-icon class="mr-2" icon="mdi-email"></v-icon>Email:</strong> <a :href="'mailto:' + item.email">{{ item.email }}</a></div>-->
+<!--          <v-divider class="my-3"></v-divider>-->
+<!--          <div><strong> <v-icon class="mr-2" icon="mdi-web"></v-icon>Site web:</strong> <a :href="item.website" v-if="item.website">{{ item.website }}</a><span v-else>N/A</span></div>-->
+<!--          <v-divider class="my-3"></v-divider>-->
           <div><strong> <v-icon class="mr-2" icon="mdi-clock-outline"></v-icon>Horaires:</strong> {{ item.opening_hour }} - {{ item.closing_hour }}</div>
           <v-divider class="my-3"></v-divider>
           <div><strong> <v-icon class="mr-2" icon="mdi-cow"></v-icon>Spécialités:</strong> {{ item.specialties.join(', ') }}</div>
@@ -293,7 +293,6 @@ export default {
         filteredItems = filteredItems.filter(item =>
                                                  item.name.toLowerCase().includes(lowerCaseSearch) ||
                                                  item.owner.toLowerCase().includes(lowerCaseSearch) ||
-                                                 item.address.toLowerCase().includes(lowerCaseSearch) ||
                                                  item.city.toLowerCase().includes(lowerCaseSearch)
         );
       }
