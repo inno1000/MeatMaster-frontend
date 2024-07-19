@@ -99,6 +99,24 @@ const sidebarItem: menu[] = [
         to: '/boucherie/liste'
       }
     ]
+  },
+
+  {
+    title: 'Abattage',
+    icon: WindmillIcon,
+    to: '/forms/radio',
+    children: [
+      {
+        title: 'Enregistrer Abattage',
+        icon: CircleIcon,
+        to: '/abattage/enregistrer'
+      },
+      {
+        title: 'Liste animaux',
+        icon: CircleIcon,
+        to: '/abattage/liste'
+      }
+    ]
   }
 
   // {

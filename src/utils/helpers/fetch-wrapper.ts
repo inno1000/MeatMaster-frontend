@@ -1,5 +1,7 @@
 import { useAuthStore } from '@/stores/auth';
 
+const baseUrl = `${import.meta.env.VITE_API_URL}/auth`;
+
 export const fetchWrapper = {
   get: request('GET'),
   post: request('POST'),

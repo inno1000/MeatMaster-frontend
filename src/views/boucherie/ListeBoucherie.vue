@@ -31,19 +31,19 @@
     <v-row>
       <v-col v-for="(item, index) in paginatedItems" :key="index" cols="12" md="6"  class="pa-1 ma-0">
         <UiParentCard :title="item.name">
-<!--          <div class="mt-4"><strong><v-icon icon="mdi-home"></v-icon> Adresse :</strong> {{ item.address }}</div>-->
-<!--          <v-divider class="my-3"></v-divider>-->
+          <div class="mt-4"><strong><v-icon icon="mdi-home"></v-icon> Adresse :</strong> {{ item.address }}</div>
+          <v-divider class="my-3"></v-divider>
           <div class="mt-4"><strong><v-icon class="mr-2" icon="mdi-map"></v-icon>Ville:</strong> {{ item.city }}</div>
           <v-divider class="my-3"></v-divider>
-<!--          <div><strong> <v-icon class="mr-2" icon="mdi-mailbox"></v-icon>Code postal:</strong> {{ item.postal_code }}</div>-->
-<!--          <v-divider class="my-3"></v-divider>-->
+          <div><strong> <v-icon class="mr-2" icon="mdi-mailbox"></v-icon>Code postal:</strong> {{ item.postal_code }}</div>
+          <v-divider class="my-3"></v-divider>
           <div><strong> <v-icon class="mr-2" icon="mdi-phone"></v-icon>Téléphone:</strong> {{ item.phone }}</div>
           <v-divider class="my-3"></v-divider>
-<!--          <div><strong> <v-icon class="mr-2" icon="mdi-email"></v-icon>Email:</strong> <a :href="'mailto:' + item.email">{{ item.email }}</a></div>-->
-<!--          <v-divider class="my-3"></v-divider>-->
-<!--          <div><strong> <v-icon class="mr-2" icon="mdi-web"></v-icon>Site web:</strong> <a :href="item.website" v-if="item.website">{{ item.website }}</a><span v-else>N/A</span></div>-->
-<!--          <v-divider class="my-3"></v-divider>-->
-          <div><strong> <v-icon class="mr-2" icon="mdi-clock-outline"></v-icon>Horaires:</strong> {{ item.opening_hour }} - {{ item.closing_hour }}</div>
+          <div><strong> <v-icon class="mr-2" icon="mdi-email"></v-icon>Email:</strong> <a :href="'mailto:' + item.email">{{ item.email }}</a></div>
+          <v-divider class="my-3"></v-divider>
+          <div><strong> <v-icon class="mr-2" icon="mdi-web"></v-icon>Site web:</strong> <a :href="item.website" v-if="item.website">{{ item.website }}</a><span v-else>N/A</span></div>
+          <v-divider class="my-3"></v-divider>
+          <div><strong> <v-icon class="mr-2" icon="mdi-clock-outline"></v-icon>Horaires:</strong> {{ item.opening_hours }}</div>
           <v-divider class="my-3"></v-divider>
           <div><strong> <v-icon class="mr-2" icon="mdi-cow"></v-icon>Spécialités:</strong> {{ item.specialties.join(', ') }}</div>
           <div class="mt-2">
@@ -74,173 +74,27 @@
 </template>
 
 <script>
-
 import UiParentCard from '@/components/shared/UiParentCard.vue';
+import {fetchWrapper} from '../../utils/helpers/fetch-wrapper';
+import {ref} from 'vue';
 
 export default {
   components: {
     UiParentCard,
   },
   data() {
+    const items = ref([]);
     return {
       page: 1,
       itemsPerPage: 4,
       search: '',
       selectedCity: null,
       selectedSpecialty: null,
-      items: [
-        {
-          name: 'Boucherie Halal',
-          address: 'Ngaoundéré, Yoko',
-          city: 'Ngaoundéré',
-          postal_code: '454',
-          phone: '(+237) 695956707',
-          email: 'baoutourimaidadi@gmail.com',
-          opening_hour: '07:00',
-          closing_hour: '17:00',
-          website: '',
-          owner: 'Inno Batouri',
-          specialties: ['poulet', 'mouton', 'dindon'],
-          average_rating: '4',
-          review_count: '50',
-        },
-        {
-          name: 'Boucherie du Marché',
-          address: 'Douala, Bonapriso',
-          city: 'Douala',
-          postal_code: '123',
-          phone: '(+237) 673456789',
-          email: 'boucheriedumarche@example.com',
-          opening_hour: '08:00',
-          closing_hour: '18:00',
-          website: 'http://boucheriedumarche.com',
-          owner: 'Jean-Pierre Dupont',
-          specialties: ['boeuf', 'agneau', 'poulet'],
-          average_rating: '4.5',
-          review_count: '75',
-        },
-        {
-          name: 'Boucherie Centrale',
-          address: 'Yaoundé, Mvog-Mbi',
-          city: 'Yaoundé',
-          postal_code: '789',
-          phone: '(+237) 698745632',
-          email: 'centraleboucherie@example.com',
-          opening_hour: '07:30',
-          closing_hour: '19:00',
-          website: 'http://centraleboucherie.com',
-          owner: 'Marie Claire Mbida',
-          specialties: ['porc', 'veau', 'poulet'],
-          average_rating: '4.2',
-          review_count: '60',
-        },
-        {
-          name: 'Boucherie de la Gare',
-          address: 'Bafoussam, Centre Ville',
-          city: 'Bafoussam',
-          postal_code: '101',
-          phone: '(+237) 699876543',
-          email: 'boucheriedelagare@example.com',
-          opening_hour: '06:00',
-          closing_hour: '17:30',
-          website: '',
-          owner: 'Alain Nkem',
-          specialties: ['mouton', 'agneau', 'dinde'],
-          average_rating: '4.0',
-          review_count: '45',
-        },
-        {
-          name: 'Boucherie Royale',
-          address: 'Garoua, Marché Central',
-          city: 'Garoua',
-          postal_code: '202',
-          phone: '(+237) 697453210',
-          email: 'royaleboucherie@example.com',
-          opening_hour: '07:00',
-          closing_hour: '18:00',
-          website: '',
-          owner: 'Fatima Aboubakar',
-          specialties: ['boeuf', 'poulet', 'dinde'],
-          average_rating: '4.3',
-          review_count: '55',
-        },
-        {
-          name: 'Boucherie du Soleil',
-          address: 'Bertoua, Essos',
-          city: 'Bertoua',
-          postal_code: '303',
-          phone: '(+237) 696321987',
-          email: 'boucheriedusoleil@example.com',
-          opening_hour: '08:30',
-          closing_hour: '17:00',
-          website: 'http://boucheriedusoleil.com',
-          owner: 'Emmanuel Koffi',
-          specialties: ['poulet', 'boeuf', 'mouton'],
-          average_rating: '4.1',
-          review_count: '30',
-        },
-        {
-          name: 'Boucherie des Amis',
-          address: 'Ebolowa, Centre Ville',
-          city: 'Ebolowa',
-          postal_code: '404',
-          phone: '(+237) 674839201',
-          email: 'amisboucherie@example.com',
-          opening_hour: '09:00',
-          closing_hour: '18:30',
-          website: '',
-          owner: 'Pauline Ebong',
-          specialties: ['dinde', 'boeuf', 'poulet'],
-          average_rating: '4.4',
-          review_count: '70',
-        },
-        {
-          name: 'Boucherie Traditionnelle',
-          address: 'Maroua, Domayo',
-          city: 'Maroua',
-          postal_code: '505',
-          phone: '(+237) 675483902',
-          email: 'traditionnelleboucherie@example.com',
-          opening_hour: '07:00',
-          closing_hour: '16:00',
-          website: 'http://traditionnelleboucherie.com',
-          owner: 'Mohammed Issa',
-          specialties: ['mouton', 'agneau', 'boeuf'],
-          average_rating: '3.9',
-          review_count: '40',
-        },
-        {
-          name: 'Boucherie Moderne',
-          address: 'Kumba, Fiango',
-          city: 'Kumba',
-          postal_code: '606',
-          phone: '(+237) 693847562',
-          email: 'modernboucherie@example.com',
-          opening_hour: '08:00',
-          closing_hour: '17:30',
-          website: 'http://modernboucherie.com',
-          owner: 'Eugène Ngong',
-          specialties: ['poulet', 'dinde', 'boeuf'],
-          average_rating: '4.5',
-          review_count: '85',
-        },
-        {
-          name: 'Boucherie du Carrefour',
-          address: 'Bamenda, Commercial Avenue',
-          city: 'Bamenda',
-          postal_code: '707',
-          phone: '(+237) 694738291',
-          email: 'carrefourboucherie@example.com',
-          opening_hour: '09:00',
-          closing_hour: '18:00',
-          website: '',
-          owner: 'Chantal Fomunyam',
-          specialties: ['boeuf', 'poulet', 'porc'],
-          average_rating: '4.6',
-          review_count: '90',
-        },
-      ],
+      items
     };
+  },
+  mounted() {
+    this.getButchers();
   },
   computed: {
     paginatedItems() {
@@ -263,7 +117,9 @@ export default {
       // Récupérer toutes les spécialités uniques des items
       const specialties = new Set();
       this.items.forEach(item => {
+        if (Array.isArray(item.specialties)) {
         item.specialties.forEach(specialty => specialties.add(specialty));
+        }
       });
       return Array.from(specialties);
     },
@@ -313,6 +169,17 @@ export default {
       // Fonction pour faire remonter en haut de la liste
       this.$refs.scrollContainer.scrollTop = 0;
     },
+    async getButchers() {
+      const baseUrl = `${import.meta.env.VITE_API_URL}`;
+      const butchers = await fetchWrapper.get(`${baseUrl}/butchers`);
+      this.items = butchers.map(butcher => {
+        return {
+          ...butcher,
+          specialties: Array.isArray(butcher.specialties) ? butcher.specialties : butcher.specialties.split(',')
+        };
+      });
+      console.log('liste des boucheries', this.items);
+    }
   },
 };
 </script>

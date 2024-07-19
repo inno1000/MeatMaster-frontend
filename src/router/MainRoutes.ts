@@ -62,6 +62,16 @@ const MainRoutes = {
       component: () => import('@/views/boucherie/ListeBoucherie.vue')
     },
     {
+      name: 'EnregAbattage',
+      path: '/abattage/enregistrer',
+      component: () => import('@/views/abattage/EnregAbattage.vue')
+    },
+    {
+      name: 'listeAbattage',
+      path: '/abattage/liste',
+      component: () => import('@/views/abattage/ListeAbattage.vue')
+    },
+    {
       name: 'test',
       path: '/test',
       component: () => import('@/views/test/tests.vue')

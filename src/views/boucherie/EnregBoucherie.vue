@@ -7,6 +7,7 @@
             <v-form ref="Regform" lazy-validation class="loginForm">
 
               <v-text-field
+                  v-model="name"
                   variant="outlined"
                   color="primary"
                   label="Nom"
@@ -15,7 +16,18 @@
                   prepend-icon="mdi-home"
               ></v-text-field>
 
+              <v-text-field
+                  v-model="address"
+                  variant="outlined"
+                  color="primary"
+                  label="Adresse"
+                  :rules="generalRules"
+                  class="mb-4"
+                  prepend-icon="mdi-book-account"
+              ></v-text-field>
+
               <v-select
+                  v-model="city"
                   clearable
                   density="comfortable"
                   label="Ville"
@@ -27,27 +39,18 @@
                   variant="outlined"
               ></v-select>
 
-<!--              <v-text-field-->
-<!--                  v-model="receivedQuantity"-->
-<!--                  variant="outlined"-->
-<!--                  color="primary"-->
-<!--                  label="Adresse"-->
-<!--                  :rules="generalRules"-->
-<!--                  class="mb-4"-->
-<!--                  prepend-icon="mdi-book-account"-->
-<!--              ></v-text-field>-->
-
-<!--              <v-text-field-->
-<!--                  v-model="receivedQuantity"-->
-<!--                  variant="outlined"-->
-<!--                  color="primary"-->
-<!--                  label="Code postal"-->
-<!--                  :rules="generalRules"-->
-<!--                  class="mb-4"-->
-<!--                  prepend-icon="mdi-mailbox"-->
-<!--              ></v-text-field>-->
+              <v-text-field
+                  v-model="postal_code"
+                  variant="outlined"
+                  color="primary"
+                  label="Code postal"
+                  :rules="generalRules"
+                  class="mb-4"
+                  prepend-icon="mdi-mailbox"
+              ></v-text-field>
 
               <v-text-field
+                  v-model="phone"
                   variant="outlined"
                   color="primary"
                   label="Numéro de téléphone"
@@ -56,17 +59,29 @@
                   prepend-icon="mdi-phone"
               ></v-text-field>
 
-<!--              <v-text-field-->
-<!--                  v-model="receivedQuantity"-->
-<!--                  variant="outlined"-->
-<!--                  color="primary"-->
-<!--                  label="Email"-->
-<!--                  :rules="generalRules"-->
-<!--                  class="mb-4"-->
-<!--                  prepend-icon="mdi-email"-->
-<!--              ></v-text-field>-->
+              <v-text-field
+                  v-model="email"
+                  variant="outlined"
+                  color="primary"
+                  label="Email"
+                  :rules="generalRules"
+                  class="mb-4"
+                  prepend-icon="mdi-email"
+              ></v-text-field>
 
               <v-text-field
+                  v-model="website"
+                  variant="outlined"
+                  color="primary"
+                  label="Site Web"
+                  :rules="generalRules"
+                  class="mb-4"
+                  prepend-icon="mdi-web"
+                  prefix="https://"
+              ></v-text-field>
+
+              <v-text-field
+                  v-model="openingHour"
                   variant="outlined"
                   color="primary"
                   label="Heure d'ouverture"
@@ -77,6 +92,7 @@
               ></v-text-field>
 
               <v-text-field
+                  v-model="closingHour"
                   variant="outlined"
                   color="primary"
                   label="Heure de fermeture"
@@ -87,6 +103,7 @@
               ></v-text-field>
 
               <v-select
+                  v-model="openingDays"
                   clearable
                   multiple
                   density="comfortable"
@@ -100,6 +117,20 @@
               ></v-select>
 
               <v-select
+                  v-model="owner"
+                  clearable
+                  density="comfortable"
+                  label="Propriétaire"
+                  :items="['Inno', 'Batouri', 'Toto', 'Ali']"
+                  item-title="name"
+                  :rules="generalRules"
+                  class="mb-4"
+                  prepend-icon="mdi-account"
+                  variant="outlined"
+              ></v-select>
+
+              <v-select
+                  v-model="specialties"
                   clearable
                   density="comfortable"
                   label="Spécialité"
@@ -111,6 +142,8 @@
                   prepend-icon="mdi-cow"
                   variant="outlined"
               ></v-select>
+
+
 
               <v-btn color="secondary" :loading="loading" @click="validate()" class="mt-2" variant="flat" block size="large">
                 Enregistrer
@@ -128,21 +161,33 @@
 <script setup lang="ts">
 import {computed, ref} from 'vue';
 import UiParentCard from '@/components/shared/UiParentCard.vue';
-import AudioRecorder from '@/components/shared/AudioRecorder.vue';
+import { useDate } from 'vuetify'
+import toastMessage from "@/helpers/toast";
+import { fetchWrapper } from '@/utils/helpers/fetch-wrapper';
 
 const page = ref({ title: 'Enregistrement de la boucherie' });
 
 const selectedDate = ref<string | null>(null);
-const selectedMeatType = ref<string | null>(null);
-const receivedQuantity = ref<number | null>(null);
-const correspondingAmount = ref<number | null>(null);
+const name = ref<string | null>(null);
+const address = ref<string | null>(null);
+const city = ref<number | null>(null);
+const postal_code = ref<number | null>(null);
+const phone = ref<number | null>(null);
+const email = ref<number | null>(null);
+const website = ref<number | null>(null);
+const openingHour = ref<number | null>(null);
+const closingHour = ref<number | null>(null);
+const openingDays = ref<number | null>(null);
+const owner = ref<number | null>(null);
+const specialties = ref<number | null>(null);
+
+
 const Regform = ref();
 const paymentFile = ref();
 const loading = ref(false);
 
 const fromDateMenu = ref(false)
 const fromDateVal = ref(null)
-const minDate = "2020-01-05"
 
 const generalRules = [
   (value: string | number | null) => !!value || 'Ce champ est requis',
@@ -152,9 +197,6 @@ const timeRules = [
   v => !!v || 'Ce champ est requis',
   v => (v && v.length <= 5) || 'L\'heure doit être au format HH:MM',
 ];
-
-import { useDate } from 'vuetify'
-import toastMessage from "@/helpers/toast";
 
 const date = useDate()
 
@@ -185,22 +227,42 @@ function validate() {
   console.log(Regform.value.validate())
 
 }
-function submitForm() {
+async function submitForm() {
   loading.value = true
 
   const formData = {
-    'date': selectedDate.value,
-    'meatType': selectedMeatType.value,
-    'quantity': receivedQuantity.value,
-    'amount': correspondingAmount.value,
-    'paymentFile': paymentFile.value,
+    // 'date': selectedDate.value,
+    'name': name.value,
+    'city': city.value,
+    'address': address.value,
+    'postal_code': postal_code.value,
+    'phone': phone.value,
+    'email': email.value,
+    'website': 'https://'+website.value,
+    'opening_hours': openingHour.value +" - "+closingHour.value,
+    'openingDays': openingDays.value,
+    'owner': owner.value,
+    'specialties': specialties.value.join(', '),
   }
 
-  setTimeout(() => {
+  // setTimeout(() => {
     console.log(formData)
-    loading.value = false
+
+    const baseUrl = `${import.meta.env.VITE_API_URL}`;
+
+    const butcher = await fetchWrapper.post(`${baseUrl}/butchers`, formData);
+
+
+    console.log('butcher', login)
+
+  if(butcher.status === 201)
     toastMessage('Enregistrement résussi')
-  }, 3000)
+  else
+    toastMessage(login.message, 'error')
+
+    loading.value = false
+
+  // }, 3000)
   // Envoyer les données soumises à votre API ou effectuer toute autre action requise
 }
 
