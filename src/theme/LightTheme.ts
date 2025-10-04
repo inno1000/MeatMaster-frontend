@@ -4,37 +4,41 @@ const PurpleTheme: ThemeTypes = {
   name: 'PurpleTheme',
   dark: false,
   variables: {
-    'border-color': '#1e88e5',
-    'carousel-control-size': 10
+    'border-color': '#6366f1',
+    'carousel-control-size': 10,
+    'border-radius': '12px',
+    'border-radius-sm': '8px',
+    'border-radius-lg': '16px',
+    'border-radius-xl': '20px'
   },
   colors: {
-    primary: '#1e88e5',
-    secondary: '#5e35b1',
-    info: '#03c9d7',
-    success: '#00c853',
-    accent: '#FFAB91',
-    warning: '#ffc107',
-    error: '#f44336',
-    lightprimary: '#eef2f6',
-    lightsecondary: '#ede7f6',
-    lightsuccess: '#b9f6ca',
-    lighterror: '#f9d8d8',
-    lightwarning: '#fff8e1',
-    darkText: '#212121',
-    lightText: '#616161',
-    darkprimary: '#1565c0',
-    darksecondary: '#4527a0',
-    borderLight: '#d0d0d0',
-    inputBorder: '#787878',
-    containerBg: '#eef2f6',
-    surface: '#fff',
-    'on-surface-variant': '#fff',
-    facebook: '#4267b2',
+    primary: '#6366f1', // Indigo moderne
+    secondary: '#8b5cf6', // Violet moderne
+    info: '#06b6d4', // Cyan moderne
+    success: '#10b981', // Émeraude moderne
+    accent: '#f59e0b', // Ambre moderne
+    warning: '#f59e0b', // Ambre moderne
+    error: '#ef4444', // Rouge moderne
+    lightprimary: '#eef2ff',
+    lightsecondary: '#f3e8ff',
+    lightsuccess: '#d1fae5',
+    lighterror: '#fee2e2',
+    lightwarning: '#fef3c7',
+    darkText: '#111827',
+    lightText: '#6b7280',
+    darkprimary: '#4f46e5',
+    darksecondary: '#7c3aed',
+    borderLight: '#e5e7eb',
+    inputBorder: '#9ca3af',
+    containerBg: '#f9fafb',
+    surface: '#ffffff',
+    'on-surface-variant': '#ffffff',
+    facebook: '#1877f2',
     twitter: '#1da1f2',
-    linkedin: '#0e76a8',
-    gray100: '#fafafa',
-    primary200: '#90caf9',
-    secondary200: '#b39ddb'
+    linkedin: '#0a66c2',
+    gray100: '#f3f4f6',
+    primary200: '#c7d2fe',
+    secondary200: '#ddd6fe'
   }
 };
 

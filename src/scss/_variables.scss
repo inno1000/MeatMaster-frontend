@@ -9,10 +9,10 @@ $color-pack: false;
 // Global font size and border radius
 $font-size-root: 1rem;
 $border-radius-root: 12px;
-$body-font-family: 'Roboto', sans-serif !default;
-$heading-font-family: $body-font-family !default;
-$btn-font-weight: 400 !default;
-$btn-letter-spacing: 0 !default;
+$body-font-family: 'Inter', 'Roboto', sans-serif !default;
+$heading-font-family: 'Inter', 'Roboto', sans-serif !default;
+$btn-font-weight: 500 !default;
+$btn-letter-spacing: 0.025em !default;
 
 // Global Radius as per breakeven point
 $rounded: () !default;
@@ -121,4 +121,6 @@ $card-item-spacer-xy: 20px 24px !default;
 $card-text-spacer: 24px !default;
 $card-title-size: 18px !default;
 // Global Shadow
-$box-shadow: 1px 0 20px rgb(0 0 0 / 8%);
+$box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+$box-shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+$box-shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);

@@ -1,4 +1,18 @@
-import { CircleIcon, WindmillIcon, DashboardIcon, BrandChromeIcon, HelpIcon } from 'vue-tabler-icons';
+import { 
+  CircleIcon, 
+  WindmillIcon, 
+  DashboardIcon, 
+  BrandChromeIcon, 
+  HelpIcon,
+  PackageIcon,
+  ShoppingCartIcon,
+  CreditCardIcon,
+  BuildingIcon,
+  MeatIcon,
+  ChartBarIcon,
+  FileTextIcon,
+  SettingsIcon
+} from 'vue-tabler-icons';
 
 export interface menu {
   header?: string;
@@ -17,30 +31,34 @@ export interface menu {
 }
 
 const sidebarItem: menu[] = [
-  // { header: 'Dashboard' },
   {
-    title: 'Accueil',
+    title: 'Tableau de Bord',
     icon: DashboardIcon,
     to: '/dashboard/default'
   },
 
   {
-    title: 'Stock',
-    icon: WindmillIcon,
+    title: 'Gestion des Stocks',
+    icon: PackageIcon,
     to: '/stock',
     children: [
       {
-        title: 'Reception de viande',
+        title: 'État des Stocks',
+        icon: ChartBarIcon,
+        to: '/stock/management'
+      },
+      {
+        title: 'Réception de Viande',
         icon: CircleIcon,
         to: '/stock/reception'
       },
       {
-        title: 'Déclaration',
-        icon: CircleIcon,
+        title: 'Déclaration de Stock',
+        icon: FileTextIcon,
         to: '/stock/declaration'
       },
       {
-        title: 'Journal de stock',
+        title: 'Journal de Stock',
         icon: CircleIcon,
         to: '/stock/journal'
       }
@@ -49,16 +67,16 @@ const sidebarItem: menu[] = [
 
   {
     title: 'Ventes',
-    icon: WindmillIcon,
-    to: '/forms/radio',
+    icon: ShoppingCartIcon,
+    to: '/vente',
     children: [
       {
-        title: 'Enregistrer une vente',
+        title: 'Enregistrer une Vente',
         icon: CircleIcon,
         to: '/vente/enregistrer'
       },
       {
-        title: 'Liste des ventes',
+        title: 'Liste des Ventes',
         icon: CircleIcon,
         to: '/vente/liste'
       }
@@ -67,16 +85,16 @@ const sidebarItem: menu[] = [
 
   {
     title: 'Versements',
-    icon: WindmillIcon,
-    to: '/forms/radio',
+    icon: CreditCardIcon,
+    to: '/versement',
     children: [
       {
-        title: 'Enregistrer un versement',
+        title: 'Enregistrer un Versement',
         icon: CircleIcon,
         to: '/versement/enregistrer'
       },
       {
-        title: 'Liste des versments',
+        title: 'Liste des Versements',
         icon: CircleIcon,
         to: '/versement/liste'
       }
@@ -85,16 +103,16 @@ const sidebarItem: menu[] = [
 
   {
     title: 'Boucheries',
-    icon: WindmillIcon,
-    to: '/forms/radio',
+    icon: BuildingIcon,
+    to: '/boucherie',
     children: [
       {
-        title: 'Enregistrer une boucherie',
+        title: 'Enregistrer une Boucherie',
         icon: CircleIcon,
         to: '/boucherie/enregistrer'
       },
       {
-        title: 'Liste des boucheries',
+        title: 'Liste des Boucheries',
         icon: CircleIcon,
         to: '/boucherie/liste'
       }
@@ -103,8 +121,8 @@ const sidebarItem: menu[] = [
 
   {
     title: 'Abattage',
-    icon: WindmillIcon,
-    to: '/forms/radio',
+    icon: MeatIcon,
+    to: '/abattage',
     children: [
       {
         title: 'Enregistrer Abattage',
@@ -112,19 +130,60 @@ const sidebarItem: menu[] = [
         to: '/abattage/enregistrer'
       },
       {
-        title: 'Liste animaux',
+        title: 'Liste des Animaux',
         icon: CircleIcon,
         to: '/abattage/liste'
+      },
+      {
+        title: 'Détail Abattage',
+        icon: CircleIcon,
+        to: '/abattage/detail_abattage'
+      }
+    ]
+  },
+
+  { divider: true },
+
+  {
+    title: 'Rapports',
+    icon: FileTextIcon,
+    to: '/reports',
+    children: [
+      {
+        title: 'Rapport de Ventes',
+        icon: CircleIcon,
+        to: '/reports/sales'
+      },
+      {
+        title: 'Rapport de Stocks',
+        icon: CircleIcon,
+        to: '/reports/stocks'
+      },
+      {
+        title: 'Rapport Financier',
+        icon: CircleIcon,
+        to: '/reports/financial'
+      }
+    ]
+  },
+
+  {
+    title: 'Paramètres',
+    icon: SettingsIcon,
+    to: '/settings',
+    children: [
+      {
+        title: 'Profil',
+        icon: CircleIcon,
+        to: '/settings/profile'
+      },
+      {
+        title: 'Préférences',
+        icon: CircleIcon,
+        to: '/settings/preferences'
       }
     ]
   }
-
-  // {
-  //   title: 'Documentation',
-  //   icon: HelpIcon,
-  //   to: 'https://codedthemes.gitbook.io/berry-vuetify/',
-  //   type: 'external'
-  // }
 ];
 
 export default sidebarItem;

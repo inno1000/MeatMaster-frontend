@@ -21,39 +21,48 @@ const sidebarMenu = shallowRef(sidebarItems);
     rail-width="75"
     mobile-breakpoint="lg"
     app
-    class="leftSidebar"
+    class="leftSidebar modern-sidebar"
     :rail="customizer.mini_sidebar"
     expand-on-hover
   >
     <!---Logo part -->
-
-    <div class="pa-5">
-      <Logo />
+    <div class="pa-3 d-flex justify-center align-center logo-section">
+      <div class="logo-container">
+        <Logo />
+      </div>
     </div>
+    
     <!-- ---------------------------------------------- -->
     <!---Navigation -->
     <!-- ---------------------------------------------- -->
-    <perfect-scrollbar class="scrollnavbar">
-      <v-list class="pa-4">
+    <div class="sidebar-content">
+      <v-list class="pa-3 modern-nav-list">
         <!---Menu Loop -->
         <template v-for="(item, i) in sidebarMenu" :key="i">
           <!---Item Sub Header -->
           <NavGroup :item="item" v-if="item.header" :key="item.title" />
           <!---Item Divider -->
-          <v-divider class="my-3" v-else-if="item.divider" />
+          <v-divider class="my-2 modern-divider" v-else-if="item.divider" />
           <!---If Has Child -->
-          <NavCollapse class="leftPadding" :item="item" :level="0" v-else-if="item.children" />
+          <NavCollapse class="leftPadding modern-nav-item" :item="item" :level="0" v-else-if="item.children" />
           <!---Single Item-->
-          <NavItem :item="item" v-else class="leftPadding" />
+          <NavItem :item="item" v-else class="leftPadding modern-nav-item" />
           <!---End Single Item-->
         </template>
       </v-list>
-      <!--      <div class="pa-4">-->
-      <!--        <ExtraBox />-->
-      <!--      </div>-->
-      <div class="pa-4 text-center">
-        <v-chip color="inputBorder" size="small"> v1.1.0 </v-chip>
+      
+      <!-- Version info -->
+      <div class="pa-3 text-center sidebar-footer">
+        <v-chip 
+          color="primary" 
+          variant="tonal" 
+          size="small" 
+          class="modern-chip"
+        >
+          <v-icon start size="small">mdi-rocket-launch</v-icon>
+          v1.1.0
+        </v-chip>
       </div>
-    </perfect-scrollbar>
+    </div>
   </v-navigation-drawer>
 </template>

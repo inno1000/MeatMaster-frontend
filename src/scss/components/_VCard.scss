@@ -18,3 +18,8 @@
 .v-card-item {
   padding: $card-item-spacer-xy;
 }
+
+// Hide ::before pseudo-element for hover cards
+.v-card--hover::before {
+  display: none !important;
+}
