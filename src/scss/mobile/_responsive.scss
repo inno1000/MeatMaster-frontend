@@ -1,0 +1,275 @@
+// Optimisations pour mobile et tablette
+@media (max-width: 768px) {
+  // Cartes de résumé - empiler verticalement sur mobile
+  .v-card {
+    margin-bottom: 16px;
+  }
+
+  // Boutons d'action rapide - taille réduite sur mobile
+  .action-buttons {
+    .v-btn {
+      font-size: 0.875rem;
+      padding: 8px 16px;
+    }
+  }
+
+  // Formulaires - espacement réduit sur mobile
+  .form-container {
+    padding: 16px;
+    
+    .v-text-field,
+    .v-select,
+    .v-textarea {
+      margin-bottom: 16px;
+    }
+  }
+
+  // Tableaux - scroll horizontal sur mobile
+  .v-data-table {
+    .v-data-table__wrapper {
+      overflow-x: auto;
+    }
+  }
+
+  // Navigation - menu plus compact
+  .v-navigation-drawer {
+    .v-list-item {
+      min-height: 48px;
+      
+      .v-list-item__content {
+        .v-list-item-title {
+          font-size: 0.875rem;
+        }
+        
+        .v-list-item-subtitle {
+          font-size: 0.75rem;
+        }
+      }
+    }
+  }
+
+  // Dashboard - cartes en pleine largeur sur mobile
+  .dashboard-cards {
+    .v-col {
+      flex: 0 0 100%;
+      max-width: 100%;
+    }
+  }
+
+  // Alertes - taille réduite sur mobile
+  .v-alert {
+    font-size: 0.875rem;
+    padding: 12px 16px;
+  }
+
+  // Timeline - espacement réduit sur mobile
+  .v-timeline {
+    .v-timeline-item {
+      padding-bottom: 16px;
+    }
+  }
+
+  // Modales - pleine largeur sur mobile
+  .v-dialog {
+    .v-card {
+      margin: 0;
+      border-radius: 0;
+    }
+  }
+}
+
+// Optimisations pour tablettes
+@media (min-width: 769px) and (max-width: 1024px) {
+  // Cartes de résumé - 2 par ligne sur tablette
+  .dashboard-cards {
+    .v-col {
+      flex: 0 0 50%;
+      max-width: 50%;
+    }
+  }
+
+  // Formulaires - espacement moyen sur tablette
+  .form-container {
+    padding: 24px;
+  }
+}
+
+// Optimisations pour très petits écrans
+@media (max-width: 480px) {
+  // Texte plus petit sur très petits écrans
+  .v-card-title {
+    font-size: 1.25rem;
+  }
+
+  .v-card-subtitle {
+    font-size: 0.875rem;
+  }
+
+  // Boutons plus petits
+  .v-btn {
+    font-size: 0.75rem;
+    padding: 6px 12px;
+  }
+
+  // Icônes plus petites
+  .v-icon {
+    font-size: 1.25rem;
+  }
+
+  // Espacement réduit
+  .v-container {
+    padding: 8px;
+  }
+}
+
+// Améliorations pour l'accessibilité tactile
+@media (hover: none) and (pointer: coarse) {
+  // Boutons plus grands pour les doigts
+  .v-btn {
+    min-height: 44px;
+    min-width: 44px;
+  }
+  
+
+  // Liens plus grands
+  .v-list-item {
+    min-height: 48px;
+  }
+
+  // Champs de formulaire plus grands
+  .v-text-field {
+    .v-field {
+      min-height: 48px;
+    }
+  }
+}
+
+// Mode paysage sur mobile
+@media (max-width: 768px) and (orientation: landscape) {
+  // Réduire la hauteur des cartes en mode paysage
+  .v-card {
+    .v-card-text {
+      padding: 12px 16px;
+    }
+  }
+
+  // Masquer certains éléments non essentiels
+  .v-card-subtitle {
+    display: none;
+  }
+}
+
+// Styles pour les formulaires mobiles
+.mobile-form {
+  .v-text-field,
+  .v-select,
+  .v-textarea {
+    margin-bottom: 20px;
+  }
+
+  .v-btn {
+    width: 100%;
+    margin-top: 16px;
+  }
+}
+
+// Styles pour les cartes de statistiques mobiles
+.mobile-stats {
+  .v-card {
+    text-align: center;
+    
+    .v-card-text {
+      padding: 16px;
+    }
+  }
+}
+
+// Styles pour les listes mobiles
+.mobile-list {
+  .v-list-item {
+    padding: 12px 16px;
+    
+    .v-list-item__content {
+      .v-list-item-title {
+        font-size: 1rem;
+        font-weight: 500;
+      }
+      
+      .v-list-item-subtitle {
+        font-size: 0.875rem;
+        margin-top: 4px;
+      }
+    }
+  }
+}
+
+// Styles pour les tableaux mobiles
+.mobile-table {
+  .v-data-table {
+    .v-data-table__wrapper {
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    
+    .v-data-table__td {
+      padding: 8px 12px;
+      font-size: 0.875rem;
+    }
+    
+    .v-data-table__th {
+      padding: 12px;
+      font-size: 0.75rem;
+      font-weight: 600;
+    }
+  }
+}
+
+// Styles pour les alertes mobiles
+.mobile-alert {
+  .v-alert {
+    border-radius: 8px;
+    margin-bottom: 16px;
+    
+    .v-alert__content {
+      font-size: 0.875rem;
+      line-height: 1.4;
+    }
+  }
+}
+
+// Styles pour les boutons d'action mobiles
+.mobile-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  
+  .v-btn {
+    width: 100%;
+    justify-content: flex-start;
+    
+    .v-btn__content {
+      .v-icon {
+        margin-right: 12px;
+      }
+    }
+  }
+}
+
+// Styles pour les filtres mobiles
+.mobile-filters {
+  .v-row {
+    margin: 0;
+    
+    .v-col {
+      padding: 4px;
+    }
+  }
+  
+  .v-text-field,
+  .v-select {
+    .v-field {
+      font-size: 0.875rem;
+    }
+  }
+}
+
