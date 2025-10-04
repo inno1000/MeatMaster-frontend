@@ -1,7 +1,7 @@
 const MainRoutes = {
   path: '/main',
   meta: {
-    requiresAuth: true
+    requiresAuth: false
   },
   redirect: '/main/dashboard/default',
   component: () => import('@/layouts/full/FullLayout.vue'),
@@ -30,6 +30,11 @@ const MainRoutes = {
       name: 'Reception',
       path: '/stock/reception',
       component: () => import('@/views/stock/ReceptionPage.vue')
+    },
+    {
+      name: 'StockManagement',
+      path: '/stock/management',
+      component: () => import('@/views/stock/StockManagement.vue')
     },
     {
       name: 'EnregVente',
@@ -70,11 +75,20 @@ const MainRoutes = {
       name: 'listeAbattage',
       path: '/abattage/liste',
       component: () => import('@/views/abattage/ListeAbattage.vue')
+    },{
+      name: 'detailAbattage',
+      path: '/abattage/detail_abattage',
+      component: () => import('@/views/abattage/detail_abattage/DetailAbattage.vue')
     },
     {
       name: 'test',
       path: '/test',
       component: () => import('@/views/test/tests.vue')
+    },
+    {
+      name: 'SalesReport',
+      path: '/reports/sales',
+      component: () => import('@/views/reports/SalesReport.vue')
     }
     // {
     //   name: 'LandingPage',
