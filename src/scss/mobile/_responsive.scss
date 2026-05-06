@@ -1,5 +1,21 @@
 // Optimisations pour mobile et tablette
 @media (max-width: 768px) {
+  // Gestion de la barre d'état sur mobile
+  .v-app {
+    padding-top: env(safe-area-inset-top);
+  }
+  
+  // Header avec espacement pour la barre d'état
+  .v-app-bar {
+    padding-top: env(safe-area-inset-top);
+    height: calc(64px + env(safe-area-inset-top));
+  }
+  
+  // Navigation drawer avec espacement
+  .v-navigation-drawer {
+    padding-top: env(safe-area-inset-top);
+  }
+  
   // Cartes de résumé - empiler verticalement sur mobile
   .v-card {
     margin-bottom: 16px;
@@ -269,6 +285,35 @@
   .v-select {
     .v-field {
       font-size: 0.875rem;
+    }
+  }
+}
+
+// Styles spécifiques pour Capacitor (mobile natif)
+.capacitor-app {
+  // Gestion de la barre d'état sur Capacitor
+  .v-app {
+    padding-top: var(--status-bar-height, 0px);
+  }
+  
+  .v-app-bar {
+    padding-top: var(--status-bar-height, 0px);
+    height: calc(64px + var(--status-bar-height, 0px));
+  }
+  
+  .v-navigation-drawer {
+    padding-top: var(--status-bar-height, 0px);
+  }
+  
+  // Assurer que le contenu principal n'est pas caché
+  .v-main {
+    padding-top: 0 !important;
+  }
+  
+  // Ajustement pour les éléments de navigation
+  .v-toolbar {
+    .v-toolbar__content {
+      padding-top: var(--status-bar-height, 0px);
     }
   }
 }

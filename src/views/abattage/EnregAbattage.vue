@@ -8,59 +8,62 @@
         color="primary"
       >
         <!-- Formulaire d'inscription des animaux -->
-        <v-form ref="abattoirForm" v-model="isFormValid" class="modern-form">
+        <v-form ref="abattoirForm" v-model="isFormValid" class="modern-form mobile-form">
           
-          <!-- En-tête avec statistiques -->
-          <v-row class="mb-6">
-            <v-col cols="12" md="4">
-              <v-card variant="outlined" class="stats-card pa-4 text-center">
-                <v-icon size="32" color="primary" class="mb-2">mdi-cow</v-icon>
-                <h3 class="text-h5 font-weight-bold">{{ animals.length }}</h3>
-                <p class="text-body-2 text-medium-emphasis">Animal(s) enregistré(s)</p>
-              </v-card>
-            </v-col>
-            <v-col cols="12" md="4">
-              <v-card variant="outlined" class="stats-card pa-4 text-center">
-                <v-icon size="32" color="success" class="mb-2">mdi-scale-balance</v-icon>
-                <h3 class="text-h5 font-weight-bold">{{ totalWeight }} kg</h3>
-                <p class="text-body-2 text-medium-emphasis">Poids total</p>
-              </v-card>
-            </v-col>
-            <v-col cols="12" md="4">
-              <v-card variant="outlined" class="stats-card pa-4 text-center">
-                <v-icon size="32" color="info" class="mb-2">mdi-currency-usd</v-icon>
-                <h3 class="text-h5 font-weight-bold">{{ formatCurrency(totalValue) }}</h3>
-                <p class="text-body-2 text-medium-emphasis">Valeur totale</p>
-              </v-card>
-            </v-col>
-          </v-row>
+          <!-- En-tête avec statistiques - Optimisé mobile -->
+          <div class="mobile-stats mb-6">
+            <v-row>
+              <v-col cols="12" sm="4" class="mb-3">
+                <v-card variant="outlined" class="stats-card pa-3 text-center mobile-stats-card">
+                  <v-icon size="28" color="primary" class="mb-2">mdi-cow</v-icon>
+                  <h3 class="text-h6 font-weight-bold">{{ animals.length }}</h3>
+                  <p class="text-caption text-medium-emphasis">Animal(s)</p>
+                </v-card>
+              </v-col>
+              <v-col cols="12" sm="4" class="mb-3">
+                <v-card variant="outlined" class="stats-card pa-3 text-center mobile-stats-card">
+                  <v-icon size="28" color="success" class="mb-2">mdi-scale-balance</v-icon>
+                  <h3 class="text-h6 font-weight-bold">{{ totalWeight }} kg</h3>
+                  <p class="text-caption text-medium-emphasis">Poids total</p>
+                </v-card>
+              </v-col>
+              <v-col cols="12" sm="4" class="mb-3">
+                <v-card variant="outlined" class="stats-card pa-3 text-center mobile-stats-card">
+                  <v-icon size="28" color="info" class="mb-2">mdi-currency-usd</v-icon>
+                  <h3 class="text-h6 font-weight-bold">{{ formatCurrency(totalValue) }}</h3>
+                  <p class="text-caption text-medium-emphasis">Valeur totale</p>
+                </v-card>
+              </v-col>
+            </v-row>
+          </div>
 
-          <!-- Panels d'animaux -->
-          <v-expansion-panels v-model="activePanel" multiple class="modern-expansion-panels">
+          <!-- Panels d'animaux - Optimisé mobile -->
+          <v-expansion-panels v-model="activePanel" multiple class="modern-expansion-panels mobile-expansion-panels">
             <v-expansion-panel 
               v-for="(animal, animalIndex) in animals" 
               :key="animalIndex"
-              class="modern-expansion-panel"
+              class="modern-expansion-panel mobile-expansion-panel"
             >
-              <v-expansion-panel-title class="modern-panel-title">
-                <div class="d-flex justify-space-between align-center w-100">
-                  <div class="d-flex align-center">
+              <v-expansion-panel-title class="modern-panel-title mobile-panel-title">
+                <div class="d-flex justify-space-between align-center w-100 mobile-panel-header">
+                  <div class="d-flex align-center mobile-panel-info">
                     <v-avatar color="primary" size="small" class="me-3">
                       <v-icon color="white">mdi-cow</v-icon>
                     </v-avatar>
-                    <div>
-                      <h4 class="text-h6 font-weight-bold">Animal {{ animalIndex + 1 }}</h4>
-                      <p class="text-body-2 text-medium-emphasis mb-0">
+                    <div class="mobile-panel-text">
+                      <h4 class="text-subtitle-1 font-weight-bold">Animal {{ animalIndex + 1 }}</h4>
+                      <p class="text-caption text-medium-emphasis mb-0">
                         {{ animal.weight ? `${animal.weight} kg` : 'Poids non défini' }}
                       </p>
                     </div>
                   </div>
-                  <div class="d-flex align-center gap-2">
+                  <div class="d-flex align-center gap-1 mobile-panel-actions">
                     <v-chip 
                       v-if="animal.meatWeight && animal.tripesWeight"
                       :color="getDistributionStatus(animalIndex).color"
-                      size="small"
+                      size="x-small"
                       variant="flat"
+                      class="mobile-status-chip"
                     >
                       {{ getDistributionStatus(animalIndex).text }}
                     </v-chip>
@@ -68,25 +71,26 @@
                       color="error" 
                       prepend-icon="mdi-close" 
                       variant="text" 
-                      size="small"
+                      size="x-small"
                       v-if="animals.length > 1" 
                       @click.stop="removeAnimal(animalIndex)"
+                      class="mobile-remove-btn"
                     >
-                      Supprimer
+                      <span class="d-none d-sm-inline">Supprimer</span>
                     </v-btn>
                   </div>
                 </div>
               </v-expansion-panel-title>
               
-              <v-expansion-panel-text class="modern-panel-content">
-                <!-- Informations de base de l'animal -->
-                <v-card variant="outlined" class="mb-6 pa-4">
-                  <h5 class="text-h6 font-weight-bold mb-4 d-flex align-center">
-                    <v-icon class="me-2" color="primary">mdi-information</v-icon>
+              <v-expansion-panel-text class="modern-panel-content mobile-panel-content">
+                <!-- Informations de base de l'animal - Structure simplifiée -->
+                <div class="mobile-info-section mb-4">
+                  <h5 class="text-subtitle-1 font-weight-bold mb-2 d-flex align-center mobile-section-title">
+                    <v-icon class="me-2" color="primary" size="small">mdi-information</v-icon>
                     Informations de base
                   </h5>
-                  <v-row>
-                    <v-col cols="12" md="6">
+                  <v-row class="mobile-form-row">
+                    <v-col cols="12" sm="6" class="pb-2">
                       <v-text-field
                         v-model="animal.weight"
                         label="Poids de l'animal"
@@ -96,10 +100,11 @@
                         prepend-icon="mdi-scale-balance"
                         suffix="kg"
                         @input="validateDistribution(animalIndex)"
-                        class="modern-form-field"
+                        class="modern-form-field mobile-form-field"
+                        density="compact"
                       ></v-text-field>
                     </v-col>
-                    <v-col cols="12" md="6">
+                    <v-col cols="12" sm="6" class="pb-2">
                       <v-text-field
                         v-model="animal.purchasePrice"
                         label="Prix d'achat"
@@ -108,10 +113,11 @@
                         variant="outlined"
                         prepend-icon="mdi-currency-usd"
                         suffix="FCFA"
-                        class="modern-form-field"
+                        class="modern-form-field mobile-form-field"
+                        density="compact"
                       ></v-text-field>
                     </v-col>
-                    <v-col cols="12" md="6">
+                    <v-col cols="12" sm="6" class="pb-2">
                       <v-text-field
                         v-model="animal.meatWeight"
                         label="Poids de la viande"
@@ -120,10 +126,11 @@
                         variant="outlined"
                         prepend-icon="mdi-food-drumstick"
                         suffix="kg"
-                        class="modern-form-field"
+                        class="modern-form-field mobile-form-field"
+                        density="compact"
                       ></v-text-field>
                     </v-col>
-                    <v-col cols="12" md="6">
+                    <v-col cols="12" sm="6" class="pb-2">
                       <v-text-field
                         v-model="animal.tripesWeight"
                         label="Poids des tripes"
@@ -132,18 +139,20 @@
                         variant="outlined"
                         prepend-icon="mdi-food"
                         suffix="kg"
-                        class="modern-form-field"
+                        class="modern-form-field mobile-form-field"
+                        density="compact"
                       ></v-text-field>
                     </v-col>
                   </v-row>
-                </v-card>
+                </div>
 
-                <!-- Distribution aux boucheries -->
-                <v-card variant="outlined" class="pa-4">
-                  <div class="d-flex justify-space-between align-center mb-4">
-                    <h5 class="text-h6 font-weight-bold d-flex align-center mb-0">
-                      <v-icon class="me-2" color="success">mdi-home</v-icon>
-                      Distribution aux boucheries
+                <!-- Distribution aux boucheries - Structure simplifiée -->
+                <div class="mobile-distribution-section">
+                  <div class="d-flex justify-space-between align-center mb-2 mobile-distribution-header">
+                    <h5 class="text-subtitle-1 font-weight-bold d-flex align-center mb-0 mobile-section-title">
+                      <v-icon class="me-2" color="success" size="small">mdi-home</v-icon>
+                      <span class="d-none d-sm-inline">Distribution aux boucheries</span>
+                      <span class="d-inline d-sm-none">Distribution</span>
                     </h5>
                     <v-btn 
                       variant="elevated" 
@@ -151,8 +160,10 @@
                       prepend-icon="mdi-plus" 
                       size="small"
                       @click="addButcher(animalIndex)"
+                      class="mobile-add-btn"
                     >
-                      Ajouter une boucherie
+                      <span class="d-none d-sm-inline">Ajouter une boucherie</span>
+                      <span class="d-inline d-sm-none">Ajouter</span>
                     </v-btn>
                   </div>
 
@@ -187,114 +198,119 @@
                     Une ou plusieurs boucheries sont sélectionnées plusieurs fois pour cet animal. Veuillez corriger cela avant de continuer.
                   </v-alert>
 
-                  <!-- Liste des boucheries -->
+                  <!-- Liste des boucheries - Structure simplifiée -->
                   <v-scroll-y-transition class="py-0" tag="div" group>
-                    <v-card
+                    <div
                       v-for="(butcher, butcherIndex) in animal.butchers" 
                       :key="butcherIndex" 
-                      variant="outlined"
-                      class="butcher-card mb-4"
+                      class="mobile-butcher-item mb-3"
                     >
-                      <v-card-text class="pa-4">
-                        <div class="d-flex justify-space-between align-center mb-4">
-                          <div class="d-flex align-center">
-                            <v-avatar color="success" size="small" class="me-3">
-                              <v-icon color="white" size="small">mdi-home</v-icon>
-                            </v-avatar>
-                            <h6 class="text-subtitle-1 font-weight-bold mb-0">
-                              Boucherie {{ butcherIndex + 1 }}
-                            </h6>
-                          </div>
-                          <v-btn 
-                            color="error" 
-                            prepend-icon="mdi-close" 
-                            variant="text" 
-                            size="small"
-                            v-if="animal.butchers.length > 1" 
-                            @click.stop="removeButcher(animalIndex, butcherIndex)"
-                          >
-                            Supprimer
-                          </v-btn>
+                      <div class="d-flex justify-space-between align-center mb-2 mobile-butcher-header">
+                        <div class="d-flex align-center mobile-butcher-title">
+                          <v-avatar color="success" size="small" class="me-2">
+                            <v-icon color="white" size="small">mdi-home</v-icon>
+                          </v-avatar>
+                          <h6 class="text-body-1 font-weight-bold mb-0">
+                            Boucherie {{ butcherIndex + 1 }}
+                          </h6>
                         </div>
-                        
-                        <v-row>
-                          <v-col cols="12" md="6">
-                            <v-autocomplete
-                              v-model="butcher.name"
-                              :items="availableButcheries(animalIndex)"
-                              label="Nom de la boucherie"
-                              required
-                              variant="outlined"
-                              prepend-icon="mdi-home"
-                              class="modern-form-field"
-                              :error-messages="getButcherError(animalIndex, butcherIndex)"
-                              @update:model-value="validateButcherSelection(animalIndex, butcherIndex)"
-                            ></v-autocomplete>
-                          </v-col>
-                          <v-col cols="12" md="3">
-                            <v-text-field
-                              v-model="butcher.weight"
-                              label="Poids distribué"
-                              type="number"
-                              required
-                              variant="outlined"
-                              prepend-icon="mdi-scale-balance"
-                              suffix="kg"
-                              @input="validateDistribution(animalIndex)"
-                              class="modern-form-field"
-                            ></v-text-field>
-                          </v-col>
-                          <v-col cols="12" md="3">
-                            <v-text-field
-                              v-model="butcher.price"
-                              label="Prix de vente"
-                              type="number"
-                              required
-                              variant="outlined"
-                              prepend-icon="mdi-currency-usd"
-                              suffix="FCFA"
-                              class="modern-form-field"
-                            ></v-text-field>
-                          </v-col>
-                        </v-row>
-                      </v-card-text>
-                    </v-card>
+                        <v-btn 
+                          color="error" 
+                          prepend-icon="mdi-close" 
+                          variant="text" 
+                          size="x-small"
+                          v-if="animal.butchers.length > 1" 
+                          @click.stop="removeButcher(animalIndex, butcherIndex)"
+                          class="mobile-remove-butcher-btn"
+                        >
+                          <span class="d-none d-sm-inline">Supprimer</span>
+                        </v-btn>
+                      </div>
+                      
+                      <v-row class="mobile-butcher-form">
+                        <v-col cols="12" class="pb-2">
+                          <v-autocomplete
+                            v-model="butcher.name"
+                            :items="availableButcheries(animalIndex)"
+                            label="Nom de la boucherie"
+                            required
+                            variant="outlined"
+                            prepend-icon="mdi-home"
+                            class="modern-form-field mobile-form-field"
+                            :error-messages="getButcherError(animalIndex, butcherIndex)"
+                            @update:model-value="validateButcherSelection(animalIndex, butcherIndex)"
+                            density="compact"
+                          ></v-autocomplete>
+                        </v-col>
+                        <v-col cols="12" sm="6" class="pb-2">
+                          <v-text-field
+                            v-model="butcher.weight"
+                            label="Poids distribué"
+                            type="number"
+                            required
+                            variant="outlined"
+                            prepend-icon="mdi-scale-balance"
+                            suffix="kg"
+                            @input="validateDistribution(animalIndex)"
+                            class="modern-form-field mobile-form-field"
+                            density="compact"
+                          ></v-text-field>
+                        </v-col>
+                        <v-col cols="12" sm="6" class="pb-2">
+                          <v-text-field
+                            v-model="butcher.price"
+                            label="Prix de vente"
+                            type="number"
+                            required
+                            variant="outlined"
+                            prepend-icon="mdi-currency-usd"
+                            suffix="FCFA"
+                            class="modern-form-field mobile-form-field"
+                            density="compact"
+                          ></v-text-field>
+                        </v-col>
+                      </v-row>
+                    </div>
                   </v-scroll-y-transition>
-                </v-card>
+                </div>
               </v-expansion-panel-text>
             </v-expansion-panel>
           </v-expansion-panels>
 
-          <!-- Actions principales -->
-          <v-row class="mt-6">
-            <v-col cols="12" md="6">
-              <v-btn 
-                variant="elevated" 
-                color="success" 
-                prepend-icon="mdi-plus" 
-                size="large"
-                @click="addAnimal"
-                class="modern-btn"
-                block
-              >
-                Ajouter un animal
-              </v-btn>
-            </v-col>
-            <v-col cols="12" md="6">
-              <v-btn 
-                variant="elevated" 
-                color="primary" 
-                prepend-icon="mdi-check" 
-                size="large"
-                :disabled="!isFormValid || !isDistributionValid"
-                @click="submitForm"
-                class="modern-btn"
-                block
-              >
-                Enregistrer l'abattage
-              </v-btn>
-            </v-col>
-          </v-row>
+          <!-- Actions principales - Optimisé mobile -->
+          <div class="mobile-actions mt-4">
+            <v-row>
+              <v-col cols="12" sm="6" class="pb-2">
+                <v-btn 
+                  variant="elevated" 
+                  color="success" 
+                  prepend-icon="mdi-plus" 
+                  size="large"
+                  @click="addAnimal"
+                  class="modern-btn mobile-action-btn"
+                  block
+                >
+                  <span class="d-none d-sm-inline">Ajouter un animal</span>
+                  <span class="d-inline d-sm-none">Ajouter animal</span>
+                </v-btn>
+              </v-col>
+              <v-col cols="12" sm="6" class="pb-2">
+                <v-btn 
+                  variant="elevated" 
+                  color="primary" 
+                  prepend-icon="mdi-check" 
+                  size="large"
+                  :disabled="!isFormValid || !isDistributionValid"
+                  @click="submitForm"
+                  class="modern-btn mobile-action-btn"
+                  block
+                >
+                  <span class="d-none d-sm-inline">Enregistrer l'abattage</span>
+                  <span class="d-inline d-sm-none">Enregistrer</span>
+                </v-btn>
+              </v-col>
+            </v-row>
+          </div>
         </v-form>
       </UiParentCard>
     </v-col>
@@ -681,27 +697,341 @@ export default {
   }
 }
 
-/* Responsive design */
+/* Responsive design - Mobile optimizations */
 @media (max-width: 768px) {
-  .modern-expansion-panel {
-    margin-bottom: 12px;
+  /* Réduction des marges pour mieux utiliser l'espace */
+  .v-container {
+    padding-left: 8px !important;
+    padding-right: 8px !important;
   }
   
-  .modern-panel-title {
-    padding: 12px 16px;
+  .v-row {
+    margin-left: -4px !important;
+    margin-right: -4px !important;
   }
   
-  .modern-panel-content {
-    padding: 16px;
+  .v-col {
+    padding-left: 4px !important;
+    padding-right: 4px !important;
+    width: 100% !important;
+    flex: 1 1 100% !important;
   }
   
+  /* Mobile stats cards */
+  .mobile-stats-card {
+    padding: 12px !important;
+    margin-bottom: 8px;
+  }
+  
+  .mobile-stats-card .v-icon {
+    font-size: 24px !important;
+  }
+  
+  .mobile-stats-card h3 {
+    font-size: 1.1rem !important;
+  }
+  
+  .mobile-stats-card p {
+    font-size: 0.75rem !important;
+  }
+  
+  /* Mobile expansion panels */
+  .mobile-expansion-panels {
+    margin: 0 -4px;
+  }
+  
+  .mobile-expansion-panel {
+    margin-bottom: 8px;
+    border-radius: 8px;
+  }
+  
+  .mobile-panel-title {
+    padding: 12px 16px !important;
+    min-height: 60px;
+  }
+  
+  .mobile-panel-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+  
+  .mobile-panel-info {
+    width: 100%;
+  }
+  
+  .mobile-panel-text h4 {
+    font-size: 0.9rem !important;
+  }
+  
+  .mobile-panel-text p {
+    font-size: 0.7rem !important;
+  }
+  
+  .mobile-panel-actions {
+    width: 100%;
+    justify-content: space-between;
+  }
+  
+  .mobile-status-chip {
+    font-size: 0.6rem !important;
+    height: 20px !important;
+  }
+  
+  .mobile-remove-btn {
+    min-width: 32px !important;
+    height: 32px !important;
+  }
+  
+  .mobile-panel-content {
+    padding: 12px !important;
+  }
+  
+  /* Mobile info sections - Structure simplifiée */
+  .mobile-info-section {
+    padding: 8px;
+    background: rgba(var(--v-theme-surface), 0.5);
+    border-radius: 8px;
+    border: 1px solid rgba(var(--v-theme-outline), 0.1);
+    margin-bottom: 8px;
+  }
+  
+  .mobile-section-title {
+    font-size: 0.9rem !important;
+    margin-bottom: 6px !important;
+    color: rgba(var(--v-theme-on-surface), 0.8);
+  }
+  
+  .mobile-form-row .v-col {
+    padding-bottom: 4px !important;
+  }
+  
+  /* Mobile distribution sections - Structure simplifiée */
+  .mobile-distribution-section {
+    padding: 8px;
+    background: rgba(var(--v-theme-surface), 0.3);
+    border-radius: 8px;
+    border: 1px solid rgba(var(--v-theme-outline), 0.1);
+  }
+  
+  .mobile-distribution-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+  
+  .mobile-distribution-header h5 {
+    font-size: 0.9rem !important;
+  }
+  
+  .mobile-add-btn {
+    width: 100%;
+    font-size: 0.8rem !important;
+  }
+  
+  /* Mobile butcher items - Structure simplifiée */
+  .mobile-butcher-item {
+    padding: 6px;
+    background: rgba(var(--v-theme-surface), 0.2);
+    border-radius: 6px;
+    border: 1px solid rgba(var(--v-theme-outline), 0.08);
+    margin-bottom: 6px;
+  }
+  
+  .mobile-butcher-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  
+  .mobile-butcher-title {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    min-width: 0;
+  }
+  
+  .mobile-butcher-header h6 {
+    font-size: 0.85rem !important;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin: 0;
+    padding: 0;
+  }
+  
+  .mobile-remove-butcher-btn {
+    flex-shrink: 0;
+    width: 32px !important;
+    height: 32px !important;
+    min-width: 32px !important;
+    padding: 0 !important;
+  }
+  
+  .mobile-butcher-form .v-col {
+    padding-bottom: 4px !important;
+  }
+  
+  /* Mobile form fields - Largeur uniforme */
+  .mobile-form-field {
+    width: 100% !important;
+  }
+  
+  .mobile-form-field .v-field {
+    font-size: 0.9rem;
+    width: 100% !important;
+  }
+  
+  .mobile-form-field .v-field__input {
+    width: 100% !important;
+  }
+  
+  .mobile-form-field .v-label {
+    font-size: 0.8rem;
+  }
+  
+  /* Assurer que tous les champs de formulaire ont la même largeur */
+  .v-text-field,
+  .v-autocomplete {
+    width: 100% !important;
+  }
+  
+  .v-text-field .v-field,
+  .v-autocomplete .v-field {
+    width: 100% !important;
+  }
+  
+  /* Mobile actions */
+  .mobile-actions {
+    margin-top: 16px !important;
+  }
+  
+  .mobile-action-btn {
+    height: 48px !important;
+    font-size: 0.9rem !important;
+    margin-bottom: 8px !important;
+  }
+  
+  /* Mobile alerts */
+  .v-alert {
+    font-size: 0.8rem !important;
+    padding: 8px 12px !important;
+    margin-bottom: 8px !important;
+  }
+  
+  /* Mobile general adjustments */
   .stats-card {
-    margin-bottom: 12px;
+    margin-bottom: 8px !important;
   }
   
   .modern-btn {
     width: 100%;
     margin-bottom: 8px;
+  }
+  
+  /* Mobile spacing */
+  .mb-6 {
+    margin-bottom: 16px !important;
+  }
+  
+  .mb-4 {
+    margin-bottom: 12px !important;
+  }
+  
+  .mb-3 {
+    margin-bottom: 8px !important;
+  }
+  
+  .pa-4 {
+    padding: 12px !important;
+  }
+  
+  .pa-3 {
+    padding: 8px !important;
+  }
+}
+
+/* Very small screens */
+@media (max-width: 480px) {
+  /* Marges encore plus réduites pour très petits écrans */
+  .v-container {
+    padding-left: 4px !important;
+    padding-right: 4px !important;
+  }
+  
+  .v-row {
+    margin-left: -2px !important;
+    margin-right: -2px !important;
+  }
+  
+  .v-col {
+    padding-left: 2px !important;
+    padding-right: 2px !important;
+    width: 100% !important;
+    flex: 1 1 100% !important;
+  }
+  
+  .mobile-panel-title {
+    padding: 6px 8px !important;
+    min-height: 50px;
+  }
+  
+  .mobile-panel-content {
+    padding: 6px !important;
+  }
+  
+  /* Structure simplifiée pour très petits écrans */
+  .mobile-info-section,
+  .mobile-distribution-section {
+    padding: 6px !important;
+    margin-bottom: 8px !important;
+  }
+  
+  .mobile-butcher-item {
+    padding: 6px !important;
+    margin-bottom: 6px !important;
+  }
+  
+  .mobile-stats-card {
+    padding: 6px !important;
+  }
+  
+  .mobile-action-btn {
+    height: 44px !important;
+    font-size: 0.8rem !important;
+  }
+  
+  .mobile-section-title {
+    font-size: 0.8rem !important;
+  }
+  
+  .mobile-form-field .v-field {
+    font-size: 0.85rem;
+  }
+  
+  .mobile-form-field .v-label {
+    font-size: 0.75rem;
+  }
+  
+  /* Largeur uniforme pour très petits écrans */
+  .mobile-form-field {
+    width: 100% !important;
+  }
+  
+  .v-text-field,
+  .v-autocomplete {
+    width: 100% !important;
+  }
+  
+  /* Optimisation pour très petits écrans - bouton sur même ligne */
+  .mobile-butcher-header h6 {
+    font-size: 0.8rem !important;
+  }
+  
+  .mobile-remove-butcher-btn {
+    width: 28px !important;
+    height: 28px !important;
+    min-width: 28px !important;
   }
 }
 
@@ -724,5 +1054,13 @@ export default {
 
 .gap-2 {
   gap: 8px;
+}
+
+.flex-grow-1 {
+  flex-grow: 1;
+}
+
+.ml-2 {
+  margin-left: 8px;
 }
 </style>

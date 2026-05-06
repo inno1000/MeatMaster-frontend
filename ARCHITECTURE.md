@@ -1,52 +1,55 @@
-# Architecture de l'Application de Gestion de Boucherie
+# Architecture — MeatMaster (frontend Next.js)
 
-## Diagramme de l'Architecture
+> **Frontend canonique :** `next/` (Next.js 16, App Router, React 19, Tailwind 4, next-intl).  
+> L’ancien frontend Vue dans `src/` n’est plus la cible d’évolution ; il peut rester dans le dépôt jusqu’à suppression.
+
+## Diagramme d’ensemble
 
 ```mermaid
 graph TB
-    subgraph "Frontend - Vue 3 + Vuetify"
-        A[Tableau de Bord] --> B[Gestion des Stocks]
+    subgraph "Frontend — Next.js (next/)"
+        A[Tableau de bord] --> B[Gestion des stocks]
         A --> C[Ventes]
         A --> D[Versements]
         A --> E[Rapports]
-        
-        B --> B1[Réception de Viande]
-        B --> B2[État des Stocks]
-        B --> B3[Journal de Stock]
+
+        B --> B1[Réception]
+        B --> B2[État des stocks]
+        B --> B3[Journal]
         B --> B4[Déclaration]
-        
-        C --> C1[Enregistrer Vente]
-        C --> C2[Liste des Ventes]
-        
-        D --> D1[Enregistrer Versement]
-        D --> D2[Liste des Versements]
-        
-        E --> E1[Rapport de Ventes]
-        E --> E2[Rapport de Stocks]
-        E --> E3[Rapport Financier]
+
+        C --> C1[Enregistrer vente]
+        C --> C2[Liste des ventes]
+
+        D --> D1[Enregistrer versement]
+        D --> D2[Liste des versements]
+
+        E --> E1[Rapport ventes]
+        E --> E2[Rapport stocks]
+        E --> E3[Rapport financier]
     end
-    
-    subgraph "Fonctionnalités Clés"
-        F[Calculs Automatiques]
-        G[Upload de Fichiers]
-        H[Messagerie Vocale]
-        I[Alertes de Stock]
-        J[Validation des Versements]
+
+    subgraph "Fonctionnalités clés"
+        F[Calculs automatiques]
+        G[Upload fichiers / photos]
+        H[Messages vocaux]
+        I[Alertes stock]
+        J[Validation versements]
     end
-    
-    subgraph "Backend - Laravel (À Intégrer)"
+
+    subgraph "Backend — Laravel à intégrer"
         K[API REST]
-        L[Base de Données]
-        M[Upload de Fichiers]
-        N[Authentification JWT]
+        L[Base de données]
+        M[Stockage fichiers]
+        N[Auth JWT]
     end
-    
+
     A --> F
     B1 --> G
     B1 --> H
     B2 --> I
     D1 --> J
-    
+
     F --> K
     G --> M
     H --> K
@@ -54,37 +57,29 @@ graph TB
     J --> N
 ```
 
-## Structure des Composants
+## Structure des composants (Next.js)
 
 ```mermaid
 graph LR
-    subgraph "Pages Principales"
-        A[DefaultDashboard.vue]
-        B[ReceptionPage.vue]
-        C[EnregVente.vue]
-        D[EnregVersement.vue]
-        E[StockManagement.vue]
-        F[SalesReport.vue]
+    subgraph "Pages App Router"
+        A["app/.../dashboard"]
+        B["app/.../stock/*"]
+        C["app/.../vente/*"]
+        D["app/.../versement/*"]
+        E["app/.../reports/*"]
     end
-    
-    subgraph "Composants Partagés"
-        G[UiParentCard.vue]
-        H[AudioRecorder.vue]
-        I[BaseBreadcrumb.vue]
-        J[DetailModal.vue]
+
+    subgraph "Composants partagés"
+        G[ParentCard]
+        H[AudioRecorder]
+        I[DashboardShell]
     end
-    
-    subgraph "Layouts"
-        K[FullLayout.vue]
-        L[BlankLayout.vue]
+
+    subgraph "État & données"
+        M[auth-store Zustand]
+        N[TanStack Query]
     end
-    
-    subgraph "Stores"
-        M[auth.ts]
-        N[authUser.ts]
-        O[customizer.ts]
-    end
-    
+
     A --> G
     B --> G
     B --> H
@@ -93,122 +88,96 @@ graph LR
     D --> G
     D --> H
     E --> G
-    F --> G
-    
-    A --> K
-    B --> K
-    C --> K
-    D --> K
-    E --> K
-    F --> K
+
+    A --> I
+    B --> I
+    C --> I
+
+    A --> M
+    B --> N
 ```
 
-## Flux de Données
+## Flux de données (cible)
 
 ```mermaid
 sequenceDiagram
     participant U as Utilisateur
-    participant F as Frontend
+    participant F as Next.js
     participant A as API
-    participant D as Base de Données
-    
+    participant D as Base de données
+
     U->>F: Saisit une réception
-    F->>F: Valide les données
-    F->>F: Calcule le montant
-    F->>A: Envoie les données
-    A->>D: Sauvegarde
+    F->>F: Validation Zod / RHF
+    F->>A: HTTP (JSON / multipart)
+    A->>D: Persistance
     D-->>A: Confirmation
-    A-->>F: Succès
-    F-->>U: Message de confirmation
-    
+    A-->>F: Réponse
+    F-->>U: Feedback (Sonner)
+
     U->>F: Consulte les stocks
-    F->>A: Demande les stocks
-    A->>D: Requête
-    D-->>A: Données des stocks
-    A-->>F: Stocks + alertes
-    F-->>U: Affichage des stocks
+    F->>A: Requête
+    A->>D: Lecture
+    D-->>A: Données
+    A-->>F: JSON
+    F-->>U: UI
 ```
 
-## Fonctionnalités par Module
+## Fonctionnalités par module
 
-### 📊 Tableau de Bord
-- Métriques en temps réel
-- Alertes de stock
-- Activités récentes
-- Actions rapides
+### Tableau de bord
 
-### 📦 Gestion des Stocks
-- Réception avec photos
-- État détaillé des stocks
-- Alertes visuelles
-- Historique des mouvements
+- Indicateurs et accès rapides
+- Activités récentes (mock ou API)
 
-### 💰 Ventes
-- Calculs automatiques
-- Vérification des stocks
-- Quantité restante
-- Interface intuitive
+### Stocks
 
-### 💳 Versements
-- Sélection fournisseur
-- Méthodes de paiement
-- Upload de reçus
-- Statut de validation
+- Réception (évolution prévue : montant total, photos de bordereau)
+- État des stocks, journal, déclaration
 
-### 📈 Rapports
-- Filtres avancés
-- Statistiques détaillées
-- Export PDF/Excel
-- Visualisations
+### Ventes
 
-## Technologies Utilisées
+- Calculs automatiques (quantités × prix)
+- Contrôle de stock (règles métier côté API à terme)
 
-### Frontend
-- **Vue 3** : Framework JavaScript réactif
-- **Vuetify 3** : Bibliothèque de composants Material Design
-- **TypeScript** : Typage statique
-- **Pinia** : Gestion d'état
-- **Vue Router** : Navigation
-- **Vee-Validate** : Validation des formulaires
+### Versements
 
-### Styling
-- **SCSS** : Préprocesseur CSS
-- **Responsive Design** : Mobile-first
-- **Material Design** : Guidelines Google
+- Modes de paiement, références
+- Workflow validation fournisseur (back-end)
 
-### Outils de Développement
-- **Vite** : Build tool rapide
-- **ESLint** : Linting du code
-- **Prettier** : Formatage du code
+### Rapports
 
-## Sécurité et Performance
+- Filtres par période / type
+- Exports PDF/Excel : souvent générés côté serveur
 
-### Sécurité
-- Validation côté client et serveur
-- Upload sécurisé des fichiers
-- Authentification JWT
-- Protection CSRF
+## Technologies (frontend actuel)
 
-### Performance
-- Lazy loading des composants
-- Optimisation des images
-- Cache des données
-- Code splitting
+| Domaine | Choix |
+|--------|--------|
+| Framework | Next.js 16, React 19 |
+| Langage | TypeScript strict |
+| UI | Tailwind CSS 4, Radix UI, composants locaux |
+| i18n | next-intl (`/fr`, `/en`) |
+| Formulaires | React Hook Form + Zod |
+| État client | Zustand (auth persisté) |
+| Données serveur | TanStack Query |
+| Notifications | Sonner |
+
+### Backend (prévu CdC)
+
+- Laravel, PostgreSQL, fichiers sur stockage sécurisé, JWT.
+
+## Sécurité et performance
+
+- Auth JWT (mock puis API) ; routes protégées côté client (`AuthGuard`)
+- HTTPS en production ; chiffrement au repos côté infra
+- UI mobile-first, bundles découpés par route App Router
 
 ## Évolutivité
 
-### Architecture Modulaire
-- Composants réutilisables
-- Séparation des préoccupations
-- API RESTful
-- Base de données normalisée
-
-### Facilité de Maintenance
-- Code documenté
-- Tests unitaires
-- Logs détaillés
-- Monitoring
+- Modules par fonctionnalité sous `next/src/app/[locale]/(main)/...`
+- Client HTTP et schémas dans `next/src/lib/`
+- Intégration progressive avec l’API Laravel sans casser les mocks de développement
 
 ---
 
-*Cette architecture permet une évolution progressive de l'application tout en maintenant la simplicité d'utilisation pour les bouchers.*
+*Document aligné sur le frontend Next.js ; mise à jour lors du branchement complet sur l’API.*
