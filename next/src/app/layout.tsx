@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import type { Viewport } from "next";
+import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { Noto_Sans_Arabic, Poppins } from "next/font/google";
 
@@ -14,6 +14,13 @@ const notoSansArabic = Noto_Sans_Arabic({
   weight: ["400", "500", "600", "700"],
   variable: "--font-arabic",
 });
+
+export const metadata: Metadata = {
+  icons: {
+    icon: "/logo.svg",
+    apple: "/logo.svg",
+  },
+};
 
 export const viewport: Viewport = {
   width: "device-width",

@@ -1,31 +1,49 @@
 "use client";
 
+import { useMemo, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 import { ParentCard } from "@/components/shared/parent-card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ScrollRegion } from "@/components/ui/scroll-region";
-
-const ROWS = [
-  {
-    date: "2024-01-15 10:30",
-    type: "Réception",
-    meat: "Bœuf",
-    qty: 25,
-    user: "Admin",
-  },
-  {
-    date: "2024-01-15 11:15",
-    type: "Vente",
-    meat: "Mouton",
-    qty: 8,
-    user: "Caisse",
-  },
-];
+import { nativeSelectClass } from "@/lib/ui-classes";
+import { boucherieV1 } from "@/lib/api";
+import { unwrapDataArray } from "@/lib/api/unwrap";
 
 export default function StockJournalPage() {
   const t = useTranslations("stockJournal");
+  const [stockId, setStockId] = useState("");
+  const [from, setFrom] = useState("");
+  const [to, setTo] = useState("");
+
+  const stocksQuery = useQuery({
+    queryKey: ["stocks", "journal-select"],
+    queryFn: async () => unwrapDataArray(await boucherieV1.stocks.list()),
+  });
+  const mouvementsQuery = useQuery({
+    queryKey: ["stocks", "mouvements", stockId],
+    queryFn: async () => unwrapDataArray(await boucherieV1.stocks.mouvements(stockId)),
+    enabled: Boolean(stockId),
+  });
+
+  const rows = useMemo(() => {
+    return (mouvementsQuery.data ?? [])
+      .map((item) => {
+        const row = item as Record<string, unknown>;
+        return {
+          id: String(row.id ?? ""),
+          date: String(row.created_at ?? ""),
+          type: String(row.type ?? ""),
+          qty: Number(row.quantite ?? 0),
+          user: String(row.user_id ?? row.user ?? "—"),
+          motif: String(row.motif ?? ""),
+        };
+      })
+      .filter((r) => (from ? r.date.slice(0, 10) >= from : true))
+      .filter((r) => (to ? r.date.slice(0, 10) <= to : true));
+  }, [mouvementsQuery.data, from, to]);
 
   return (
     <div className="space-y-6">
@@ -38,12 +56,32 @@ export default function StockJournalPage() {
       <ParentCard title={t("filters")}>
         <div className="flex flex-wrap gap-4">
           <div className="space-y-2">
+            <Label htmlFor="stock">Stock</Label>
+            <select
+              id="stock"
+              className={nativeSelectClass}
+              value={stockId}
+              onChange={(e) => setStockId(e.target.value)}
+            >
+              <option value="">—</option>
+              {(stocksQuery.data ?? []).map((item) => {
+                const stock = item as { id?: unknown; produit?: unknown };
+                const produit = (stock.produit ?? {}) as { nom?: unknown };
+                return (
+                  <option key={String(stock.id ?? "")} value={String(stock.id ?? "")}>
+                    #{String(stock.id ?? "")} · {String(produit.nom ?? stock.id ?? "")}
+                  </option>
+                );
+              })}
+            </select>
+          </div>
+          <div className="space-y-2">
             <Label htmlFor="from">{t("from")}</Label>
-            <Input id="from" type="date" />
+            <Input id="from" type="date" value={from} onChange={(e) => setFrom(e.target.value)} />
           </div>
           <div className="space-y-2">
             <Label htmlFor="to">{t("to")}</Label>
-            <Input id="to" type="date" />
+            <Input id="to" type="date" value={to} onChange={(e) => setTo(e.target.value)} />
           </div>
           <div className="flex items-end">
             <Button type="button" variant="outline">
@@ -65,11 +103,11 @@ export default function StockJournalPage() {
               </tr>
             </thead>
             <tbody>
-              {ROWS.map((row) => (
-                <tr key={row.date} className="border-b border-border">
+              {rows.map((row) => (
+                <tr key={row.id} className="border-b border-border">
                   <td className="p-3">{row.date}</td>
                   <td className="p-3">{row.type}</td>
-                  <td className="p-3">{row.meat}</td>
+                  <td className="p-3">{row.motif}</td>
                   <td className="p-3">{row.qty}</td>
                   <td className="p-3">{row.user}</td>
                 </tr>

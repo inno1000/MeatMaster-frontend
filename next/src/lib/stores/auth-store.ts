@@ -1,6 +1,5 @@
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
-import { mockLogin } from "@/lib/mock-data/auth-mock";
 import type { User } from "@/lib/schemas/auth";
 import { isApiEnabled } from "@/lib/api/config";
 import { apiLogin, apiLogout } from "@/lib/api/services/auth";
@@ -22,9 +21,7 @@ export const useAuthStore = create<AuthState>()(
       setReturnUrl: (returnUrl) => set({ returnUrl }),
 
       login: async (email, password) => {
-        const user = isApiEnabled()
-          ? await apiLogin(email, password)
-          : await mockLogin(email, password);
+        const user = await apiLogin(email, password);
         set({ user });
       },
 

@@ -1,37 +1,73 @@
 # Spécification API — MeatMaster (frontend Next.js)
 
-Ce document décrit les **endpoints REST** attendus par le frontend actuel (remplacement des mocks) et les **structures JSON** associées. Les chemins sont donnés **sous le préfixe** défini par `NEXT_PUBLIC_API_URL` (sans slash final), par exemple : base `https://api.example.com` → `POST https://api.example.com/auth/login`.
+Ce document décrit les **endpoints REST** attendus par le frontend actuel (remplacement des mocks) et les **structures JSON** associées.
 
-**Documentation officielle du backend (Scribe)** — schémas de requête/réponse et exemples à jour : [Boucherie API](https://boucherie-api.onrender.com/docs/). Pour la liste des boucheries : [`GET api/v1/boucheries`](https://boucherie-api.onrender.com/docs/#boucheries-GETapi-v1-boucheries).
+**Variable d’environnement** : `NEXT_PUBLIC_API_URL` = **origine seule** du serveur (sans `/api/v1`), alignée sur la collection Postman — par exemple `https://boucherie-api.onrender.com`. Le client ajoute ensuite `/api/v1/...` (`config.ts`, `v1-url.ts`).
 
-Dans le code Next, les appels métier passent par `src/lib/api/services/boucherie-v1.ts` avec le préfixe `/api/v1` (voir `v1-url.ts`).
+**Documentation officielle (Scribe)** : [Boucherie API](https://boucherie-api.onrender.com/docs/). Liens directs : boucheries [`GET api/v1/boucheries`](https://boucherie-api.onrender.com/docs/#boucheries-GETapi-v1-boucheries), ventes [`GET api/v1/ventes`](https://boucherie-api.onrender.com/docs/#ventes-GETapi-v1-ventes).
+
+**Collection Postman** : export équivalent (variable `baseUrl` → `https://boucherie-api.onrender.com`, chemins `api/v1/...`). Les corps / réponses ci‑dessous sont **alignés** sur cette collection et sur `services/auth.ts` + `boucherie-v1.ts`.
 
 **Conventions générales**
 
 | Élément | Recommandation |
 |--------|----------------|
 | Format | `application/json` pour le corps, sauf upload fichiers (`multipart/form-data`) |
-| Auth | Header `Authorization: Bearer <accessToken>` sur toutes les routes protégées |
+| Auth | Header `Authorization: Bearer <token>` (Sanctum, ex. `1|…`) sur les routes protégées |
 | Dates | ISO 8601 (`2024-01-15` ou `2024-01-15T10:30:00Z`) |
 | Identifiants | `uuid` ou `string` opaque côté serveur ; le front migrera des **noms** vers des **id** |
 | Erreurs 4xx/5xx | Corps JSON `{ "message": "..." }` (ou tableau de messages) ; `401`/`403` déclenchent déconnexion côté client |
 | Pagination (listes) | Query `?page=1&pageSize=20` ; réponse `{ "items": [...], "total": number, "page": number, "pageSize": number }` |
 
-**Rôles métier** (`role` dans le profil utilisateur)
+**Rôles métier** (`role` dans le profil utilisateur côté front)
 
-- `butcher` — opérateur boucherie (stock, ventes, enregistrement versement, fiches boucheries).
-- `supplier` — fournisseur (abattages, validation versements, rapports côté fournisseur si exposés).
-- `admin` — coordination plateforme (affectations fournisseur ↔ boucheries, utilisateurs, configuration).
+- `butcher` — opérateur boucherie (équivalent API `boucher`).
+- `supplier` — **fournisseur** : inclut tout ce que l’ancien écran « caissier » couvrait (ventes, liste des versements, etc.) **plus** les fonctions fournisseur (abattages, rapports). Une seule entrée UI ; pas de rôle `caissier` dans le state applicatif.
+- `admin` — coordination plateforme (équivalent API `admin`).
 
-Les règles d’accès UI actuelles sont dans `src/lib/authz.ts` ; le backend doit **refuser** toute ressource hors périmètre même si l’URL est devinée.
+**Compatibilité API Laravel** : si le backend renvoie encore `role: "caissier"` (ou `fournisseur`), le front le mappe vers **`supplier`** (`auth-user.ts`). Les valeurs d’inscription possibles côté API (`caissier`, etc.) restent acceptées dans le corps JSON ; le client normalise toujours vers `butcher` | `supplier` | `admin`.
+
+Les règles d’accès UI sont dans `src/lib/authz.ts` ; le backend doit **refuser** toute ressource hors périmètre même si l’URL est devinée.
 
 ---
 
-## 1. Authentification
+## 1. Authentification (Laravel Sanctum)
 
-### 1.1 `POST /auth/login`
+Tous les chemins sont sous **`/api/v1/auth/...`** (full URL : `{NEXT_PUBLIC_API_URL}/api/v1/auth/...`). Implémentation front : `src/lib/api/services/auth.ts` (`apiLogin`, `apiRegister`, `apiLogout`) + schéma `LaravelLoginResponseSchema` (`token` + `data`).
 
-Connexion. Le frontend envoie déjà ce corps (schéma `LoginSchema`).
+### 1.1 `POST /api/v1/auth/register`
+
+**Requête** (corps JSON API)
+
+```json
+{
+  "name": "Alice Martin",
+  "email": "user@example.com",
+  "password": "secretsecret",
+  "password_confirmation": "secretsecret",
+  "boucherie_id": "uuid-optionnel-selon-règle-métier",
+  "role": "caissier"
+}
+```
+
+`role` : valeurs attendues côté API (`admin`, `boucher`, `caissier`, etc. — voir doc Scribe).
+
+**Réponse `201`**
+
+```json
+{
+  "data": {
+    "id": 1,
+    "name": "Alice",
+    "email": "alice@example.com",
+    "role": "boucher"
+  },
+  "token": "1|…",
+  "message": "Compte créé avec succès."
+}
+```
+
+### 1.2 `POST /api/v1/auth/login`
 
 **Requête**
 
@@ -42,66 +78,34 @@ Connexion. Le frontend envoie déjà ce corps (schéma `LoginSchema`).
 }
 ```
 
-**Réponse `200`** — alignée sur `LoginResponseSchema`
-
-```json
-{
-  "accessToken": "jwt-or-opaque-token"
-}
-```
-
-### 1.2 `GET /auth/me` (ou `GET /auth/user`)
-
-Profil de l’utilisateur connecté (équivalent actuel de fusion token + user). Le client attend un objet **compatible** avec le schéma utilisateur ci‑dessous ; le champ token côté app peut être **le même** que `accessToken` renvoyé au login.
-
 **Réponse `200`**
 
 ```json
 {
-  "id": "uuid",
-  "email": "user@example.com",
-  "name": "Nom affiché",
-  "role": "butcher",
-  "butcheries": [
-    {
-      "id": "uuid-boucherie",
-      "name": "Boucherie Halal"
-    }
-  ]
+  "data": {
+    "id": 1,
+    "name": "Alice",
+    "email": "alice@example.com",
+    "role": "admin"
+  },
+  "token": "1|…",
+  "message": "Connexion réussie."
 }
 ```
 
-**Variante minimale** (comme le mock actuel `UserSchema`) — le front accepte encore aujourd’hui des **chaînes** pour `butcheries` ; la cible est d’évoluer vers des objets `{ id, name }` puis d’adapter le schéma Zod.
+Le front enchaîne avec **`GET /api/v1/auth/me`** pour enrichir le profil (ex. `boucherie` imbriquée si présente).
 
-```json
-{
-  "email": "user@example.com",
-  "name": "Nom affiché",
-  "role": "supplier",
-  "butcheries": ["Boucherie Halal"]
-}
-```
+### 1.3 `GET /api/v1/auth/me`
 
-**Note** : `lib/api/auth-service.ts` utilise aujourd’hui `POST .../auth/login` + `GET .../auth/user` et attend `{ accessToken }` puis parse avec `UserSchema` en réinjectant `token: accessToken`. Harmoniser les chemins (`/auth/me` vs `/auth/user`) entre ce fichier et l’implémentation réelle.
+Header : `Authorization: Bearer <token>`.
 
-### 1.3 `POST /auth/register` (optionnel / phase 2)
+**Réponse `200`** : utilisateur courant (souvent enveloppe `data` ou champs à la racine — le mapper `extractUserPayload` accepte les deux).
 
-**Requête** (`RegisterSchema`)
+### 1.4 `POST /api/v1/auth/logout`
 
-```json
-{
-  "firstName": "string",
-  "lastName": "string",
-  "email": "string",
-  "password": "string"
-}
-```
+Header : `Authorization: Bearer <token>`. Corps vide.
 
-**Réponse `201`** : compte créé en attente d’activation, ou `200` avec message métier.
-
-### 1.4 `POST /auth/logout` (optionnel)
-
-Invalidation côté serveur du refresh token / session si applicable.
+**Réponse `200`** : `{ "message": "Déconnexion réussie." }`
 
 ---
 
@@ -131,7 +135,7 @@ Liste des comptes (admin). Filtres query optionnels : `?role=supplier&butcheryId
 }
 ```
 
-### 2.2 `PUT /admin/users/:userId/butcheries` (ou `PATCH /users/:id`)
+### 2.2 `PUT /admin/users/:userId/butcheries` (affectation ; les mises à jour user utilisent **`PUT /users/:id`** côté API)
 
 Affectation **exclusive** des boucheries desservies par un **fournisseur** (liste complète remplacée).
 
@@ -170,7 +174,7 @@ Catalogue officiel des boucheries (pour selects formulaires abattage, versements
 
 ## 3. Boucheries (CRUD)
 
-Aligné sur `ButcherFormSchema` + réponses mock `butchers-store`. **Backend Laravel** : groupe **Boucheries** dans la doc Scribe — liste [`GET /api/v1/boucheries`](https://boucherie-api.onrender.com/docs/#boucheries-GETapi-v1-boucheries), création `POST /api/v1/boucheries`, lecture `GET /api/v1/boucheries/{id}`, mise à jour **`PUT`** `/api/v1/boucheries/{id}`, suppression `DELETE /api/v1/boucheries/{id}`.
+Aligné sur `ButcherFormSchema` + normalisation `mapApiBoucherieRow`. **Backend Laravel** : groupe **Boucheries** dans la doc Scribe — liste [`GET /api/v1/boucheries`](https://boucherie-api.onrender.com/docs/#boucheries-GETapi-v1-boucheries), création `POST /api/v1/boucheries`, lecture `GET /api/v1/boucheries/{id}`, mise à jour **`PUT`** `/api/v1/boucheries/{id}`, suppression `DELETE /api/v1/boucheries/{id}`.
 
 Ci‑dessous, chemins **relatifs au préfixe `/api/v1`** (comme dans `boucherieV1.boucheries`).
 
@@ -202,30 +206,25 @@ Liste pour l’écran « liste des boucheries » et alimentation des selects (`b
 }
 ```
 
-*(Les noms de champs peuvent être en `snake_case` côté API si le backend est Python/Django — fournir une convention unique et documenter le mapping.)*
+Les réponses liste peuvent envelopper les lignes dans `data` ; chaque ligne utilise typiquement **`nom`**, **`ville`**, **`telephone`**, **`adresse`**, etc. Le front normalise via `mapApiBoucherieRow` (`boucherie-record.ts`).
 
 ### 3.2 `POST /butcheries`
 
-**Requête** (champs formulaire actuel)
+**Requête** (corps minimal aligné collection Postman — le formulaire UI peut envoyer plus de champs si le backend les accepte)
 
 ```json
 {
-  "name": "string",
-  "address": "string",
-  "city": "string",
-  "postal_code": "string",
-  "phone": "string",
-  "email": "string",
-  "website": "string",
-  "openingHour": "08:00",
-  "closingHour": "18:00",
-  "openingDays": ["mon", "tue"],
-  "owner": "string",
-  "specialties": ["boeuf", "mouton"]
+  "nom": "Boucherie Halal",
+  "adresse": "Rue …",
+  "ville": "Yaoundé",
+  "telephone": "+237…",
+  "actif": true
 }
 ```
 
-**Réponse `201`** : fiche boucherie créée (objet complet avec `id`).
+Création depuis le formulaire actuel : `use-butchers.ts` mappe `name` → `nom`, `address` → `adresse`, `city` → `ville`, `phone` → `telephone`, `actif: true`.
+
+**Réponse `201`** : fiche créée (voir Scribe pour la structure exacte).
 
 ### 3.3 `GET /butcheries/:id` / `PUT /butcheries/:id` / `DELETE /butcheries/:id`
 
@@ -463,49 +462,49 @@ Export CSV/Excel pour le bouton « export » du journal (query mêmes filtres qu
 
 ## 7. Ventes
 
-### 7.1 `GET /sales`
+**Backend Laravel** — groupe **Ventes** dans la doc Scribe : [`GET api/v1/ventes`](https://boucherie-api.onrender.com/docs/#ventes-GETapi-v1-ventes). Ci‑dessous : chemins **relatifs au préfixe `/api/v1`** (fonctions `boucherieV1.ventes.*`).
 
-Liste + filtres (`from`, `to`, `meatTypeId`, `butcheryId`).
+| Méthode | Chemin | Rôle |
+|--------|--------|------|
+| `GET` | `/ventes` | Lister les ventes |
+| `POST` | `/ventes` | Créer une vente |
+| `GET` | `/ventes/{vente}` | Détail d’une vente |
+| `PATCH` | `/ventes/{vente}/statut` | Mettre à jour le statut |
+| `DELETE` | `/ventes/{vente}` | Supprimer |
+| `GET` | `/ventes/{vente}/paiements` | Paiements (versements UI) |
+| `POST` | `/ventes/{vente}/paiements` | Enregistrer un paiement |
+| `POST` | `/ventes/{vente}/livraison` | Créer / initier livraison |
+| `PATCH` | `/ventes/{vente}/livraison` | Mettre à jour livraison |
 
-**Réponse `200`**
+Les query params de filtrage (`from`, `to`, etc.) et la forme exacte des réponses : **voir Scribe** (pagination / enveloppe selon version API).
+
+### 7.1 `POST /ventes` — corps attendu (extrait Scribe)
+
+Une vente porte un **type** (`type_vente` : valeur du référentiel / enum côté backend), un **client** optionnel, des **notes**, et au moins une **ligne** produit.
 
 ```json
 {
-  "items": [
+  "type_vente": "valeur_enum_referentiel",
+  "client_id": "uuid-optionnel",
+  "notes": "texte optionnel",
+  "lignes": [
     {
-      "id": "uuid",
-      "date": "2024-01-15",
-      "butcheryId": "uuid",
-      "meatTypeName": "Bœuf",
-      "quantity": 25,
-      "unit": "kg",
-      "unitPrice": 2500,
-      "totalAmount": 62500,
-      "customerName": "Client A",
-      "audioAttachmentIds": []
+      "produit_id": "uuid",
+      "quantite": 84,
+      "prix_unitaire": 12
     }
-  ],
-  "total": 0
+  ]
 }
 ```
 
-### 7.2 `POST /sales`
+- `client_id` : UUID d’un enregistrement **clients** (optionnel).
+- `lignes[].produit_id` : UUID d’un **produit** ; `quantite` ≥ 0,01 ; `prix_unitaire` optionnel (≥ 0 si présent).
 
-**Requête**
+**Réponse `201`** : ressource vente créée (structure dans Scribe).
 
-```json
-{
-  "butcheryId": "uuid",
-  "date": "2024-01-15",
-  "meatTypeId": "uuid",
-  "soldQuantity": 25,
-  "unitPrice": 2500,
-  "customerName": "Client A",
-  "audioAttachmentIds": ["uuid"]
-}
-```
+### 7.2 Écart avec l’UI actuelle (mock)
 
-**Réponse `201`**. Le serveur doit **refuser** si `soldQuantity` > stock disponible (même règle que la validation Zod actuelle sur données mock).
+Les écrans `vente/liste` et `vente/enregistrer` utilisent encore des tableaux fictifs (`meatType`, `customer` texte, une seule ligne) et **ne appellent pas** `GET/POST /ventes`. Pour brancher l’API : lister **produits** (`GET /produits`), **clients** (`GET /clients`), référentiel **type de vente** (`GET /referentiels/...` selon la doc), puis mapper le formulaire vers le corps `POST /ventes` ci‑dessus.
 
 ---
 
@@ -568,19 +567,17 @@ Agrégats pour l’écran rapport ventes (totaux, moyenne, ventilation par type)
 Plusieurs formulaires incluent un composant **enregistrement audio** (blobs locaux aujourd’hui). Flux recommandé :
 
 1. `POST /attachments` en `multipart/form-data` avec champ `file` (audio/webm, etc.) → réponse `{ "id": "uuid", "url": "..." }`.
-2. Référencer `audioAttachmentIds` dans `POST /slaughters`, `POST /payments`, `POST /sales`, `POST /stock/receptions`.
+2. Référencer les IDs pièce jointe dans les corps prévus par le backend (ex. `POST /abattages`, `POST /ventes`, `POST …/ventes/{id}/paiements`, réceptions stock) une fois les champs exposés dans Scribe.
 
 ---
 
-## 10. Référentiels (types de viande, méthodes paiement, villes…)
+## 10. Référentiels (enums)
 
-Pour remplacer les listes en dur (`MEAT`, `CITIES`, options versement) :
+Backend : **`GET /api/v1/referentiels/:type`** — liste les valeurs globales **et** celles de la boucherie de l’utilisateur. **`POST /api/v1/referentiels/:type`** avec corps `{ "valeur", "libelle", "ordre" }` pour ajouter une valeur. **`PATCH`** / **`DELETE`** sur `/referentiels/:type/:id` (les entrées `systeme=true` ne sont pas modifiables / supprimables).
 
-| Endpoint | Usage |
-|----------|--------|
-| `GET /reference/meat-types` | `{ "items": [{ "id", "name", "defaultUnitPrice", "unit" }] }` |
-| `GET /reference/payment-methods` | `{ "items": [{ "id", "code", "label" }] }` |
-| `GET /reference/cities` (optionnel) | Autocomplete fiche boucherie |
+Exemples de **`type`** (collection Postman / Scribe) : `espece_animal`, `categorie_produit`, `unite_produit`, `mode_paiement`, `statut_animal`, `type_vente`, `statut_vente`, `statut_livraison`, `type_mouvement`.
+
+À utiliser côté front pour remplacer les listes en dur (`MEAT`, modes de paiement, statuts de vente/livraison, etc.).
 
 ---
 
@@ -592,7 +589,7 @@ Pour remplacer les listes en dur (`MEAT`, `CITIES`, options versement) :
 | Boucheries CRUD | ✓ (scope) | — | ✓ |
 | Slaughters | lecture si lié | ✓ CRUD ses lots | ✓ |
 | Payments liste / création boucherie | ✓ | ✓ validation | ✓ |
-| Stock / ventes | ✓ (scope) | — | ✓ |
+| Stock / ventes | ✓ (scope) | ✓ ventes (fournisseur / ex‑caissier) | ✓ |
 | Affectations user ↔ boucheries | — | — | ✓ |
 | Rapports | selon pages | selon pages | ✓ |
 

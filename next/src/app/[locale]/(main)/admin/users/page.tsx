@@ -1,142 +1,48 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useState } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import { ParentCard } from "@/components/shared/parent-card";
 import { Button } from "@/components/ui/button";
-import {
-  ALL_PLATFORM_BUTCHERIES,
-  PLATFORM_SUPPLIERS,
-  getDefaultSupplierButcheries,
-} from "@/lib/mock-data/platform-users";
-import { useAuthStore } from "@/lib/stores/auth-store";
-import { useUserDirectoryStore } from "@/lib/stores/user-directory-store";
-
-const OTHER_ACCOUNTS = [
-  { email: "boucher@meatmaster.local", role: "butcher" as const, name: "Boucher Demo" },
-  { email: "admin@meatmaster.local", role: "admin" as const, name: "Administrateur" },
-];
-
-function sortList(a: string[], b: string[]) {
-  return JSON.stringify([...a].sort()) === JSON.stringify([...b].sort());
-}
-
-type SupplierCardProps = {
-  email: string;
-  name: string;
-};
-
-function SupplierAssignmentCard({ email, name }: SupplierCardProps) {
-  const t = useTranslations("admin");
-  const setSupplierButcheries = useUserDirectoryStore((s) => s.setSupplierButcheries);
-  const rawFromStore = useUserDirectoryStore(
-    (s) => s.supplierButcheries[email.toLowerCase()],
-  );
-  const defaultButcheries = useMemo(
-    () => getDefaultSupplierButcheries(email),
-    [email],
-  );
-  const savedButcheries = rawFromStore ?? defaultButcheries;
-
-  const [draft, setDraft] = useState<string[]>(() =>
-    getDefaultSupplierButcheries(email),
-  );
-
-  useEffect(() => {
-    setDraft(savedButcheries);
-  }, [savedButcheries]);
-
-  const dirty = useMemo(
-    () => !sortList(draft, savedButcheries),
-    [draft, savedButcheries],
-  );
-
-  const toggle = (butchery: string) => {
-    setDraft((prev) =>
-      prev.includes(butchery) ? prev.filter((b) => b !== butchery) : [...prev, butchery],
-    );
-  };
-
-  const handleSave = () => {
-    if (draft.length === 0) {
-      toast.error(t("assignAtLeastOne"));
-      return;
-    }
-    setSupplierButcheries(email, draft);
-    const u = useAuthStore.getState().user;
-    if (u?.email.toLowerCase() === email.toLowerCase()) {
-      useAuthStore.setState({ user: { ...u, butcheries: [...draft] } });
-    }
-    toast.success(t("toastAssignmentsSaved"));
-  };
-
-  const handleCancel = () => {
-    setDraft(savedButcheries);
-  };
-
-  return (
-    <div className="rounded-lg border border-border p-4">
-      <div className="mb-3 space-y-1">
-        <p className="font-medium">{name}</p>
-        <p className="text-xs text-muted-foreground sm:text-sm">{email}</p>
-      </div>
-      <p className="mb-2 text-xs font-medium text-muted-foreground sm:text-sm">
-        {t("assignButcheriesLabel")}
-      </p>
-      <ul className="space-y-2">
-        {ALL_PLATFORM_BUTCHERIES.map((b) => {
-          const id = `${email}-${b}`;
-          return (
-            <li key={b}>
-              <label
-                htmlFor={id}
-                className="flex min-h-11 cursor-pointer items-center gap-3 rounded-md border border-transparent px-1 py-1.5 tap-highlight-transparent hover:bg-muted/60"
-              >
-                <input
-                  id={id}
-                  type="checkbox"
-                  checked={draft.includes(b)}
-                  onChange={() => {
-                    toggle(b);
-                  }}
-                  className="h-5 w-5 shrink-0 rounded border-input accent-primary"
-                />
-                <span className="text-sm leading-tight">{b}</span>
-              </label>
-            </li>
-          );
-        })}
-      </ul>
-      <div className="mt-4 flex flex-wrap gap-2">
-        <Button type="button" onClick={handleSave} disabled={!dirty}>
-          {t("saveAssignments")}
-        </Button>
-        <Button
-          type="button"
-          variant="outline"
-          onClick={handleCancel}
-          disabled={!dirty}
-        >
-          {t("cancelAssignments")}
-        </Button>
-      </div>
-    </div>
-  );
-}
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { boucherieV1 } from "@/lib/api";
+import { formatError } from "@/lib/format-error";
+import { unwrapDataArray } from "@/lib/api/unwrap";
 
 export default function AdminUsersPage() {
   const t = useTranslations("admin");
-  const resetSupplierAssignments = useUserDirectoryStore((s) => s.resetSupplierAssignments);
+  const queryClient = useQueryClient();
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [role, setRole] = useState("boucher");
+  const [boucherieId, setBoucherieId] = useState("");
 
-  const handleResetAll = () => {
-    resetSupplierAssignments();
-    const u = useAuthStore.getState().user;
-    if (u?.role === "supplier") {
-      const fresh = useUserDirectoryStore.getState().getSupplierButcheries(u.email);
-      useAuthStore.setState({ user: { ...u, butcheries: fresh } });
+  const usersQuery = useQuery({
+    queryKey: ["admin", "users"],
+    queryFn: async () => unwrapDataArray(await boucherieV1.users.list()),
+  });
+
+  const createUser = async () => {
+    try {
+      await boucherieV1.users.create({
+        name,
+        email,
+        password,
+        role,
+        boucherie_id: boucherieId || undefined,
+      });
+      setName("");
+      setEmail("");
+      setPassword("");
+      await queryClient.invalidateQueries({ queryKey: ["admin", "users"] });
+      toast.success("Utilisateur créé.");
+    } catch (error) {
+      toast.error(formatError(error));
     }
-    toast.success(t("toastAssignmentsReset"));
   };
 
   return (
@@ -147,30 +53,67 @@ export default function AdminUsersPage() {
       </div>
 
       <ParentCard title={t("suppliersSectionTitle")}>
-        <p className="mb-4 text-sm text-muted-foreground">{t("assignHint")}</p>
-        <div className="space-y-4">
-          {PLATFORM_SUPPLIERS.map((s) => (
-            <SupplierAssignmentCard key={s.email} email={s.email} name={s.name} />
-          ))}
+        <p className="mb-4 text-sm text-muted-foreground">
+          Source API `/api/v1/users` (plus de store local).
+        </p>
+        <div className="grid gap-3 sm:grid-cols-2">
+          <div className="space-y-2">
+            <Label htmlFor="name">Nom</Label>
+            <Input id="name" value={name} onChange={(e) => setName(e.target.value)} />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="email">Email</Label>
+            <Input id="email" value={email} onChange={(e) => setEmail(e.target.value)} />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="password">Mot de passe</Label>
+            <Input
+              id="password"
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="role">Rôle API</Label>
+            <Input id="role" value={role} onChange={(e) => setRole(e.target.value)} />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="boucherieId">Boucherie ID</Label>
+            <Input
+              id="boucherieId"
+              value={boucherieId}
+              onChange={(e) => setBoucherieId(e.target.value)}
+            />
+          </div>
         </div>
-        <div className="mt-6 border-t border-border pt-4">
-          <Button type="button" variant="outline" onClick={handleResetAll}>
-            {t("resetAllAssignments")}
+        <div className="mt-4">
+          <Button type="button" onClick={() => void createUser()}>
+            Créer utilisateur
           </Button>
         </div>
       </ParentCard>
 
-      <ParentCard title={t("otherAccountsTitle")}>
+      <ParentCard title="Liste utilisateurs">
         <div className="space-y-3">
-          {OTHER_ACCOUNTS.map((u) => (
-            <div key={u.email} className="rounded-lg border border-border p-3 text-sm">
-              <p className="font-medium">{u.name}</p>
-              <p className="text-muted-foreground">{u.email}</p>
-              <p className="mt-1 text-muted-foreground">
-                {t("roleLabel")}: {u.role}
-              </p>
-            </div>
-          ))}
+          {(usersQuery.data ?? []).map((item) => {
+            const u = item as Record<string, unknown>;
+            return (
+              <div
+                key={String(u.id ?? u.email ?? "")}
+                className="rounded-lg border border-border p-3 text-sm"
+              >
+                <p className="font-medium">{String(u.name ?? "—")}</p>
+                <p className="text-muted-foreground">{String(u.email ?? "—")}</p>
+                <p className="mt-1 text-muted-foreground">
+                  {t("roleLabel")}: {String(u.role ?? "—")}
+                </p>
+                <p className="text-muted-foreground">
+                  Boucherie: {String(u.boucherie_id ?? "—")}
+                </p>
+              </div>
+            );
+          })}
         </div>
       </ParentCard>
     </div>

@@ -54,6 +54,7 @@ const RECENT = [
 
 export const DashboardContent = () => {
   const t = useTranslations("dashboard");
+  const tNav = useTranslations("nav");
   const role = useAuthStore((s) => s.user?.role ?? "butcher");
 
   const stats = useMemo(() => {
@@ -223,6 +224,20 @@ export const DashboardContent = () => {
                 </>
               ) : role === "supplier" ? (
                 <>
+                  <Link
+                    href="/vente/enregistrer"
+                    className="flex min-h-11 items-center gap-2 rounded-lg border border-border px-3 py-2.5 text-sm font-medium hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                  >
+                    <DollarSign className="size-4" aria-hidden />
+                    {t("sale")}
+                  </Link>
+                  <Link
+                    href="/vente/liste"
+                    className="flex min-h-11 items-center gap-2 rounded-lg border border-border px-3 py-2.5 text-sm font-medium hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                  >
+                    <DollarSign className="size-4" aria-hidden />
+                    {tNav("saleList")}
+                  </Link>
                   <Link
                     href="/abattage/enregistrer"
                     className="flex min-h-11 items-center gap-2 rounded-lg border border-border px-3 py-2.5 text-sm font-medium hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"

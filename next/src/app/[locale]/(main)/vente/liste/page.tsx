@@ -1,63 +1,67 @@
 "use client";
 
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 import { useMemo, useState } from "react";
+import { toast } from "sonner";
 import { ParentCard } from "@/components/shared/parent-card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { nativeSelectClass } from "@/lib/ui-classes";
 import { ScrollRegion } from "@/components/ui/scroll-region";
-
-const SALES = [
-  {
-    id: 1,
-    date: "2024-01-15",
-    meatType: "Bœuf",
-    quantity: 25,
-    unitPrice: 2500,
-    totalAmount: 62500,
-    customer: "Client A",
-  },
-  {
-    id: 2,
-    date: "2024-01-15",
-    meatType: "Mouton",
-    quantity: 15,
-    unitPrice: 3000,
-    totalAmount: 45000,
-    customer: "Client B",
-  },
-  {
-    id: 3,
-    date: "2024-01-14",
-    meatType: "Poulet",
-    quantity: 30,
-    unitPrice: 2000,
-    totalAmount: 60000,
-    customer: "Client C",
-  },
-];
+import { Button } from "@/components/ui/button";
+import { boucherieV1 } from "@/lib/api";
+import { formatError } from "@/lib/format-error";
+import { unwrapDataArray } from "@/lib/api/unwrap";
 
 export default function VenteListePage() {
   const t = useTranslations("vente");
   const [from, setFrom] = useState("");
   const [to, setTo] = useState("");
-  const [meat, setMeat] = useState("");
+  const [typeVente, setTypeVente] = useState("");
+  const [statut, setStatut] = useState("");
+  const queryClient = useQueryClient();
+
+  const salesQuery = useQuery({
+    queryKey: ["ventes", from, to, typeVente, statut],
+    queryFn: async () => {
+      const raw = await boucherieV1.ventes.list({
+        date_debut: from || undefined,
+        date_fin: to || undefined,
+        type_vente: typeVente || undefined,
+        statut: statut || undefined,
+      });
+      return unwrapDataArray(raw);
+    },
+  });
 
   const rows = useMemo(() => {
-    return SALES.filter((s) => {
-      if (from && s.date < from) {
-        return false;
-      }
-      if (to && s.date > to) {
-        return false;
-      }
-      if (meat && s.meatType !== meat) {
-        return false;
-      }
-      return true;
+    return (salesQuery.data ?? []).map((item) => {
+      const row = item as Record<string, unknown>;
+      const client = (row.client ?? {}) as Record<string, unknown>;
+      return {
+        id: String(row.id ?? ""),
+        date: String(row.created_at ?? row.date_vente ?? ""),
+        typeVente: String(row.type_vente ?? ""),
+        statut: String(row.statut ?? ""),
+        totalAmount: Number(row.montant_total ?? 0),
+        customer: String(client.nom ?? client.name ?? "—"),
+      };
     });
-  }, [from, to, meat]);
+  }, [salesQuery.data]);
+
+  const updateStatus = async (saleId: string, status: string) => {
+    if (!saleId || !status) {
+      return;
+    }
+    try {
+      await boucherieV1.ventes.patchStatut(saleId, { statut: status });
+      await queryClient.invalidateQueries({ queryKey: ["ventes"] });
+      toast.success("Statut mis à jour.");
+    } catch (error) {
+      toast.error(formatError(error));
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -78,42 +82,69 @@ export default function VenteListePage() {
             <Input type="date" value={to} onChange={(e) => setTo(e.target.value)} />
           </div>
           <div className="space-y-2">
-            <Label>{t("meatType")}</Label>
+            <Label>Type de vente</Label>
             <select
               className={nativeSelectClass}
-              value={meat}
-              onChange={(e) => setMeat(e.target.value)}
+              value={typeVente}
+              onChange={(e) => setTypeVente(e.target.value)}
             >
               <option value="">—</option>
-              {["Bœuf", "Mouton", "Chèvre", "Poulet"].map((m) => (
-                <option key={m} value={m}>
-                  {m}
-                </option>
-              ))}
+              <option value="comptoir">Comptoir</option>
+              <option value="livraison">Livraison</option>
+            </select>
+          </div>
+          <div className="space-y-2">
+            <Label>Statut</Label>
+            <select
+              className={nativeSelectClass}
+              value={statut}
+              onChange={(e) => setStatut(e.target.value)}
+            >
+              <option value="">—</option>
+              <option value="en_attente">En attente</option>
+              <option value="payee">Payée</option>
+              <option value="annulee">Annulée</option>
             </select>
           </div>
         </div>
         <ScrollRegion>
-          <table className="w-full min-w-[640px] text-left text-sm">
+          <table className="w-full min-w-[820px] text-left text-sm">
             <thead className="border-b border-border bg-muted/50">
               <tr>
                 <th className="p-3">{t("tableDate")}</th>
-                <th className="p-3">{t("tableMeat")}</th>
-                <th className="p-3">{t("tableQty")}</th>
-                <th className="p-3">{t("unitPrice")}</th>
+                <th className="p-3">Type</th>
+                <th className="p-3">Statut</th>
                 <th className="p-3">{t("total")}</th>
                 <th className="p-3">{t("tableCustomer")}</th>
+                <th className="p-3">Actions</th>
               </tr>
             </thead>
             <tbody>
               {rows.map((s) => (
                 <tr key={s.id} className="border-b border-border">
                   <td className="p-3">{s.date}</td>
-                  <td className="p-3">{s.meatType}</td>
-                  <td className="p-3">{s.quantity}</td>
-                  <td className="p-3">{s.unitPrice.toLocaleString()}</td>
+                  <td className="p-3">{s.typeVente}</td>
+                  <td className="p-3">{s.statut}</td>
                   <td className="p-3">{s.totalAmount.toLocaleString()}</td>
                   <td className="p-3">{s.customer}</td>
+                  <td className="p-3">
+                    <div className="flex flex-wrap gap-2">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => void updateStatus(s.id, "payee")}
+                      >
+                        Payée
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="destructive"
+                        onClick={() => void updateStatus(s.id, "annulee")}
+                      >
+                        Annuler
+                      </Button>
+                    </div>
+                  </td>
                 </tr>
               ))}
             </tbody>

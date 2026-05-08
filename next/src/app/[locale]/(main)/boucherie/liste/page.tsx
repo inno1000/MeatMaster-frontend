@@ -8,10 +8,12 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { formatError } from "@/lib/format-error";
 import { ScrollRegion } from "@/components/ui/scroll-region";
 import { useAuthStore } from "@/lib/stores/auth-store";
+import { isApiEnabled } from "@/lib/api/config";
 
 export default function BoucherieListePage() {
   const t = useTranslations("boucherie");
   const tCommon = useTranslations("common");
+  const apiOk = isApiEnabled();
   const { data, isLoading, error } = useButchers();
   const user = useAuthStore((s) => s.user);
   const visibleData =
@@ -28,22 +30,27 @@ export default function BoucherieListePage() {
         </p>
       </div>
       <ParentCard title={t("listTitle")}>
-        {isLoading ? (
+        {!apiOk ? (
+          <Alert variant="destructive">
+            <AlertDescription>{tCommon("apiNotConfigured")}</AlertDescription>
+          </Alert>
+        ) : null}
+        {apiOk && isLoading ? (
           <div className="space-y-3">
             {Array.from({ length: 5 }).map((_, i) => (
               <Skeleton key={i} className="h-12 w-full" />
             ))}
           </div>
         ) : null}
-        {error ? (
+        {apiOk && error ? (
           <Alert variant="destructive">
             <AlertDescription>{formatError(error)}</AlertDescription>
           </Alert>
         ) : null}
-        {!isLoading && !error && visibleData && visibleData.length === 0 ? (
+        {apiOk && !isLoading && !error && visibleData && visibleData.length === 0 ? (
           <p className="text-center text-muted-foreground">{tCommon("noData")}</p>
         ) : null}
-        {!isLoading && !error && visibleData && visibleData.length > 0 ? (
+        {apiOk && !isLoading && !error && visibleData && visibleData.length > 0 ? (
           <ScrollRegion>
             <table className="w-full min-w-[480px] text-left text-sm">
               <thead className="border-b border-border bg-muted/50">

@@ -1,59 +1,46 @@
 "use client";
 
-/**
- * UI « Versements » : à aligner sur les **paiements** API (`GET/POST …/ventes/{vente}/paiements`).
- * Données encore mockées jusqu’à sélection / liste des ventes côté API.
- */
 import { useMemo, useState } from "react";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { ParentCard } from "@/components/shared/parent-card";
 import { ScrollRegion } from "@/components/ui/scroll-region";
 import { Button } from "@/components/ui/button";
 import { useAuthStore } from "@/lib/stores/auth-store";
-
-const ROWS = [
-  {
-    id: 1,
-    date: "2024-01-15",
-    butcher: "Boucherie Halal",
-    supplierEmail: "fournisseur@meatmaster.local",
-    amount: 150000,
-    method: "Mobile money",
-    reference: "MM-10293",
-    status: "pending" as const,
-    supplierComment: "",
-  },
-  {
-    id: 2,
-    date: "2024-01-14",
-    butcher: "Boucherie Centrale",
-    supplierEmail: "fournisseur@meatmaster.local",
-    amount: 89000,
-    method: "Espèces",
-    reference: "CASH-882",
-    status: "accepted" as const,
-    supplierComment: "",
-  },
-  {
-    id: 3,
-    date: "2024-01-13",
-    butcher: "Boucherie du Marché",
-    supplierEmail: "fournisseur2@meatmaster.local",
-    amount: 112000,
-    method: "Virement",
-    reference: "TR-4431",
-    status: "rejected" as const,
-    supplierComment: "Référence non conforme",
-  },
-];
+import { boucherieV1 } from "@/lib/api";
+import { formatError } from "@/lib/format-error";
+import { unwrapDataArray } from "@/lib/api/unwrap";
 
 export default function VersementListePage() {
   const t = useTranslations("versement");
   const user = useAuthStore((s) => s.user);
-  const [rows, setRows] = useState(ROWS);
+  const [rejectionReason, setRejectionReason] = useState<string>("");
+  const queryClient = useQueryClient();
+
+  const rowsQuery = useQuery({
+    queryKey: ["versements"],
+    queryFn: async () => {
+      const raw = await boucherieV1.versements.list();
+      return unwrapDataArray(raw);
+    },
+  });
 
   const visibleRows = useMemo(() => {
+    const rows = (rowsQuery.data ?? []).map((item) => {
+      const row = item as Record<string, unknown>;
+      return {
+        id: String(row.id ?? ""),
+        date: String(row.date_versement ?? row.created_at ?? ""),
+        butcher: String(row.boucherie_id ?? ""),
+        supplierId: String(row.fournisseur_user_id ?? ""),
+        amount: Number(row.montant ?? 0),
+        method: String(row.mode_paiement ?? ""),
+        reference: String(row.reference ?? ""),
+        status: String(row.statut ?? "en_attente"),
+        supplierComment: String(row.motif_rejet ?? ""),
+      };
+    });
     if (!user) {
       return [];
     }
@@ -61,37 +48,41 @@ export default function VersementListePage() {
       return rows;
     }
     if (user.role === "supplier") {
-      return rows.filter((row) => row.supplierEmail === user.email);
+      return rows.filter((row) => row.supplierId === String((user as { id?: unknown }).id ?? ""));
     }
-    return rows.filter((row) => user.butcheries.includes(row.butcher));
-  }, [rows, user]);
+    return rows;
+  }, [rowsQuery.data, user]);
 
-  const onValidate = (
-    id: number,
-    status: "accepted" | "rejected",
-    comment = "",
+  const onValidate = async (
+    id: string,
+    status: "valide" | "rejete",
   ) => {
-    setRows((prev) =>
-      prev.map((row) =>
-        row.id === id ? { ...row, status, supplierComment: comment } : row,
-      ),
-    );
-    toast.success(
-      status === "accepted" ? t("validatedOk") : t("rejectedOk"),
-    );
+    try {
+      if (status === "valide") {
+        await boucherieV1.versements.valider(id);
+      } else {
+        await boucherieV1.versements.rejeter(id, {
+          motif_rejet: rejectionReason || t("defaultRejectReason"),
+        });
+      }
+      await queryClient.invalidateQueries({ queryKey: ["versements"] });
+      toast.success(status === "valide" ? t("validatedOk") : t("rejectedOk"));
+    } catch (error) {
+      toast.error(formatError(error));
+    }
   };
 
-  const renderStatus = (status: (typeof ROWS)[number]["status"]) => {
+  const renderStatus = (status: string) => {
     const classes =
-      status === "accepted"
+      status === "valide"
         ? "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300"
-        : status === "rejected"
+        : status === "rejete"
           ? "bg-destructive/15 text-destructive"
           : "bg-amber-500/15 text-amber-700 dark:text-amber-300";
     const label =
-      status === "accepted"
+      status === "valide"
         ? t("statusAccepted")
-        : status === "rejected"
+        : status === "rejete"
           ? t("statusRejected")
           : t("statusPending");
     return (
@@ -143,13 +134,13 @@ export default function VersementListePage() {
                   </td>
                   {user?.role === "supplier" ? (
                     <td className="p-3">
-                      {r.status === "pending" ? (
+                      {r.status === "en_attente" ? (
                         <div className="flex flex-wrap gap-2">
                           <Button
                             type="button"
                             variant="outline"
                             className="h-8 min-h-8 px-2 text-xs"
-                            onClick={() => onValidate(r.id, "accepted")}
+                            onClick={() => void onValidate(r.id, "valide")}
                           >
                             {t("accept")}
                           </Button>
@@ -157,9 +148,7 @@ export default function VersementListePage() {
                             type="button"
                             variant="destructive"
                             className="h-8 min-h-8 px-2 text-xs"
-                            onClick={() =>
-                              onValidate(r.id, "rejected", t("defaultRejectReason"))
-                            }
+                            onClick={() => void onValidate(r.id, "rejete")}
                           >
                             {t("reject")}
                           </Button>
@@ -177,6 +166,16 @@ export default function VersementListePage() {
           </table>
         </ScrollRegion>
       </ParentCard>
+      {user?.role === "supplier" ? (
+        <ParentCard title="Motif de rejet (optionnel)">
+          <input
+            className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+            value={rejectionReason}
+            onChange={(e) => setRejectionReason(e.target.value)}
+            placeholder={t("defaultRejectReason")}
+          />
+        </ParentCard>
+      ) : null}
     </div>
   );
 }

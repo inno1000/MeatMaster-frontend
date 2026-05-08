@@ -1,11 +1,12 @@
 "use client";
 
+import { useEffect } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import { z } from "zod";
 import { formResolver } from "@/lib/form-resolver";
-import { useMemo } from "react";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
+import { useQuery } from "@tanstack/react-query";
 import { ParentCard } from "@/components/shared/parent-card";
 import { nativeSelectClass } from "@/lib/ui-classes";
 import { Button } from "@/components/ui/button";
@@ -13,28 +14,29 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AudioRecorder } from "@/components/shared/audio-recorder";
-
-const MEAT = [
-  { name: "Bœuf", price: 2500, stock: 45 },
-  { name: "Mouton", price: 3000, stock: 23 },
-  { name: "Chèvre", price: 2800, stock: 12 },
-  { name: "Poulet", price: 2000, stock: 67 },
-];
+import { boucherieV1, isApiEnabled } from "@/lib/api";
+import { formatError } from "@/lib/format-error";
+import { unwrapDataArray, unwrapDataObject } from "@/lib/api/unwrap";
 
 const Schema = z
   .object({
     date: z.string().min(1),
-    meatType: z.string().min(1),
-    soldQty: z.coerce.number().positive(),
+    typeVente: z.string().min(1),
+    clientId: z.string().optional(),
+    productId: z.string().min(1),
+    soldQty: z.coerce.number().positive("Requis"),
     unitPrice: z.coerce.number().nonnegative(),
+    notes: z.string().optional(),
+    createDelivery: z.boolean().default(false),
+    deliveryAddress: z.string().optional(),
+    deliveryDate: z.string().optional(),
   })
   .superRefine((data, ctx) => {
-    const meat = MEAT.find((m) => m.name === data.meatType);
-    if (meat && data.soldQty > meat.stock) {
+    if (data.createDelivery && !data.deliveryAddress) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
-        path: ["soldQty"],
-        message: "stock",
+        path: ["deliveryAddress"],
+        message: "required",
       });
     }
   });
@@ -43,6 +45,7 @@ type FormValues = z.infer<typeof Schema>;
 
 export default function VenteEnregistrerPage() {
   const t = useTranslations("vente");
+  const tCommon = useTranslations("common");
   const {
     register,
     control,
@@ -53,34 +56,83 @@ export default function VenteEnregistrerPage() {
     resolver: formResolver(Schema),
     defaultValues: {
       date: new Date().toISOString().slice(0, 10),
-      meatType: "",
-      soldQty: 0,
+      typeVente: "comptoir",
+      clientId: "",
+      productId: "",
+      soldQty: 1,
       unitPrice: 0,
+      notes: "",
+      createDelivery: false,
+      deliveryAddress: "",
+      deliveryDate: new Date().toISOString().slice(0, 10),
     },
   });
 
-  const meatType = useWatch({ control, name: "meatType" });
+  const productId = useWatch({ control, name: "productId" });
+  const typeVente = useWatch({ control, name: "typeVente" });
   const soldQty = useWatch({ control, name: "soldQty" });
   const unitPrice = useWatch({ control, name: "unitPrice" });
 
-  const selected = useMemo(
-    () => MEAT.find((m) => m.name === meatType),
-    [meatType],
-  );
+  const productsQuery = useQuery({
+    queryKey: ["produits", "for-sale"],
+    queryFn: async () => unwrapDataArray(await boucherieV1.produits.list()),
+    enabled: isApiEnabled(),
+  });
+  const clientsQuery = useQuery({
+    queryKey: ["clients", "for-sale"],
+    queryFn: async () => unwrapDataArray(await boucherieV1.clients.list()),
+    enabled: isApiEnabled(),
+  });
+  const typeVenteQuery = useQuery({
+    queryKey: ["referentiels", "type_vente"],
+    queryFn: async () => unwrapDataArray(await boucherieV1.referentiels.list("type_vente")),
+    enabled: isApiEnabled(),
+  });
 
-  const total = useMemo(() => {
-    if (!soldQty || !unitPrice) {
-      return 0;
+  useEffect(() => {
+    if (!productId || productsQuery.data === undefined) {
+      return;
     }
-    return soldQty * unitPrice;
-  }, [soldQty, unitPrice]);
+    const found = productsQuery.data.find(
+      (item) =>
+        String((item as { id?: unknown }).id ?? "") === productId,
+    ) as { prix_unitaire?: unknown } | undefined;
+    const unit = Number(found?.prix_unitaire ?? 0);
+    if (Number.isFinite(unit) && unit > 0) {
+      setValue("unitPrice", unit, { shouldValidate: true, shouldDirty: true });
+    }
+  }, [productId, productsQuery.data, setValue]);
 
-  const remaining =
-    selected && soldQty ? Math.max(0, selected.stock - soldQty) : null;
+  const total = soldQty && unitPrice ? soldQty * unitPrice : 0;
 
-  const onSubmit = handleSubmit(async () => {
-    await new Promise((r) => setTimeout(r, 600));
-    toast.success(t("toastOk"));
+  const onSubmit = handleSubmit(async (values) => {
+    try {
+      const createdRaw = await boucherieV1.ventes.create({
+        type_vente: values.typeVente,
+        client_id: values.clientId || undefined,
+        notes: values.notes || undefined,
+        date_vente: values.date,
+        lignes: [
+          {
+            produit_id: values.productId,
+            quantite: values.soldQty,
+            prix_unitaire: values.unitPrice,
+          },
+        ],
+      });
+      const created = unwrapDataObject(createdRaw);
+      const saleId = String(created.id ?? "");
+      if (values.createDelivery && saleId) {
+        await boucherieV1.ventes.createLivraison(saleId, {
+          adresse_livraison: values.deliveryAddress,
+          statut: "en_attente",
+          date_prevue: values.deliveryDate,
+        });
+      }
+      toast.success(t("toastOk"));
+    } catch (error) {
+      toast.error(formatError(error));
+    }
   });
 
   return (
@@ -92,6 +144,11 @@ export default function VenteEnregistrerPage() {
         </p>
       </div>
       <ParentCard title={t("createTitle")}>
+        {!isApiEnabled() ? (
+          <Alert className="mb-4">
+            <AlertDescription>{tCommon("apiNotConfigured")}</AlertDescription>
+          </Alert>
+        ) : null}
         <form onSubmit={onSubmit} className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="date">{t("date")}</Label>
@@ -101,30 +158,74 @@ export default function VenteEnregistrerPage() {
             ) : null}
           </div>
           <div className="space-y-2">
-            <Label htmlFor="meatType">{t("meatType")}</Label>
+            <Label htmlFor="typeVente">Type de vente</Label>
             <select
-              id="meatType"
+              id="typeVente"
               className={nativeSelectClass}
-              {...register("meatType", {
-                onChange: (e) => {
-                  const name = e.target.value;
-                  const m = MEAT.find((x) => x.name === name);
-                  if (m) {
-                    setValue("unitPrice", m.price);
-                  }
-                },
-              })}
+              {...register("typeVente")}
             >
-              <option value="">{t("meatType")}</option>
-              {MEAT.map((m) => (
-                <option key={m.name} value={m.name}>
-                  {m.name} ({m.stock} kg)
-                </option>
-              ))}
+              <option value="">—</option>
+              {(typeVenteQuery.data ?? []).map((item) => {
+                const ref = item as { valeur?: unknown; libelle?: unknown };
+                const value = String(ref.valeur ?? "");
+                return (
+                  <option key={value} value={value}>
+                    {String(ref.libelle ?? value)}
+                  </option>
+                );
+              })}
             </select>
-            {errors.meatType ? (
+            {errors.typeVente ? (
               <p className="text-sm text-destructive">
-                {errors.meatType.message}
+                {errors.typeVente.message}
+              </p>
+            ) : null}
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="clientId">{t("tableCustomer")}</Label>
+            <select
+              id="clientId"
+              className={nativeSelectClass}
+              {...register("clientId")}
+            >
+              <option value="">—</option>
+              {(clientsQuery.data ?? []).map((item) => {
+                const obj = item as { id?: unknown; nom?: unknown; name?: unknown };
+                return (
+                  <option key={String(obj.id ?? "")} value={String(obj.id ?? "")}>
+                    {String(obj.nom ?? obj.name ?? obj.id ?? "")}
+                  </option>
+                );
+              })}
+            </select>
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="productId">{t("meatType")}</Label>
+            <select
+              id="productId"
+              className={nativeSelectClass}
+              {...register("productId")}
+            >
+              <option value="">—</option>
+              {(productsQuery.data ?? []).map((item) => {
+                const obj = item as {
+                  id?: unknown;
+                  nom?: unknown;
+                  name?: unknown;
+                  prix_unitaire?: unknown;
+                };
+                return (
+                  <option key={String(obj.id ?? "")} value={String(obj.id ?? "")}>
+                    {String(obj.nom ?? obj.name ?? obj.id ?? "")}
+                    {" · "}
+                    {Number(obj.prix_unitaire ?? 0).toLocaleString()} FCFA
+                  </option>
+                );
+              })}
+            </select>
+            {errors.productId ? (
+              <p className="text-sm text-destructive">
+                {errors.productId.message}
               </p>
             ) : null}
           </div>
@@ -138,9 +239,7 @@ export default function VenteEnregistrerPage() {
             />
             {errors.soldQty ? (
               <p className="text-sm text-destructive">
-                {errors.soldQty.message === "stock"
-                  ? t("stockError")
-                  : errors.soldQty.message}
+                {errors.soldQty.message}
               </p>
             ) : null}
           </div>
@@ -153,11 +252,29 @@ export default function VenteEnregistrerPage() {
               {...register("unitPrice")}
             />
           </div>
-          {selected ? (
+          <div className="space-y-2">
+            <Label htmlFor="notes">{t("notes")}</Label>
+            <Input id="notes" {...register("notes")} />
+          </div>
+          {typeVente === "livraison" ? (
+            <>
+              <div className="space-y-2">
+                <Label htmlFor="deliveryAddress">Adresse livraison</Label>
+                <Input id="deliveryAddress" {...register("deliveryAddress")} />
+                {errors.deliveryAddress ? (
+                  <p className="text-sm text-destructive">{errors.deliveryAddress.message}</p>
+                ) : null}
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="deliveryDate">Date prévue</Label>
+                <Input id="deliveryDate" type="date" {...register("deliveryDate")} />
+              </div>
+            </>
+          ) : null}
+          {total > 0 ? (
             <Alert>
               <AlertDescription>
-                {t("total")}: {total.toLocaleString()} FCFA · {t("remaining")}:{" "}
-                {remaining !== null ? `${remaining} kg` : "—"}
+                {t("total")}: {total.toLocaleString()} FCFA
               </AlertDescription>
             </Alert>
           ) : null}

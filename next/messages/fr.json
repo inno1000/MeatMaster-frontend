@@ -16,6 +16,7 @@
     "no": "Non",
     "actions": "Actions",
     "noData": "Aucune donnée",
+    "apiNotConfigured": "Configurez NEXT_PUBLIC_API_URL (URL du backend sans /api/v1) pour charger les données.",
     "version": "v1.1.0",
     "switchLanguage": "Changer de langue"
   },

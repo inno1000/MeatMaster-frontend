@@ -2,7 +2,7 @@
 
 import * as Dialog from "@radix-ui/react-dialog";
 import * as Separator from "@radix-ui/react-separator";
-import { Menu, Package, UserRound } from "lucide-react";
+import { Menu, UserRound } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { usePathname } from "@/i18n/navigation";
 import { Link } from "@/i18n/navigation";
@@ -17,6 +17,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { AppLogo } from "@/components/shared/app-logo";
 import { LocaleSwitcher } from "@/components/shared/locale-switcher";
 import { useAuthStore } from "@/lib/stores/auth-store";
 import { useState, type ReactNode } from "react";
@@ -128,13 +129,8 @@ export const DashboardShell = ({ children }: { children: ReactNode }) => {
   );
 
   const brand = (
-    <div className="flex min-h-11 items-center gap-2.5">
-      <span className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-primary/12 ring-1 ring-primary/20 sm:size-10">
-        <Package className="size-5 text-primary sm:size-[1.35rem]" aria-hidden />
-      </span>
-      <span className="truncate font-semibold tracking-tight">
-        {t("common.appName")}
-      </span>
+    <div className="flex min-h-11 min-w-0 items-center">
+      <AppLogo variant="sidebar" alt="" />
     </div>
   );
 

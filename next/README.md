@@ -4,13 +4,12 @@ Application **canonique** du dépôt : tout le développement MeatMaster se fait
 
 ## Données
 
-Sans **`NEXT_PUBLIC_API_URL`**, les données restent **mockées** (auth, boucheries, etc.).  
-Dès que l’URL du backend Laravel est renseignée (voir `.env.local.example`), **connexion / inscription / déconnexion** et la **liste + création des boucheries** passent par l’API réelle (`/api/v1`). Les autres écrans utilisent encore les mocks jusqu’à branchement ultérieur.
+**Connexion, inscription, déconnexion** et **liste / création des boucheries** passent uniquement par l’API (`/api/v1`) : définir **`NEXT_PUBLIC_API_URL`** (voir `.env.local.example`). Sans cette variable, la connexion échoue et la liste des boucheries affiche un message de configuration. Les **autres écrans** (stock, ventes, abattages, admin démo, etc.) utilisent encore des mocks ou des placeholders jusqu’à branchement ultérieur.
 
 ## Prérequis
 
 - Node.js 20+
-- Backend optionnel : copier `next/.env.local.example` → `.env.local` et définir `NEXT_PUBLIC_API_URL` (ex. `https://boucherie-api.onrender.com`).
+- Backend : copier `next/.env.local.example` → `.env.local` et définir `NEXT_PUBLIC_API_URL` (ex. `https://boucherie-api.onrender.com`) pour l’auth et les boucheries.
 
 ## Installation
 
@@ -42,7 +41,7 @@ Les routes sont préfixées par la locale : **`/fr/...`**, **`/en/...`** et **`/
 ## Authentification
 
 Le jeton **Sanctum** (`token` Laravel) est stocké via **Zustand** (`persist` / `localStorage`). Les routes sous `(main)` sont protégées par `AuthGuard`.  
-Rôles API **`boucher`** et **`caissier`** sont mappés vers `butcher` et `caissier` dans l’UI ; le rôle démo **`supplier`** ne fonctionne qu’en mode mock.
+Rôles API : **`boucher`** → `butcher` ; **`caissier`** (ou équivalent) → **`supplier`** (fournisseur : ventes + périmètre abattages / rapports, voir `authz.ts`). **`supplier`** est le seul rôle UI pour ce métier — il n’y a plus de `caissier` dans le state client.
 
 ## Client API (`/api/v1`)
 

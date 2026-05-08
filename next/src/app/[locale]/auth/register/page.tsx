@@ -5,9 +5,7 @@ import { formResolver } from "@/lib/form-resolver";
 import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
 import { toast } from "sonner";
-import { Package } from "lucide-react";
 import { RegisterSchema, type RegisterInput } from "@/lib/schemas/auth";
-import { isApiEnabled } from "@/lib/api/config";
 import { apiRegister } from "@/lib/api/services/auth";
 import { useAuthStore } from "@/lib/stores/auth-store";
 import { formatError } from "@/lib/format-error";
@@ -21,6 +19,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { LocaleSwitcher } from "@/components/shared/locale-switcher";
+import { AppLogo } from "@/components/shared/app-logo";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -45,10 +44,6 @@ export default function RegisterPage() {
   });
 
   const onSubmit = handleSubmit(async (data) => {
-    if (!isApiEnabled()) {
-      toast.info(t("pending"));
-      return;
-    }
     try {
       const user = await apiRegister({
         name: `${data.firstName} ${data.lastName}`.trim(),
@@ -73,9 +68,7 @@ export default function RegisterPage() {
       <div className="flex flex-1 items-center justify-center px-4 py-8 safe-pad-x safe-pad-b">
       <div className="w-full max-w-md">
         <div className="mb-8 flex flex-col items-center gap-3 text-center">
-          <span className="flex size-14 items-center justify-center rounded-2xl bg-primary/12 shadow-sm ring-1 ring-primary/20">
-            <Package className="size-8 text-primary" aria-hidden />
-          </span>
+          <AppLogo variant="hero" alt={tCommon("appName")} />
         </div>
         <Card className="shadow-float ring-1 ring-black/[0.04]">
           <CardHeader>

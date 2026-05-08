@@ -15,14 +15,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { isApiEnabled } from "@/lib/api/config";
 
 export const LoginForm = () => {
   const t = useTranslations("auth.login");
   const tCommon = useTranslations("common");
-  const demoSupplier2Label = t.has("demoSupplier2")
-    ? t("demoSupplier2")
-    : `${t("demoSupplier")} 2`;
   const router = useRouter();
   const login = useAuthStore((s) => s.login);
   const setReturnUrl = useAuthStore((s) => s.setReturnUrl);
@@ -112,28 +108,6 @@ export const LoginForm = () => {
           <p className="text-sm text-destructive">{errors.password.message}</p>
         ) : null}
       </div>
-
-      {!isApiEnabled() ? (
-        <Alert>
-          <AlertDescription>
-            <span className="block font-medium">{t("demoAccountsTitle")}</span>
-            <span className="block">
-              {t("demoButcher")}: <code>boucher@meatmaster.local / 123456</code>
-            </span>
-            <span className="block">
-              {t("demoSupplier")}:{" "}
-              <code>fournisseur@meatmaster.local / 123456</code>
-            </span>
-            <span className="block">
-              {demoSupplier2Label}:{" "}
-              <code>fournisseur2@meatmaster.local / 123456</code>
-            </span>
-            <span className="block">
-              {t("demoAdmin")}: <code>admin@meatmaster.local / 123456</code>
-            </span>
-          </AlertDescription>
-        </Alert>
-      ) : null}
 
       <Button
         type="submit"

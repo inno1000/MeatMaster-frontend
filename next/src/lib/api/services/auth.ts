@@ -45,10 +45,17 @@ export function extractUserPayload(data: unknown): ApiUserPayload {
     boucherieRaw && typeof boucherieRaw === "object"
       ? (boucherieRaw as { nom?: string; id?: string | number })
       : undefined;
+  const roleFromArray =
+    Array.isArray(src.roles) && typeof src.roles[0] === "string"
+      ? src.roles[0]
+      : undefined;
   return {
     name: typeof src.name === "string" ? src.name : undefined,
     email: typeof src.email === "string" ? src.email : undefined,
-    role: typeof src.role === "string" ? src.role : undefined,
+    role:
+      typeof src.role === "string"
+        ? src.role
+        : roleFromArray ?? undefined,
     boucherie: boucherie ?? undefined,
     boucherie_nom:
       typeof src.boucherie_nom === "string" ? src.boucherie_nom : undefined,
@@ -110,7 +117,8 @@ const RegisterApiBodySchema = z.object({
   email: z.string().email(),
   password: z.string().min(8),
   password_confirmation: z.string(),
-  boucherie_id: z.string().uuid().optional(),
+  /** UUID ou id numérique selon le backend Laravel. */
+  boucherie_id: z.union([z.string().min(1), z.number().int().positive()]).optional(),
   role: z.enum(["admin", "boucher", "caissier"]).optional(),
 });
 

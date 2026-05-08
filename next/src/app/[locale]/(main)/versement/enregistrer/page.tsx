@@ -1,8 +1,7 @@
 "use client";
 
-/** Versement = **paiement** backend : à poster sur `POST /api/v1/ventes/{vente}/paiements` une fois la vente connue. */
-
 import { useForm } from "react-hook-form";
+import { useQuery } from "@tanstack/react-query";
 import { z } from "zod";
 import { formResolver } from "@/lib/form-resolver";
 import { useTranslations } from "next-intl";
@@ -13,11 +12,17 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { AudioRecorder } from "@/components/shared/audio-recorder";
+import { boucherieV1 } from "@/lib/api";
+import { formatError } from "@/lib/format-error";
+import { unwrapDataArray } from "@/lib/api/unwrap";
 
 const Schema = z.object({
-  amount: z.coerce.number().positive(),
-  method: z.string().min(1),
-  reference: z.string().min(1),
+  fournisseurUserId: z.coerce.number().positive(),
+  amount: z.coerce.number().positive("Requis"),
+  method: z.string().min(1, "Requis"),
+  dateVersement: z.string().min(1, "Requis"),
+  reference: z.string().min(1, "Requis"),
+  notes: z.string().optional(),
 });
 
 type FormValues = z.infer<typeof Schema>;
@@ -31,13 +36,36 @@ export default function VersementEnregistrerPage() {
     formState: { errors, isSubmitting },
   } = useForm<FormValues>({
     resolver: formResolver(Schema),
-    defaultValues: { amount: 0, method: "mobile", reference: "" },
+    defaultValues: {
+      fournisseurUserId: 0,
+      amount: 0,
+      method: "mobile_money",
+      dateVersement: new Date().toISOString().slice(0, 10),
+      reference: "",
+      notes: "",
+    },
+  });
+  const modePaiementQuery = useQuery({
+    queryKey: ["referentiels", "mode_paiement"],
+    queryFn: async () =>
+      unwrapDataArray(await boucherieV1.referentiels.list("mode_paiement")),
   });
 
-  const onSubmit = handleSubmit(async () => {
-    await new Promise((r) => setTimeout(r, 400));
-    toast.success(t("toastOk"));
-    reset();
+  const onSubmit = handleSubmit(async (values) => {
+    try {
+      await boucherieV1.versements.create({
+        fournisseur_user_id: values.fournisseurUserId,
+        montant: values.amount,
+        mode_paiement: values.method,
+        date_versement: values.dateVersement,
+        reference: values.reference,
+        notes: values.notes || undefined,
+      });
+      toast.success(t("toastOk"));
+      reset();
+    } catch (error) {
+      toast.error(formatError(error));
+    }
   });
 
   return (
@@ -48,6 +76,19 @@ export default function VersementEnregistrerPage() {
       </div>
       <ParentCard title={t("createTitle")}>
         <form onSubmit={onSubmit} className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="fournisseurUserId">ID fournisseur</Label>
+            <Input
+              id="fournisseurUserId"
+              type="number"
+              {...register("fournisseurUserId")}
+            />
+            {errors.fournisseurUserId ? (
+              <p className="text-sm text-destructive">
+                {errors.fournisseurUserId.message}
+              </p>
+            ) : null}
+          </div>
           <div className="space-y-2">
             <Label htmlFor="amount">{t("amount")}</Label>
             <Input id="amount" type="number" {...register("amount")} />
@@ -62,10 +103,20 @@ export default function VersementEnregistrerPage() {
               className={nativeSelectClass}
               {...register("method")}
             >
-              <option value="mobile">Mobile money</option>
-              <option value="cash">Espèces</option>
-              <option value="bank">Virement</option>
+              {(modePaiementQuery.data ?? []).map((item) => {
+                const ref = item as { valeur?: unknown; libelle?: unknown };
+                const value = String(ref.valeur ?? "");
+                return (
+                  <option key={value} value={value}>
+                    {String(ref.libelle ?? value)}
+                  </option>
+                );
+              })}
             </select>
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="dateVersement">Date</Label>
+            <Input id="dateVersement" type="date" {...register("dateVersement")} />
           </div>
           <div className="space-y-2">
             <Label htmlFor="reference">{t("reference")}</Label>
@@ -75,6 +126,10 @@ export default function VersementEnregistrerPage() {
                 {errors.reference.message}
               </p>
             ) : null}
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="notes">Notes</Label>
+            <Input id="notes" {...register("notes")} />
           </div>
           <AudioRecorder />
           <Button type="submit" disabled={isSubmitting}>

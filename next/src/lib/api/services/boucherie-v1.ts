@@ -1,11 +1,41 @@
 /**
  * Appels HTTP vers l’API Laravel documentée (`/api/v1/...`).
  * Les réponses sont laissées souples (`unknown`) : enveloppes `data` / pagination selon le backend.
+ * Mise à jour des ressources CRUD : **PUT** uniquement. **PATCH** réservé aux routes documentées
+ * (référentiels, `ventes/.../statut`, `ventes/.../livraison`).
  */
 import { apiClient } from "@/lib/api/client";
-import { v1Url } from "@/lib/api/v1-url";
+import { v1Url, v1UrlWithQuery } from "@/lib/api/v1-url";
 
 const enc = encodeURIComponent;
+
+/** Filtres `GET /animaux` (ex. `?statut=en_attente`). */
+export type AnimauxListParams = {
+  statut?: string;
+};
+
+/** Filtres `GET /ventes` (pagination Laravel : `page`, etc.). */
+export type VentesListParams = {
+  statut?: string;
+  type_vente?: string;
+  date_debut?: string;
+  date_fin?: string;
+  page?: number;
+};
+
+export type VersementsListParams = {
+  statut?: string;
+  page?: number;
+};
+
+export type DistributionsListParams = {
+  statut?: string;
+  page?: number;
+};
+
+export type ReceptionsListParams = {
+  page?: number;
+};
 
 export const boucherieV1 = {
   referentiels: {
@@ -30,8 +60,6 @@ export const boucherieV1 = {
       apiClient.get<unknown>(v1Url(`/boucheries/${enc(id)}`)),
     update: (id: string, body: Record<string, unknown>) =>
       apiClient.put<unknown>(v1Url(`/boucheries/${enc(id)}`), body),
-    patch: (id: string, body: Record<string, unknown>) =>
-      apiClient.patch<unknown>(v1Url(`/boucheries/${enc(id)}`), body),
     remove: (id: string) =>
       apiClient.delete<unknown>(v1Url(`/boucheries/${enc(id)}`)),
   },
@@ -43,8 +71,6 @@ export const boucherieV1 = {
     get: (id: string) => apiClient.get<unknown>(v1Url(`/users/${enc(id)}`)),
     update: (id: string, body: Record<string, unknown>) =>
       apiClient.put<unknown>(v1Url(`/users/${enc(id)}`), body),
-    patch: (id: string, body: Record<string, unknown>) =>
-      apiClient.patch<unknown>(v1Url(`/users/${enc(id)}`), body),
     remove: (id: string) =>
       apiClient.delete<unknown>(v1Url(`/users/${enc(id)}`)),
   },
@@ -57,8 +83,6 @@ export const boucherieV1 = {
       apiClient.get<unknown>(v1Url(`/fournisseurs/${enc(id)}`)),
     update: (id: string, body: Record<string, unknown>) =>
       apiClient.put<unknown>(v1Url(`/fournisseurs/${enc(id)}`), body),
-    patch: (id: string, body: Record<string, unknown>) =>
-      apiClient.patch<unknown>(v1Url(`/fournisseurs/${enc(id)}`), body),
     remove: (id: string) =>
       apiClient.delete<unknown>(v1Url(`/fournisseurs/${enc(id)}`)),
   },
@@ -70,8 +94,6 @@ export const boucherieV1 = {
     get: (id: string) => apiClient.get<unknown>(v1Url(`/clients/${enc(id)}`)),
     update: (id: string, body: Record<string, unknown>) =>
       apiClient.put<unknown>(v1Url(`/clients/${enc(id)}`), body),
-    patch: (id: string, body: Record<string, unknown>) =>
-      apiClient.patch<unknown>(v1Url(`/clients/${enc(id)}`), body),
     remove: (id: string) =>
       apiClient.delete<unknown>(v1Url(`/clients/${enc(id)}`)),
   },
@@ -84,8 +106,6 @@ export const boucherieV1 = {
       apiClient.get<unknown>(v1Url(`/produits/${enc(id)}`)),
     update: (id: string, body: Record<string, unknown>) =>
       apiClient.put<unknown>(v1Url(`/produits/${enc(id)}`), body),
-    patch: (id: string, body: Record<string, unknown>) =>
-      apiClient.patch<unknown>(v1Url(`/produits/${enc(id)}`), body),
     remove: (id: string) =>
       apiClient.delete<unknown>(v1Url(`/produits/${enc(id)}`)),
   },
@@ -99,7 +119,8 @@ export const boucherieV1 = {
   },
 
   animaux: {
-    list: () => apiClient.get<unknown>(v1Url("/animaux")),
+    list: (params?: AnimauxListParams) =>
+      apiClient.get<unknown>(v1UrlWithQuery("/animaux", params)),
     get: (id: string) =>
       apiClient.get<unknown>(v1Url(`/animaux/${enc(id)}`)),
   },
@@ -126,7 +147,10 @@ export const boucherieV1 = {
   },
 
   ventes: {
-    list: () => apiClient.get<unknown>(v1Url("/ventes")),
+    list: (params?: VentesListParams) =>
+      apiClient.get<unknown>(
+        v1UrlWithQuery("/ventes", params),
+      ),
     create: (body: Record<string, unknown>) =>
       apiClient.post<unknown>(v1Url("/ventes"), body),
     get: (id: string) =>
@@ -153,5 +177,38 @@ export const boucherieV1 = {
         v1Url(`/ventes/${enc(venteId)}/livraison`),
         body,
       ),
+  },
+
+  versements: {
+    list: (params?: VersementsListParams) =>
+      apiClient.get<unknown>(v1UrlWithQuery("/versements", params)),
+    create: (body: Record<string, unknown>) =>
+      apiClient.post<unknown>(v1Url("/versements"), body),
+    get: (id: string) =>
+      apiClient.get<unknown>(v1Url(`/versements/${enc(id)}`)),
+    valider: (id: string, body?: Record<string, unknown>) =>
+      apiClient.patch<unknown>(v1Url(`/versements/${enc(id)}/valider`), body),
+    rejeter: (id: string, body: Record<string, unknown>) =>
+      apiClient.patch<unknown>(v1Url(`/versements/${enc(id)}/rejeter`), body),
+  },
+
+  distributions: {
+    list: (params?: DistributionsListParams) =>
+      apiClient.get<unknown>(v1UrlWithQuery("/distributions", params)),
+    create: (body: Record<string, unknown>) =>
+      apiClient.post<unknown>(v1Url("/distributions"), body),
+    get: (id: string) =>
+      apiClient.get<unknown>(v1Url(`/distributions/${enc(id)}`)),
+    annuler: (id: string) =>
+      apiClient.patch<unknown>(v1Url(`/distributions/${enc(id)}/annuler`)),
+  },
+
+  receptions: {
+    list: (params?: ReceptionsListParams) =>
+      apiClient.get<unknown>(v1UrlWithQuery("/receptions", params)),
+    create: (body: Record<string, unknown>) =>
+      apiClient.post<unknown>(v1Url("/receptions"), body),
+    get: (id: string) =>
+      apiClient.get<unknown>(v1Url(`/receptions/${enc(id)}`)),
   },
 } as const;

@@ -1,6 +1,6 @@
 import type { User, UserRole } from "@/lib/schemas/auth";
 
-/** Rôles renvoyés par l’API Laravel (doc). */
+/** Rôles renvoyés par l’API Laravel (`caissier` = ancien nom métier, fusionné côté UI dans `supplier`). */
 export type ApiRole = "admin" | "boucher" | "caissier";
 
 export const mapApiRoleToApp = (role: string): UserRole => {
@@ -11,8 +11,9 @@ export const mapApiRoleToApp = (role: string): UserRole => {
   if (r === "boucher") {
     return "butcher";
   }
-  if (r === "caissier") {
-    return "caissier";
+  /** Fournisseur : l’API peut exposer `caissier` ou un futur `fournisseur` — une seule entrée UI `supplier`. */
+  if (r === "caissier" || r === "fournisseur") {
+    return "supplier";
   }
   return "butcher";
 };

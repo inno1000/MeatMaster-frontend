@@ -32,10 +32,15 @@ export function AudioRecorder({ className }: { className?: string }) {
   const audioChunksRef = useRef<Blob[]>([]);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const recordingsRef = useRef<RecordingItem[]>([]);
+  const isRecordingRef = useRef(false);
 
   useEffect(() => {
     recordingsRef.current = recordings;
   }, [recordings]);
+
+  useEffect(() => {
+    isRecordingRef.current = isRecording;
+  }, [isRecording]);
 
   const clearTimer = useCallback(() => {
     if (timerRef.current) {
@@ -49,15 +54,30 @@ export function AudioRecorder({ className }: { className?: string }) {
   const startTimer = useCallback(() => {
     clearTimer();
     timerRef.current = setInterval(() => {
+      if (!isRecordingRef.current) {
+        return;
+      }
       setElapsedSeconds((s) => {
         const next = s + 1;
         if (next >= MAX_SECONDS) {
+          queueMicrotask(() => {
+            if (isRecordingRef.current) {
+              stopTimer();
+              setElapsedSeconds(0);
+              const mr = mediaRecorderRef.current;
+              if (mr && mr.state !== "inactive") {
+                mr.stop();
+              }
+              setIsRecording(false);
+              setIsPaused(false);
+            }
+          });
           return MAX_SECONDS;
         }
         return next;
       });
     }, 1000);
-  }, [clearTimer]);
+  }, [clearTimer, stopTimer]);
 
   const stopRecording = useCallback(() => {
     stopTimer();
@@ -69,12 +89,6 @@ export function AudioRecorder({ className }: { className?: string }) {
     setIsRecording(false);
     setIsPaused(false);
   }, [stopTimer]);
-
-  useEffect(() => {
-    if (elapsedSeconds >= MAX_SECONDS && isRecording) {
-      stopRecording();
-    }
-  }, [elapsedSeconds, isRecording, stopRecording]);
 
   const startRecording = async () => {
     setMicError(null);

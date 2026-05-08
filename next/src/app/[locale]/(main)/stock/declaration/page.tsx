@@ -1,5 +1,6 @@
 "use client";
 
+import { useQuery } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { formResolver } from "@/lib/form-resolver";
@@ -9,9 +10,14 @@ import { ParentCard } from "@/components/shared/parent-card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { nativeSelectClass } from "@/lib/ui-classes";
+import { boucherieV1 } from "@/lib/api";
+import { formatError } from "@/lib/format-error";
+import { unwrapDataArray } from "@/lib/api/unwrap";
 
 const Schema = z.object({
-  meatType: z.string().min(1),
+  stockId: z.string().min(1),
+  type: z.string().min(1),
   declaredQty: z.coerce.number().positive(),
   reason: z.string().min(1),
 });
@@ -27,13 +33,26 @@ export default function StockDeclarationPage() {
     formState: { errors, isSubmitting },
   } = useForm<FormValues>({
     resolver: formResolver(Schema),
-    defaultValues: { meatType: "", declaredQty: 0, reason: "" },
+    defaultValues: { stockId: "", type: "ajustement", declaredQty: 0, reason: "" },
   });
 
-  const onSubmit = handleSubmit(async () => {
-    await new Promise((r) => setTimeout(r, 400));
-    toast.success(t("toastOk"));
-    reset();
+  const stocksQuery = useQuery({
+    queryKey: ["stocks", "adjust-select"],
+    queryFn: async () => unwrapDataArray(await boucherieV1.stocks.list()),
+  });
+
+  const onSubmit = handleSubmit(async (values) => {
+    try {
+      await boucherieV1.stocks.ajuster(values.stockId, {
+        type: values.type,
+        quantite: values.declaredQty,
+        motif: values.reason,
+      });
+      toast.success(t("toastOk"));
+      reset();
+    } catch (error) {
+      toast.error(formatError(error));
+    }
   });
 
   return (
@@ -45,13 +64,32 @@ export default function StockDeclarationPage() {
       <ParentCard title={t("title")}>
         <form onSubmit={onSubmit} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="meatType">{t("meatType")}</Label>
-            <Input id="meatType" {...register("meatType")} />
-            {errors.meatType ? (
+            <Label htmlFor="stockId">Stock</Label>
+            <select id="stockId" className={nativeSelectClass} {...register("stockId")}>
+              <option value="">—</option>
+              {(stocksQuery.data ?? []).map((item) => {
+                const stock = item as { id?: unknown; produit?: unknown };
+                const produit = (stock.produit ?? {}) as { nom?: unknown };
+                return (
+                  <option key={String(stock.id ?? "")} value={String(stock.id ?? "")}>
+                    #{String(stock.id ?? "")} · {String(produit.nom ?? stock.id ?? "")}
+                  </option>
+                );
+              })}
+            </select>
+            {errors.stockId ? (
               <p className="text-sm text-destructive">
-                {errors.meatType.message}
+                {errors.stockId.message}
               </p>
             ) : null}
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="type">{t("movementType")}</Label>
+            <select id="type" className={nativeSelectClass} {...register("type")}>
+              <option value="ajustement">Ajustement</option>
+              <option value="entree">Entrée</option>
+              <option value="sortie">Sortie</option>
+            </select>
           </div>
           <div className="space-y-2">
             <Label htmlFor="declaredQty">{t("declaredQty")}</Label>

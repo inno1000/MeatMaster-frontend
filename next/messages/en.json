@@ -14,6 +14,7 @@
     "no": "No",
     "actions": "Actions",
     "noData": "No data",
+    "apiNotConfigured": "Set NEXT_PUBLIC_API_URL (backend origin without /api/v1) to load data.",
     "version": "v1.1.0",
     "switchLanguage": "Change language"
   },

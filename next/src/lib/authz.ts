@@ -1,16 +1,17 @@
 import type { UserRole } from "@/lib/schemas/auth";
 import type { NavEntry } from "@/lib/nav-config";
 
+/** Fournisseur = rôle UI `supplier` (ventes, versements liste, abattages, rapports — pas stock ni CRUD boucheries ni saisie versement boucherie). */
 const roleRouteRules: Array<{ prefix: string; roles: UserRole[] }> = [
   { prefix: "/abattage", roles: ["supplier"] },
   { prefix: "/reports", roles: ["supplier"] },
   { prefix: "/stock", roles: ["butcher"] },
-  { prefix: "/vente", roles: ["butcher", "caissier"] },
+  { prefix: "/vente", roles: ["butcher", "supplier"] },
   { prefix: "/boucherie", roles: ["butcher"] },
   { prefix: "/versement/enregistrer", roles: ["butcher"] },
-  { prefix: "/versement/liste", roles: ["butcher", "supplier", "caissier"] },
-  { prefix: "/dashboard", roles: ["butcher", "supplier", "caissier"] },
-  { prefix: "/settings", roles: ["butcher", "supplier", "caissier"] },
+  { prefix: "/versement/liste", roles: ["butcher", "supplier"] },
+  { prefix: "/dashboard", roles: ["butcher", "supplier"] },
+  { prefix: "/settings", roles: ["butcher", "supplier"] },
 ];
 
 export const canAccessPath = (role: UserRole, pathname: string): boolean => {

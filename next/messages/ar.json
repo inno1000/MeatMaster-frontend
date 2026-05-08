@@ -16,6 +16,7 @@
     "no": "لا",
     "actions": "إجراءات",
     "noData": "لا توجد بيانات",
+    "apiNotConfigured": "عرّف NEXT_PUBLIC_API_URL (أصل الخادم بدون /api/v1) لتحميل البيانات.",
     "version": "v1.1.0",
     "switchLanguage": "تغيير اللغة"
   },

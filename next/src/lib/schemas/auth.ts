@@ -1,7 +1,7 @@
 import { z } from "zod";
 
-/** Rôles UI : `supplier` = démo / futur compte fournisseur ; `caissier` = API Laravel. */
-export const RoleSchema = z.enum(["butcher", "supplier", "admin", "caissier"]);
+/** `supplier` = fournisseur (inclut ventes / liste versements + abattages & rapports). L’API peut encore envoyer `caissier` ; il est mappé vers `supplier`. */
+export const RoleSchema = z.enum(["butcher", "supplier", "admin"]);
 export type UserRole = z.infer<typeof RoleSchema>;
 
 export const LoginSchema = z.object({

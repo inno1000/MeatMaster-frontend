@@ -1,5 +1,6 @@
 "use client";
 
+import { useQuery } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { formResolver } from "@/lib/form-resolver";
@@ -10,12 +11,15 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { AudioRecorder } from "@/components/shared/audio-recorder";
+import { nativeSelectClass } from "@/lib/ui-classes";
+import { boucherieV1 } from "@/lib/api";
+import { formatError } from "@/lib/format-error";
+import { unwrapDataArray } from "@/lib/api/unwrap";
 
 const Schema = z.object({
-  supplier: z.string().min(1),
-  meatType: z.string().min(1),
-  quantity: z.coerce.number().positive(),
-  batch: z.string().min(1),
+  distributionId: z.string().min(1),
+  quantity: z.coerce.number().positive("Requis"),
+  dateReception: z.string().min(1, "Requis"),
   notes: z.string().optional(),
 });
 
@@ -31,18 +35,31 @@ export default function StockReceptionPage() {
   } = useForm<FormValues>({
     resolver: formResolver(Schema),
     defaultValues: {
-      supplier: "",
-      meatType: "",
+      distributionId: "",
       quantity: 0,
-      batch: "",
+      dateReception: new Date().toISOString().slice(0, 10),
       notes: "",
     },
   });
 
-  const onSubmit = handleSubmit(async () => {
-    await new Promise((r) => setTimeout(r, 400));
-    toast.success(t("toastOk"));
-    reset();
+  const distributionsQuery = useQuery({
+    queryKey: ["distributions", "for-reception"],
+    queryFn: async () => unwrapDataArray(await boucherieV1.distributions.list()),
+  });
+
+  const onSubmit = handleSubmit(async (values) => {
+    try {
+      await boucherieV1.receptions.create({
+        distribution_id: values.distributionId,
+        quantite_recue: values.quantity,
+        date_reception: values.dateReception,
+        notes: values.notes || undefined,
+      });
+      toast.success(t("toastOk"));
+      reset();
+    } catch (error) {
+      toast.error(formatError(error));
+    }
   });
 
   return (
@@ -54,20 +71,25 @@ export default function StockReceptionPage() {
       <ParentCard title={t("title")}>
         <form onSubmit={onSubmit} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="supplier">{t("supplier")}</Label>
-            <Input id="supplier" {...register("supplier")} />
-            {errors.supplier ? (
+            <Label htmlFor="distributionId">Distribution</Label>
+            <select
+              id="distributionId"
+              className={nativeSelectClass}
+              {...register("distributionId")}
+            >
+              <option value="">—</option>
+              {(distributionsQuery.data ?? []).map((item) => {
+                const d = item as { id?: unknown; abattage_id?: unknown; quantite?: unknown };
+                return (
+                  <option key={String(d.id ?? "")} value={String(d.id ?? "")}>
+                    #{String(d.id ?? "")} · abattage {String(d.abattage_id ?? "")} · {String(d.quantite ?? "")} kg
+                  </option>
+                );
+              })}
+            </select>
+            {errors.distributionId ? (
               <p className="text-sm text-destructive">
-                {errors.supplier.message}
-              </p>
-            ) : null}
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="meatType">{t("meatType")}</Label>
-            <Input id="meatType" {...register("meatType")} />
-            {errors.meatType ? (
-              <p className="text-sm text-destructive">
-                {errors.meatType.message}
+                {errors.distributionId.message}
               </p>
             ) : null}
           </div>
@@ -81,10 +103,10 @@ export default function StockReceptionPage() {
             ) : null}
           </div>
           <div className="space-y-2">
-            <Label htmlFor="batch">{t("batch")}</Label>
-            <Input id="batch" {...register("batch")} />
-            {errors.batch ? (
-              <p className="text-sm text-destructive">{errors.batch.message}</p>
+            <Label htmlFor="dateReception">Date réception</Label>
+            <Input id="dateReception" type="date" {...register("dateReception")} />
+            {errors.dateReception ? (
+              <p className="text-sm text-destructive">{errors.dateReception.message}</p>
             ) : null}
           </div>
           <div className="space-y-2">

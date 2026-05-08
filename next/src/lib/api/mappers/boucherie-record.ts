@@ -1,7 +1,8 @@
-import type { MockButcherRecord } from "@/lib/mock-data/butchers-store";
+/** Ligne « boucherie » après normalisation du GET `/api/v1/boucheries`. */
+export type BoucherieListRow = Record<string, unknown>;
 
 /** Adapte une ligne API `boucheries` vers la forme attendue par les écrans existants. */
-export function mapApiBoucherieRow(row: unknown): MockButcherRecord {
+export function mapApiBoucherieRow(row: unknown): BoucherieListRow {
   const r = (row && typeof row === "object" ? row : {}) as Record<
     string,
     unknown

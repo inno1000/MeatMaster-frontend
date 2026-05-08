@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 import { ParentCard } from "@/components/shared/parent-card";
 import { ScrollRegion } from "@/components/ui/scroll-region";
@@ -8,107 +9,67 @@ import { cn } from "@/lib/utils";
 import { nativeSelectClass } from "@/lib/ui-classes";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-
-const STOCK_DATA = [
-  {
-    id: 1,
-    name: "Bœuf",
-    currentStock: 45,
-    minThreshold: 20,
-    maxThreshold: 100,
-    unit: "kg",
-    price: 2500,
-    lastUpdated: "2024-01-15",
-    status: "normal" as const,
-  },
-  {
-    id: 2,
-    name: "Mouton",
-    currentStock: 15,
-    minThreshold: 20,
-    maxThreshold: 80,
-    unit: "kg",
-    price: 3000,
-    lastUpdated: "2024-01-14",
-    status: "low" as const,
-  },
-  {
-    id: 3,
-    name: "Chèvre",
-    currentStock: 8,
-    minThreshold: 15,
-    maxThreshold: 60,
-    unit: "kg",
-    price: 2800,
-    lastUpdated: "2024-01-13",
-    status: "critical" as const,
-  },
-  {
-    id: 4,
-    name: "Poulet",
-    currentStock: 67,
-    minThreshold: 30,
-    maxThreshold: 120,
-    unit: "kg",
-    price: 2000,
-    lastUpdated: "2024-01-15",
-    status: "normal" as const,
-  },
-];
-
-const HISTORY = [
-  {
-    id: 1,
-    type: "reception",
-    meatType: "Bœuf",
-    quantity: 25,
-    date: "2024-01-15",
-    time: "10:30",
-    user: "Boucher A",
-  },
-  {
-    id: 2,
-    type: "vente",
-    meatType: "Mouton",
-    quantity: 8,
-    date: "2024-01-15",
-    time: "11:15",
-    user: "Boucher B",
-  },
-];
+import { boucherieV1 } from "@/lib/api";
+import { unwrapDataArray } from "@/lib/api/unwrap";
 
 export const StockManagementView = () => {
   const t = useTranslations("stockManagement");
   const [meatFilter, setMeatFilter] = useState("");
-  const [movFilter, setMovFilter] = useState<string | "">("");
+  const [movFilter, setMovFilter] = useState("");
+
+  const stocksQuery = useQuery({
+    queryKey: ["stocks", "management"],
+    queryFn: async () => unwrapDataArray(await boucherieV1.stocks.list()),
+  });
 
   const totalValue = useMemo(
-    () =>
-      STOCK_DATA.reduce((acc, m) => acc + m.currentStock * m.price, 0),
-    [],
+    () => {
+      return (stocksQuery.data ?? []).reduce<number>((acc, item) => {
+        const row = item as { quantite?: unknown; produit?: unknown };
+        const produit = (row.produit ?? {}) as { prix_unitaire?: unknown };
+        return acc + Number(row.quantite ?? 0) * Number(produit.prix_unitaire ?? 0);
+      }, 0);
+    },
+    [stocksQuery.data],
   );
 
-  const lowCount = STOCK_DATA.filter(
-    (m) => m.status === "low" || m.status === "critical",
-  ).length;
+  const rows = useMemo(
+    () =>
+      (stocksQuery.data ?? [])
+        .map((item) => {
+          const row = item as Record<string, unknown>;
+          const produit = (row.produit ?? {}) as Record<string, unknown>;
+          const qty = Number(row.quantite ?? 0);
+          const seuil = Number(row.seuil_alerte ?? 0);
+          const enAlerte = Boolean(row.en_alerte ?? (seuil > 0 && qty <= seuil));
+          return {
+            id: String(row.id ?? ""),
+            name: String(produit.nom ?? row.produit_id ?? ""),
+            currentStock: qty,
+            minThreshold: seuil,
+            unit: String(produit.unite ?? "kg"),
+            price: Number(produit.prix_unitaire ?? 0),
+            lastUpdated: String(row.updated_at ?? ""),
+            status: (enAlerte ? "critical" : "normal") as "critical" | "normal",
+            movementType: String(row.type_mouvement ?? ""),
+          };
+        })
+        .filter((r) =>
+          meatFilter
+            ? r.name.toLowerCase().includes(meatFilter.toLowerCase())
+            : true,
+        )
+        .filter((r) => (movFilter ? r.movementType === movFilter : true)),
+    [stocksQuery.data, meatFilter, movFilter],
+  );
 
-  const filteredHistory = useMemo(() => {
-    let rows = HISTORY;
-    if (meatFilter) {
-      rows = rows.filter((r) =>
-        r.meatType.toLowerCase().includes(meatFilter.toLowerCase()),
-      );
-    }
-    if (movFilter) {
-      rows = rows.filter((r) => r.type === movFilter);
-    }
-    return rows;
-  }, [meatFilter, movFilter]);
+  const lowCount = rows.filter((m) => m.status !== "normal").length;
 
-  const statusBadge = (status: (typeof STOCK_DATA)[number]["status"]) => {
+  const filteredHistory = rows;
+
+  const statusBadge = (status: "normal" | "critical") => {
     const map = {
       normal: "bg-emerald-500/15 text-emerald-900",
-      low: "bg-amber-500/15 text-amber-900",
       critical: "bg-red-500/15 text-red-900",
     };
     return map[status];
@@ -135,7 +96,7 @@ export const StockManagementView = () => {
         <div className="rounded-xl border border-border bg-card p-4">
           <p className="text-sm text-muted-foreground">{t("criticalStock")}</p>
           <p className="text-2xl font-semibold text-red-700">
-            {STOCK_DATA.filter((m) => m.status === "critical").length}
+            {rows.filter((m) => m.status === "critical").length}
           </p>
         </div>
       </div>
@@ -162,6 +123,7 @@ export const StockManagementView = () => {
               <option value="">{t("all")}</option>
               <option value="reception">Réception</option>
               <option value="vente">Vente</option>
+              <option value="ajustement">Ajustement</option>
             </select>
           </div>
         </div>
@@ -181,28 +143,28 @@ export const StockManagementView = () => {
               </tr>
             </thead>
             <tbody>
-              {STOCK_DATA.map((row) => (
+              {rows.map((row) => (
                 <tr key={row.id} className="border-b border-border">
                   <td className="p-3 font-medium">{row.name}</td>
                   <td className="p-3">
                     {row.currentStock} {row.unit}
                   </td>
                   <td className="p-3 text-muted-foreground">
-                    {row.minThreshold}–{row.maxThreshold}
+                    {row.minThreshold}
                   </td>
                   <td className="p-3">{row.price.toLocaleString()}</td>
                   <td className="p-3">
                     <span
-                      className={cn(
+                    className={cn(
                         "rounded-full px-2 py-0.5 text-xs font-medium",
-                        statusBadge(row.status),
+                        statusBadge(row.status as "critical" | "normal"),
                       )}
                     >
                       {row.status}
                     </span>
                   </td>
                   <td className="p-3 text-muted-foreground">
-                    {row.lastUpdated}
+                    {row.lastUpdated.slice(0, 10)}
                   </td>
                 </tr>
               ))}
@@ -226,11 +188,11 @@ export const StockManagementView = () => {
               {filteredHistory.map((row) => (
                 <tr key={row.id} className="border-b border-border">
                   <td className="p-3">
-                    {row.date} {row.time}
+                    {row.lastUpdated}
                   </td>
-                  <td className="p-3 capitalize">{row.type}</td>
-                  <td className="p-3">{row.meatType}</td>
-                  <td className="p-3">{row.quantity} kg</td>
+                  <td className="p-3 capitalize">{row.movementType || "—"}</td>
+                  <td className="p-3">{row.name}</td>
+                  <td className="p-3">{row.currentStock} kg</td>
                 </tr>
               ))}
             </tbody>
