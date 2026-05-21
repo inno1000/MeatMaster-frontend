@@ -1,5 +1,7 @@
 "use client";
 
+import { withLocaleParams } from "@/lib/with-locale-params";
+
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
@@ -14,7 +16,7 @@ import { boucherieV1 } from "@/lib/api";
 import { unwrapDataArray } from "@/lib/api/unwrap";
 import { pickDisplayLabel } from "@/lib/display/reference-label";
 
-export default function StockJournalPage() {
+function StockJournalPage() {
   const t = useTranslations("stockJournal");
   const tCommon = useTranslations("common");
   const [stockId, setStockId] = useState("");
@@ -127,3 +129,5 @@ export default function StockJournalPage() {
     </div>
   );
 }
+
+export default withLocaleParams(StockJournalPage);

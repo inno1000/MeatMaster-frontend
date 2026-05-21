@@ -1,6 +1,9 @@
 "use client";
 
-import { useForm, Controller } from "react-hook-form";
+import { withLocaleParams } from "@/lib/with-locale-params";
+
+import { useState } from "react";
+import { useForm } from "react-hook-form";
 import { formResolver } from "@/lib/form-resolver";
 import { useTranslations } from "next-intl";
 import { Store } from "lucide-react";
@@ -13,63 +16,43 @@ import {
   type ButcherFormInput,
 } from "@/lib/schemas/butcher";
 import { useCreateButcher } from "@/lib/hooks/use-butchers";
-import { cn } from "@/lib/utils";
-import { nativeSelectClass } from "@/lib/ui-classes";
 import { AudioRecorder } from "@/components/shared/audio-recorder";
+import { uploadAudioBlobs } from "@/lib/api";
+import { formatError } from "@/lib/format-error";
+import { toast } from "sonner";
 
-const CITIES = [
-  "Ngaoundéré",
-  "Douala",
-  "Yaoundé",
-  "Garoua",
-  "Maroua",
-  "Bertoua",
-  "Maiganga",
-];
-
-const DAYS = [
-  "Lundi",
-  "Mardi",
-  "Mercredi",
-  "Jeudi",
-  "Vendredi",
-  "Samedi",
-  "Dimanche",
-];
-
-const OWNERS = ["Inno", "Batouri", "Toto", "Ali"];
-
-const SPECS = ["boeuf", "mouton", "chèvre", "poulet"];
-
-export default function BoucherieEnregistrerPage() {
+function BoucherieEnregistrerPage() {
   const t = useTranslations("boucherie");
   const createButcher = useCreateButcher();
+  const [audioBlobs, setAudioBlobs] = useState<Blob[]>([]);
 
   const {
     register,
-    control,
     handleSubmit,
+    reset,
     formState: { errors, isSubmitting },
   } = useForm<ButcherFormInput>({
     resolver: formResolver(ButcherFormSchema),
     defaultValues: {
-      name: "",
-      address: "",
-      city: CITIES[0],
-      postal_code: "",
-      phone: "",
-      email: "",
-      website: "",
-      openingHour: "08:00",
-      closingHour: "18:00",
-      openingDays: [],
-      owner: OWNERS[0],
-      specialties: [],
+      nom: "",
+      adresse: "",
+      ville: "",
+      telephone: "",
     },
   });
 
-  const onSubmit = handleSubmit((data) => {
-    createButcher.mutate(data);
+  const onSubmit = handleSubmit(async (data) => {
+    try {
+      const attachmentIds = await uploadAudioBlobs(audioBlobs);
+      await createButcher.mutateAsync({
+        ...data,
+        attachmentIds,
+      });
+      reset();
+      setAudioBlobs([]);
+    } catch (e) {
+      toast.error(formatError(e));
+    }
   });
 
   return (
@@ -81,193 +64,42 @@ export default function BoucherieEnregistrerPage() {
       <ParentCard title={t("createTitle")} titleIcon={Store}>
         <form onSubmit={onSubmit} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="name">{t("name")}</Label>
-            <Input id="name" {...register("name")} />
-            {errors.name ? (
-              <p className="text-sm text-destructive">{errors.name.message}</p>
+            <Label htmlFor="nom">{t("name")}</Label>
+            <Input id="nom" {...register("nom")} />
+            {errors.nom ? (
+              <p className="text-sm text-destructive">{errors.nom.message}</p>
             ) : null}
           </div>
           <div className="space-y-2">
-            <Label htmlFor="address">{t("address")}</Label>
-            <Input id="address" {...register("address")} />
-            {errors.address ? (
+            <Label htmlFor="adresse">{t("address")}</Label>
+            <Input id="adresse" {...register("adresse")} />
+            {errors.adresse ? (
               <p className="text-sm text-destructive">
-                {errors.address.message}
+                {errors.adresse.message}
               </p>
             ) : null}
           </div>
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-2">
-              <Label htmlFor="city">{t("city")}</Label>
-              <select
-                id="city"
-                className={nativeSelectClass}
-                {...register("city")}
-              >
-                {CITIES.map((c) => (
-                  <option key={c} value={c}>
-                    {c}
-                  </option>
-                ))}
-              </select>
+              <Label htmlFor="ville">{t("city")}</Label>
+              <Input id="ville" {...register("ville")} />
+              {errors.ville ? (
+                <p className="text-sm text-destructive">{errors.ville.message}</p>
+              ) : null}
             </div>
             <div className="space-y-2">
-              <Label htmlFor="postal">{t("postal")}</Label>
-              <Input id="postal" {...register("postal_code")} />
-              {errors.postal_code ? (
+              <Label htmlFor="telephone">{t("phone")}</Label>
+              <Input id="telephone" {...register("telephone")} />
+              {errors.telephone ? (
                 <p className="text-sm text-destructive">
-                  {errors.postal_code.message}
+                  {errors.telephone.message}
                 </p>
               ) : null}
             </div>
           </div>
-          <div className="space-y-2">
-            <Label htmlFor="phone">{t("phone")}</Label>
-            <Input id="phone" {...register("phone")} />
-            {errors.phone ? (
-              <p className="text-sm text-destructive">{errors.phone.message}</p>
-            ) : null}
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="email">{t("email")}</Label>
-            <Input id="email" type="email" {...register("email")} />
-            {errors.email ? (
-              <p className="text-sm text-destructive">{errors.email.message}</p>
-            ) : null}
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="website">{t("website")}</Label>
-            <Input id="website" placeholder="example.com" {...register("website")} />
-            {errors.website ? (
-              <p className="text-sm text-destructive">{errors.website.message}</p>
-            ) : null}
-          </div>
-          <div className="grid gap-4 sm:grid-cols-2">
-            <div className="space-y-2">
-              <Label htmlFor="open">{t("opening")}</Label>
-              <Input id="open" type="time" {...register("openingHour")} />
-              {errors.openingHour ? (
-                <p className="text-sm text-destructive">{errors.openingHour.message}</p>
-              ) : null}
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="close">{t("closing")}</Label>
-              <Input id="close" type="time" {...register("closingHour")} />
-              {errors.closingHour ? (
-                <p className="text-sm text-destructive">{errors.closingHour.message}</p>
-              ) : null}
-            </div>
-          </div>
 
-          <Controller
-            control={control}
-            name="openingDays"
-            render={({ field }) => (
-              <fieldset className="space-y-2">
-                <legend className="text-sm font-medium">{t("days")}</legend>
-                <div className="flex flex-wrap gap-3">
-                  {DAYS.map((day) => {
-                    const checked = field.value.includes(day);
-                    return (
-                      <label
-                        key={day}
-                        className={cn(
-                          "flex cursor-pointer items-center gap-2 rounded-lg border px-3 py-1.5 text-sm",
-                          checked ? "border-primary bg-primary/10" : "border-border",
-                        )}
-                      >
-                        <input
-                          type="checkbox"
-                          className="size-4 rounded border-border"
-                          checked={checked}
-                          onChange={(e) => {
-                            if (e.target.checked) {
-                              field.onChange([...field.value, day]);
-                            } else {
-                              field.onChange(
-                                field.value.filter((d: string) => d !== day),
-                              );
-                            }
-                          }}
-                        />
-                        {day}
-                      </label>
-                    );
-                  })}
-                </div>
-                {errors.openingDays ? (
-                  <p className="text-sm text-destructive">
-                    {errors.openingDays.message as string}
-                  </p>
-                ) : null}
-              </fieldset>
-            )}
-          />
+          <AudioRecorder onBlobsChange={setAudioBlobs} />
 
-          <div className="space-y-2">
-            <Label htmlFor="owner">{t("owner")}</Label>
-            <select
-              id="owner"
-              className={nativeSelectClass}
-              {...register("owner")}
-            >
-              {OWNERS.map((o) => (
-                <option key={o} value={o}>
-                  {o}
-                </option>
-              ))}
-            </select>
-            {errors.owner ? (
-              <p className="text-sm text-destructive">{errors.owner.message}</p>
-            ) : null}
-          </div>
-
-          <Controller
-            control={control}
-            name="specialties"
-            render={({ field }) => (
-              <fieldset className="space-y-2">
-                <legend className="text-sm font-medium">{t("specialties")}</legend>
-                <div className="flex flex-wrap gap-3">
-                  {SPECS.map((spec) => {
-                    const checked = field.value.includes(spec);
-                    return (
-                      <label
-                        key={spec}
-                        className={cn(
-                          "flex cursor-pointer items-center gap-2 rounded-lg border px-3 py-1.5 text-sm capitalize",
-                          checked ? "border-primary bg-primary/10" : "border-border",
-                        )}
-                      >
-                        <input
-                          type="checkbox"
-                          className="size-4 rounded border-border"
-                          checked={checked}
-                          onChange={(e) => {
-                            if (e.target.checked) {
-                              field.onChange([...field.value, spec]);
-                            } else {
-                              field.onChange(
-                                field.value.filter((s: string) => s !== spec),
-                              );
-                            }
-                          }}
-                        />
-                        {spec}
-                      </label>
-                    );
-                  })}
-                </div>
-                {errors.specialties ? (
-                  <p className="text-sm text-destructive">
-                    {errors.specialties.message as string}
-                  </p>
-                ) : null}
-              </fieldset>
-            )}
-          />
-
-          <AudioRecorder />
           <Button type="submit" disabled={createButcher.isPending || isSubmitting}>
             {t("submit")}
           </Button>
@@ -276,3 +108,5 @@ export default function BoucherieEnregistrerPage() {
     </div>
   );
 }
+
+export default withLocaleParams(BoucherieEnregistrerPage);

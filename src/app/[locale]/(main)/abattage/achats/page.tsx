@@ -1,5 +1,7 @@
 "use client";
 
+import { withLocaleParams } from "@/lib/with-locale-params";
+
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -28,7 +30,7 @@ const Schema = z.object({
 
 type FormValues = z.infer<typeof Schema>;
 
-export default function AbattageAchatsPage() {
+function AbattageAchatsPage() {
   const t = useTranslations("achatsFournisseur");
   const queryClient = useQueryClient();
   const {
@@ -168,3 +170,5 @@ export default function AbattageAchatsPage() {
     </div>
   );
 }
+
+export default withLocaleParams(AbattageAchatsPage);

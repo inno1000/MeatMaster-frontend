@@ -31,6 +31,10 @@ export type ApiUserPayload = {
   boucherie_names_from_pivot?: string[];
   /** Identifiant métier `fournisseurs` (ex. `fournisseur_id` sur le user Laravel). */
   fournisseurEntityId?: string | number;
+  /** Compte User du fournisseur assigné à la boucherie du boucher (`fournisseur_user_id`). */
+  fournisseurUserId?: string | number;
+  /** Nom affiché du fournisseur assigné (`fournisseur_assigne.nom`). */
+  supplierAssigneName?: string;
   /** Si l’API impose un changement de mot de passe (nom Laravel ou camelCase). */
   must_change_password?: boolean;
 };
@@ -67,6 +71,18 @@ export const toAppUser = (
       ? String(payload.fournisseurEntityId)
       : undefined;
 
+  const supplierUserId =
+    payload.fournisseurUserId !== undefined &&
+    payload.fournisseurUserId !== null
+      ? String(payload.fournisseurUserId)
+      : undefined;
+
+  const supplierName =
+    typeof payload.supplierAssigneName === "string" &&
+    payload.supplierAssigneName.length > 0
+      ? payload.supplierAssigneName
+      : undefined;
+
   return {
     token,
     id:
@@ -79,6 +95,8 @@ export const toAppUser = (
     butcheries,
     butcheryIds,
     ...(fournisseurEntityId ? { fournisseurEntityId } : {}),
+    ...(supplierUserId ? { supplierUserId } : {}),
+    ...(supplierName ? { supplierName } : {}),
     ...(mustChangePassword ? { mustChangePassword: true as const } : {}),
   };
 };

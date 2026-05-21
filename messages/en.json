@@ -107,11 +107,23 @@
     "mobilePayments": "Payments",
     "mobileReports": "Reports"
   },
-  "placeholder": {
-    "title": "Coming soon",
-    "body": "This section will connect to the API in a future iteration."
-  },
   "settings": {
+    "profile": {
+      "title": "Profile",
+      "subtitle": "Account name and email",
+      "name": "Name",
+      "email": "Email",
+      "role": "Role",
+      "save": "Save",
+      "saved": "Profile updated.",
+      "missingUserId": "Missing user id."
+    },
+    "preferences": {
+      "title": "Preferences",
+      "subtitle": "Interface language",
+      "language": "Language",
+      "languageHint": "Your choice is stored in this browser for future visits."
+    },
     "firstPassword": {
       "title": "Password change required",
       "subtitle": "You are still using the initial password set when your account was created. Choose a personal password before continuing.",
@@ -308,6 +320,7 @@
     "listSubtitle": "History",
     "detailTitle": "Slaughter detail",
     "detailSubtitle": "Animal information",
+    "audioNotes": "Audio notes",
     "animal": "Animal",
     "weight": "Weight",
     "price": "Purchase price",
@@ -453,19 +466,48 @@
   },
   "reports": {
     "salesTitle": "Sales report",
-    "salesSubtitle": "Summary and filters",
+    "salesSubtitle": "API summary (sales and statistics)",
+    "stocksTitle": "Stock report",
+    "stocksSubtitle": "Current levels and alerts",
+    "financialTitle": "Financial report",
+    "financialSubtitle": "Payments and supplier indicators",
     "dateFrom": "From",
     "dateTo": "To",
     "meatType": "Meat type",
     "totalAmount": "Total amount",
     "totalQty": "Total quantity",
     "avgSale": "Average sale",
-    "byMeat": "By meat type",
+    "salesCount": "Number of sales",
+    "byMeat": "Top products",
+    "periode": "Period",
+    "periodeWeek": "Last 7 days",
+    "periodeMonth": "Last 30 days",
+    "periodeYear": "Last 12 months",
+    "status": "Status",
+    "statusOk": "Normal",
+    "statusAlert": "Alert",
     "tableDate": "Date",
     "tableMeat": "Meat",
     "tableQty": "Quantity",
     "tableUnit": "Unit price",
     "tableTotal": "Total",
-    "tableCustomer": "Customer"
+    "tableCustomer": "Customer",
+    "tableType": "Type",
+    "tableProduct": "Product",
+    "tableThreshold": "Alert threshold",
+    "stockRefs": "Stock references",
+    "stockAlerts": "Low-stock alerts",
+    "searchProduct": "Search product",
+    "versementsTitle": "Payments",
+    "versementPending": "Pending",
+    "versementValid": "Approved",
+    "versementRejected": "Rejected",
+    "totalDue": "Total due",
+    "totalReceived": "Total received",
+    "operations": "operations",
+    "supplierActivity": "Slaughter activity",
+    "slaughterCount": "Slaughters",
+    "slaughterWeight": "Total weight",
+    "avgYield": "Average yield"
   }
 }

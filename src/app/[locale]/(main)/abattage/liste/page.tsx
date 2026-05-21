@@ -1,5 +1,7 @@
 "use client";
 
+import { withLocaleParams } from "@/lib/with-locale-params";
+
 import { useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
@@ -18,7 +20,7 @@ import { unwrapDataArray } from "@/lib/api/unwrap";
 import { mapApiBoucherieRow } from "@/lib/api/mappers/boucherie-record";
 import { pickDisplayLabel } from "@/lib/display/reference-label";
 
-export default function AbattageListePage() {
+function AbattageListePage() {
   const t = useTranslations("abattage");
   const tCommon = useTranslations("common");
   const [search, setSearch] = useState("");
@@ -102,6 +104,7 @@ export default function AbattageListePage() {
 
       return {
         id: String(row.id ?? ""),
+        abattageId: abId,
         abattageLabel,
         boucherieLabel,
         produitLabel,
@@ -220,6 +223,20 @@ export default function AbattageListePage() {
                   <td className="p-3">{a.date}</td>
                   <td className="p-3">
                     <div className="flex flex-wrap items-center gap-1">
+                      {a.abattageId ? (
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          className="h-9 min-h-9 px-2.5 text-xs"
+                          asChild
+                        >
+                          <Link
+                            href={`/abattage/detail_abattage?id=${encodeURIComponent(a.abattageId)}`}
+                          >
+                            Détail
+                          </Link>
+                        </Button>
+                      ) : null}
                       <Button
                         type="button"
                         variant="ghost"
@@ -241,3 +258,5 @@ export default function AbattageListePage() {
     </div>
   );
 }
+
+export default withLocaleParams(AbattageListePage);

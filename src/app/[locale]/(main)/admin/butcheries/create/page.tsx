@@ -1,5 +1,7 @@
 "use client";
 
+import { withLocaleParams } from "@/lib/with-locale-params";
+
 import { useForm } from "react-hook-form";
 import { useQueryClient } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
@@ -17,7 +19,7 @@ import {
 import { formatError } from "@/lib/format-error";
 import { formResolver } from "@/lib/form-resolver";
 
-export default function AdminCreateButcheryPage() {
+function AdminCreateButcheryPage() {
   const t = useTranslations("admin");
   const queryClient = useQueryClient();
   const {
@@ -102,3 +104,5 @@ export default function AdminCreateButcheryPage() {
     </div>
   );
 }
+
+export default withLocaleParams(AdminCreateButcheryPage);

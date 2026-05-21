@@ -19,7 +19,13 @@ const MAX_SECONDS = 60;
 
 type RecordingItem = { url: string; blob: Blob };
 
-export function AudioRecorder({ className }: { className?: string }) {
+type AudioRecorderProps = {
+  className?: string;
+  /** Blobs enregistrés (pour envoi API au submit du formulaire parent). */
+  onBlobsChange?: (blobs: Blob[]) => void;
+};
+
+export function AudioRecorder({ className, onBlobsChange }: AudioRecorderProps) {
   const t = useTranslations("audioRecorder");
   const [isRecording, setIsRecording] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
@@ -37,6 +43,10 @@ export function AudioRecorder({ className }: { className?: string }) {
   useEffect(() => {
     recordingsRef.current = recordings;
   }, [recordings]);
+
+  useEffect(() => {
+    onBlobsChange?.(recordings.map((r) => r.blob));
+  }, [recordings, onBlobsChange]);
 
   useEffect(() => {
     isRecordingRef.current = isRecording;

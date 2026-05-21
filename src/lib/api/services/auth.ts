@@ -182,6 +182,27 @@ export function extractUserPayload(data: unknown): ApiUserPayload {
     out.fournisseurEntityId = feRaw as string | number;
   }
 
+  const assigne =
+    src.fournisseur_assigne &&
+    typeof src.fournisseur_assigne === "object" &&
+    !Array.isArray(src.fournisseur_assigne)
+      ? (src.fournisseur_assigne as Record<string, unknown>)
+      : null;
+  const fuRaw =
+    src.fournisseur_user_id ??
+    src.fournisseurUserId ??
+    assigne?.user_id;
+  if (fuRaw !== undefined && fuRaw !== null && String(fuRaw).trim() !== "") {
+    out.fournisseurUserId = fuRaw as string | number;
+    if (out.fournisseurEntityId === undefined && assigne?.id != null) {
+      out.fournisseurEntityId = assigne.id as string | number;
+    }
+    const nomAssigne = assigne?.nom;
+    if (typeof nomAssigne === "string" && nomAssigne.trim() !== "") {
+      out.supplierAssigneName = nomAssigne.trim();
+    }
+  }
+
   return out;
 }
 

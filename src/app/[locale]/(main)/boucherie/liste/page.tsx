@@ -1,5 +1,7 @@
 "use client";
 
+import { withLocaleParams } from "@/lib/with-locale-params";
+
 import { useTranslations } from "next-intl";
 import { Store } from "lucide-react";
 import { ParentCard } from "@/components/shared/parent-card";
@@ -11,7 +13,7 @@ import { ScrollRegion } from "@/components/ui/scroll-region";
 import { useAuthStore } from "@/lib/stores/auth-store";
 import { isApiEnabled } from "@/lib/api/config";
 
-export default function BoucherieListePage() {
+function BoucherieListePage() {
   const t = useTranslations("boucherie");
   const tCommon = useTranslations("common");
   const apiOk = isApiEnabled();
@@ -96,3 +98,5 @@ export default function BoucherieListePage() {
     </div>
   );
 }
+
+export default withLocaleParams(BoucherieListePage);

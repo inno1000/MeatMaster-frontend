@@ -1,5 +1,7 @@
 "use client";
 
+import { withLocaleParams } from "@/lib/with-locale-params";
+
 import { useQuery } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 import { Building2 } from "lucide-react";
@@ -13,7 +15,7 @@ import { mapApiBoucherieRow } from "@/lib/api/mappers/boucherie-record";
 import { formatError } from "@/lib/format-error";
 import { isApiEnabled } from "@/lib/api/config";
 
-export default function AdminButcheriesListPage() {
+function AdminButcheriesListPage() {
   const t = useTranslations("admin");
   const tBoucherie = useTranslations("boucherie");
   const tCommon = useTranslations("common");
@@ -87,3 +89,5 @@ export default function AdminButcheriesListPage() {
     </div>
   );
 }
+
+export default withLocaleParams(AdminButcheriesListPage);

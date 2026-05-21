@@ -13,7 +13,8 @@
     "android:assemble": "npm run build:mobile && android\\gradlew.bat assembleDebug",
     "android:assemble:release": "npm run build:mobile && android\\gradlew.bat assembleRelease",
     "android:open": "npx cap open android",
-    "android:run": "npx cap run android"
+    "android:run": "npx cap run android",
+    "test:api": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/test-api-integration.ps1"
   },
   "dependencies": {
     "@capacitor/android": "^7.4.3",

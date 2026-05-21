@@ -1,5 +1,7 @@
 "use client";
 
+import { withLocaleParams } from "@/lib/with-locale-params";
+
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 import { useMemo, useState } from "react";
@@ -15,7 +17,7 @@ import { boucherieV1 } from "@/lib/api";
 import { formatError } from "@/lib/format-error";
 import { unwrapDataArray } from "@/lib/api/unwrap";
 
-export default function VenteListePage() {
+function VenteListePage() {
   const t = useTranslations("vente");
   const [from, setFrom] = useState("");
   const [to, setTo] = useState("");
@@ -155,3 +157,5 @@ export default function VenteListePage() {
     </div>
   );
 }
+
+export default withLocaleParams(VenteListePage);

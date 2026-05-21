@@ -37,6 +37,14 @@ export type ReceptionsListParams = {
   page?: number;
 };
 
+export type StatsParams = {
+  periode?: "semaine" | "mois" | "annee";
+};
+
+export type RecettesListParams = {
+  page?: number;
+};
+
 export const boucherieV1 = {
   referentiels: {
     list: (type: string) =>
@@ -210,5 +218,27 @@ export const boucherieV1 = {
       apiClient.post<unknown>(v1Url("/receptions"), body),
     get: (id: string) =>
       apiClient.get<unknown>(v1Url(`/receptions/${enc(id)}`)),
+  },
+
+  stats: {
+    admin: (params?: StatsParams) =>
+      apiClient.get<unknown>(v1UrlWithQuery("/stats/admin", params)),
+    boucher: (params?: StatsParams) =>
+      apiClient.get<unknown>(v1UrlWithQuery("/stats/boucher", params)),
+    fournisseur: (params?: StatsParams) =>
+      apiClient.get<unknown>(v1UrlWithQuery("/stats/fournisseur", params)),
+  },
+
+  recettes: {
+    list: (params?: RecettesListParams) =>
+      apiClient.get<unknown>(v1UrlWithQuery("/recettes", params)),
+    create: (body: Record<string, unknown>) =>
+      apiClient.post<unknown>(v1Url("/recettes"), body),
+    get: (id: string) =>
+      apiClient.get<unknown>(v1Url(`/recettes/${enc(id)}`)),
+    valider: (id: string) =>
+      apiClient.patch<unknown>(v1Url(`/recettes/${enc(id)}/valider`)),
+    rejeter: (id: string, body?: Record<string, unknown>) =>
+      apiClient.patch<unknown>(v1Url(`/recettes/${enc(id)}/rejeter`), body),
   },
 } as const;

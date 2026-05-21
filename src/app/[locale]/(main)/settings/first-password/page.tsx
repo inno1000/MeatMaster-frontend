@@ -1,5 +1,7 @@
 "use client";
 
+import { withLocaleParams } from "@/lib/with-locale-params";
+
 import { useMemo } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -44,7 +46,7 @@ function buildSchema(t: (key: string) => string) {
 
 type FirstPwdInput = z.infer<ReturnType<typeof buildSchema>>;
 
-export default function SettingsFirstPasswordPage() {
+function SettingsFirstPasswordPage() {
   const t = useTranslations("settings.firstPassword");
   const router = useRouter();
   const user = useAuthStore((s) => s.user);
@@ -123,3 +125,5 @@ export default function SettingsFirstPasswordPage() {
     </div>
   );
 }
+
+export default withLocaleParams(SettingsFirstPasswordPage);

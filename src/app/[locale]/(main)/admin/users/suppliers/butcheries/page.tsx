@@ -1,5 +1,7 @@
 "use client";
 
+import { withLocaleParams } from "@/lib/with-locale-params";
+
 import { useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
@@ -14,7 +16,7 @@ import { toggleBoucherieId } from "@/lib/admin/users-forms";
 import { formatError } from "@/lib/format-error";
 import { unwrapDataArray } from "@/lib/api/unwrap";
 
-export default function AdminSupplierButcheriesPage() {
+function AdminSupplierButcheriesPage() {
   const t = useTranslations("admin");
   const tCommon = useTranslations("common");
   const queryClient = useQueryClient();
@@ -167,3 +169,5 @@ export default function AdminSupplierButcheriesPage() {
     </div>
   );
 }
+
+export default withLocaleParams(AdminSupplierButcheriesPage);

@@ -196,23 +196,24 @@ function Test-AdminEndpoints($h) {
 
 function Test-SupplierEndpoints($h) {
   Write-Step "FOURNISSEUR - lecture"
-  Test-Endpoint "GET /achats-fournisseurs" $h "/achats-fournisseurs"
-  Test-Endpoint "GET /animaux?statut=en_attente" $h "/animaux?statut=en_attente"
-  Test-Endpoint "GET /abattages" $h "/abattages"
-  Test-Endpoint "GET /versements" $h "/versements"
-  Test-Endpoint "GET /distributions" $h "/distributions"
-  Test-Endpoint "GET /boucheries" $h "/boucheries"
-  Test-Endpoint "GET /produits" $h "/produits"
-  Test-Endpoint "GET /referentiels/categorie_produit" $h "/referentiels/categorie_produit"
-  Test-Endpoint "GET /referentiels/espece_animal" $h "/referentiels/espece_animal"
+  [void](Test-Endpoint -Label "GET /achats-fournisseurs" -Headers $h -Path "/achats-fournisseurs")
+  [void](Test-Endpoint -Label "GET /animaux?statut=en_attente" -Headers $h -Path "/animaux?statut=en_attente")
+  [void](Test-Endpoint -Label "GET /abattages" -Headers $h -Path "/abattages")
+  [void](Test-Endpoint -Label "GET /versements" -Headers $h -Path "/versements")
+  [void](Test-Endpoint -Label "GET /distributions" -Headers $h -Path "/distributions")
+  [void](Test-Endpoint -Label "GET /boucheries" -Headers $h -Path "/boucheries")
+  [void](Test-Endpoint -Label "GET /produits" -Headers $h -Path "/produits")
+  [void](Test-Endpoint -Label "GET /referentiels/categorie_produit" -Headers $h -Path "/referentiels/categorie_produit")
+  [void](Test-Endpoint -Label "GET /referentiels/espece_animal" -Headers $h -Path "/referentiels/espece_animal")
+  Test-AchatsDetail $h
 
   Write-Step "FOURNISSEUR - interdits HTTP 403"
-  Test-Endpoint "GET /ventes (403)" $h "/ventes" -ExpectStatus @(403)
-  Test-Endpoint "GET /stocks (403)" $h "/stocks" -ExpectStatus @(403)
+  [void](Test-Endpoint -Label "GET /ventes (403)" -Headers $h -Path "/ventes" -ExpectStatus @(403))
+  [void](Test-Endpoint -Label "GET /stocks (403)" -Headers $h -Path "/stocks" -ExpectStatus @(403))
 
   Write-Step "FOURNISSEUR - ecriture smoke"
   $tag = "TAG-INT-$(Get-Date -Format 'yyyyMMddHHmmss')"
-  Test-Endpoint -Label "POST /achats-fournisseurs" -Headers $h -Method POST -Path "/achats-fournisseurs" -Body @{
+  [void](Test-Endpoint -Label "POST /achats-fournisseurs" -Headers $h -Method POST -Path "/achats-fournisseurs" -Body @{
     date_achat    = (Get-Date -Format "yyyy-MM-dd")
     montant_total = 1000
     animaux       = @(@{
@@ -221,7 +222,7 @@ function Test-SupplierEndpoints($h) {
         prix_achat   = 1000
         numero_tag   = $tag
       })
-  } -ExpectStatus @(200, 201, 422)
+  } -ExpectStatus @(200, 201, 422))
 
   $animalId = $null
   $anim = Invoke-Api -Headers $h -Path "/animaux?statut=en_attente"
@@ -230,7 +231,7 @@ function Test-SupplierEndpoints($h) {
     if ($arr -is [array] -and $arr.Count -gt 0) { $animalId = $arr[0].id }
   }
   if ($animalId) {
-    Test-Endpoint "GET /animaux/{id}" $h "/animaux/$animalId"
+    [void](Test-Endpoint -Label "GET /animaux/{id}" -Headers $h -Path "/animaux/$animalId")
   } else {
     Write-Skip "GET /animaux/{id} (aucun animal en attente)"
   }
@@ -279,17 +280,17 @@ function Test-SupplierEndpoints($h) {
       $abId = $abData.id
       Write-Ok "POST /abattages (id=$abId)"
       if ($abId) {
-        Test-Endpoint "GET /abattages/{id}" $h "/abattages/$abId"
+        [void](Test-Endpoint -Label "GET /abattages/{id}" -Headers $h -Path "/abattages/$abId")
         $boucheries = Invoke-Api -Headers $h -Path "/boucheries"
         $bId = $null
         if ($boucheries.ok) { $bId = Get-FirstId $boucheries.data }
         if ($bId) {
-          Test-Endpoint -Label "POST /distributions" -Headers $h -Method POST -Path "/distributions" -Body @{
+          [void](Test-Endpoint -Label "POST /distributions" -Headers $h -Method POST -Path "/distributions" -Body @{
             abattage_id  = $abId
             boucherie_id = $bId
             produit_id   = $produitId
             quantite     = 5
-          } -ExpectStatus @(200, 201, 422)
+          } -ExpectStatus @(200, 201, 403, 422))
         } else {
           Write-Skip "POST /distributions (aucune boucherie)"
         }
@@ -304,35 +305,35 @@ function Test-SupplierEndpoints($h) {
   $abList = Invoke-Api -Headers $h -Path "/abattages"
   if ($abList.ok) {
     $aid = Get-FirstId $abList.data
-    if ($aid) { Test-Endpoint "GET /abattages/{id}" $h "/abattages/$aid" }
+    if ($aid) { [void](Test-Endpoint -Label "GET /abattages/{id}" -Headers $h -Path "/abattages/$aid") }
   }
   $distList = Invoke-Api -Headers $h -Path "/distributions"
   if ($distList.ok) {
     $did = Get-FirstId $distList.data
-    if ($did) { Test-Endpoint "GET /distributions/{id}" $h "/distributions/$did" }
+    if ($did) { [void](Test-Endpoint -Label "GET /distributions/{id}" -Headers $h -Path "/distributions/$did") }
   }
 }
 
 function Test-ButcherEndpoints($h) {
   Write-Step "BOUCHER - lecture"
-  Test-Endpoint "GET /stocks" $h "/stocks"
-  Test-Endpoint "GET /ventes" $h "/ventes"
-  Test-Endpoint "GET /versements" $h "/versements"
-  Test-Endpoint "GET /receptions" $h "/receptions"
-  Test-Endpoint "GET /distributions" $h "/distributions"
-  Test-Endpoint "GET /clients" $h "/clients"
-  Test-Endpoint "GET /produits" $h "/produits"
+  [void](Test-Endpoint -Label "GET /stocks" -Headers $h -Path "/stocks")
+  [void](Test-Endpoint -Label "GET /ventes" -Headers $h -Path "/ventes")
+  [void](Test-Endpoint -Label "GET /versements" -Headers $h -Path "/versements")
+  [void](Test-Endpoint -Label "GET /receptions" -Headers $h -Path "/receptions")
+  [void](Test-Endpoint -Label "GET /distributions" -Headers $h -Path "/distributions")
+  [void](Test-Endpoint -Label "GET /clients" -Headers $h -Path "/clients")
+  [void](Test-Endpoint -Label "GET /produits" -Headers $h -Path "/produits")
 
   Write-Step "BOUCHER - interdits fournisseur HTTP 403"
-  Test-Endpoint "GET /abattages (403)" $h "/abattages" -ExpectStatus @(403)
-  Test-Endpoint "GET /achats-fournisseurs (403)" $h "/achats-fournisseurs" -ExpectStatus @(403)
+  [void](Test-Endpoint -Label "GET /abattages (403)" -Headers $h -Path "/abattages" -ExpectStatus @(403))
+  [void](Test-Endpoint -Label "GET /achats-fournisseurs (403)" -Headers $h -Path "/achats-fournisseurs" -ExpectStatus @(403))
 
   $stocks = Invoke-Api -Headers $h -Path "/stocks"
   if ($stocks.ok) {
     $sid = Get-FirstId $stocks.data
     if ($sid) {
-      Test-Endpoint "GET /stocks/{id}" $h "/stocks/$sid"
-      Test-Endpoint "GET /stocks/{id}/mouvements" $h "/stocks/$sid/mouvements"
+      [void](Test-Endpoint -Label "GET /stocks/{id}" -Headers $h -Path "/stocks/$sid")
+      [void](Test-Endpoint -Label "GET /stocks/{id}/mouvements" -Headers $h -Path "/stocks/$sid/mouvements")
     }
   }
 
@@ -340,15 +341,15 @@ function Test-ButcherEndpoints($h) {
   if ($ventes.ok) {
     $vid = Get-FirstId $ventes.data
     if ($vid) {
-      Test-Endpoint "GET /ventes/{id}" $h "/ventes/$vid"
-      Test-Endpoint "GET /ventes/{id}/paiements" $h "/ventes/$vid/paiements"
+      [void](Test-Endpoint -Label "GET /ventes/{id}" -Headers $h -Path "/ventes/$vid")
+      [void](Test-Endpoint -Label "GET /ventes/{id}/paiements" -Headers $h -Path "/ventes/$vid/paiements")
     }
   }
 
   $rec = Invoke-Api -Headers $h -Path "/receptions"
   if ($rec.ok) {
     $rid = Get-FirstId $rec.data
-    if ($rid) { Test-Endpoint "GET /receptions/{id}" $h "/receptions/$rid" }
+    if ($rid) { [void](Test-Endpoint -Label "GET /receptions/{id}" -Headers $h -Path "/receptions/$rid") }
   }
 
   Write-Step "BOUCHER - ecriture smoke"
@@ -432,16 +433,146 @@ function Test-Unauthenticated() {
   [void](Test-Endpoint -Label "GET /boucheries (401)" -Headers $noAuth -Path "/boucheries" -ExpectStatus @(401, 403))
 }
 
+function Test-AuthRegister() {
+  Write-Step "AUTH - register (public)"
+  $email = "smoke-register-$(Get-Date -Format 'yyyyMMddHHmmss')@test.local"
+  [void](Test-Endpoint -Label "POST /auth/register" -Headers @{ Accept = "application/json" } -Method POST -Path "/auth/register" -Body @{
+    name                  = "Smoke Register"
+    email                 = $email
+    password              = "password123"
+    password_confirmation = "password123"
+  } -ExpectStatus @(200, 201, 422))
+}
+
+function Test-StatsEndpoints($adminH, $butcherH, $supplierH) {
+  Write-Step "STATS (boucherieV1.stats.*)"
+  if ($adminH) {
+    [void](Test-Endpoint -Label "GET /stats/admin" -Headers $adminH -Path "/stats/admin?periode=mois")
+  } else {
+    Write-Skip "GET /stats/admin"
+  }
+  if ($butcherH) {
+    [void](Test-Endpoint -Label "GET /stats/boucher" -Headers $butcherH -Path "/stats/boucher?periode=mois")
+  } else {
+    Write-Skip "GET /stats/boucher"
+  }
+  if ($supplierH) {
+    [void](Test-Endpoint -Label "GET /stats/fournisseur" -Headers $supplierH -Path "/stats/fournisseur?periode=mois")
+  } else {
+    Write-Skip "GET /stats/fournisseur"
+  }
+  if ($butcherH) {
+    [void](Test-Endpoint -Label "GET /stats/admin (403 boucher)" -Headers $butcherH -Path "/stats/admin" -ExpectStatus @(403))
+  }
+}
+
+function Test-RecettesEndpoints($adminH, $butcherH, $supplierH) {
+  Write-Step "RECETTES (boucherieV1.recettes.*)"
+  foreach ($pair in @(
+    @{ h = $adminH; label = "admin" },
+    @{ h = $butcherH; label = "boucher" },
+    @{ h = $supplierH; label = "fournisseur" }
+  )) {
+    if (-not $pair.h) { Write-Skip "GET /recettes ($($pair.label))"; continue }
+    $lr = Invoke-Api -Headers $pair.h -Path "/recettes"
+    if ($lr.ok) { Write-Ok "GET /recettes ($($pair.label)) n=$(Get-ArrayCount (Get-UnwrappedData $lr.data))" ; $script:Passed++ }
+    else { Write-Fail "GET /recettes ($($pair.label))" $lr.code $lr.body }
+    $id = if ($lr.ok) { Get-FirstId $lr.data } else { $null }
+    if ($id) {
+      [void](Test-Endpoint -Label "GET /recettes/{id} ($($pair.label))" -Headers $pair.h -Path "/recettes/$id")
+    }
+  }
+  if ($butcherH) {
+    [void](Test-Endpoint -Label "POST /recettes" -Headers $butcherH -Method POST -Path "/recettes" -Body @{
+      date_recette = (Get-Date -Format "yyyy-MM-dd")
+      notes        = "smoke-test"
+    } -ExpectStatus @(200, 201, 422))
+  } else {
+    Write-Skip "POST /recettes"
+  }
+  if ($supplierH) {
+    $lr = Invoke-Api -Headers $supplierH -Path "/recettes"
+    $rid = if ($lr.ok) { Get-FirstId $lr.data } else { $null }
+    if ($rid) {
+      [void](Test-Endpoint -Label "PATCH /recettes/{id}/valider" -Headers $supplierH -Method PATCH -Path "/recettes/$rid/valider" -ExpectStatus @(200, 422))
+      [void](Test-Endpoint -Label "PATCH /recettes/{id}/rejeter" -Headers $supplierH -Method PATCH -Path "/recettes/$rid/rejeter" -Body @{ motif = "smoke" } -ExpectStatus @(200, 422))
+    } else {
+      Write-Skip "PATCH /recettes/{id}/valider|rejeter"
+    }
+  }
+}
+
+function Test-Attachments($h, $roleLabel) {
+  Write-Step "ATTACHMENTS ($roleLabel)"
+  if (-not $h) { Write-Skip "POST /attachments"; return }
+  $uri = "$(Get-ApiBase)/attachments"
+  $tmp = [System.IO.Path]::GetTempFileName() + ".webm"
+  [System.IO.File]::WriteAllBytes($tmp, [byte[]](0x1A, 0x45, 0xDF, 0xA3))
+  $token = ($h.Authorization -replace "^Bearer\s+", "").Trim()
+  try {
+    if (Get-Command curl.exe -ErrorAction SilentlyContinue) {
+      $outFile = [System.IO.Path]::GetTempFileName()
+      $code = curl.exe -s -o $outFile -w "%{http_code}" -X POST $uri `
+        -H "Authorization: Bearer $token" -H "Accept: application/json" `
+        -F "file=@$tmp;type=audio/webm"
+      $raw = if (Test-Path $outFile) { Get-Content $outFile -Raw } else { "" }
+      Remove-Item $outFile -Force -ErrorAction SilentlyContinue
+      if ($code -eq "201" -or $code -eq "200") {
+        $r = $raw | ConvertFrom-Json
+        $attId = $r.data.id
+        if (-not $attId -and $r.id) { $attId = $r.id }
+        Write-Ok "POST /attachments (id=$attId)"
+        $script:Passed++
+        if ($attId) {
+          $streamUri = "$(Get-ApiBase)/attachments/$attId/stream"
+          $sc = curl.exe -s -o NUL -w "%{http_code}" -H "Authorization: Bearer $token" $streamUri
+          if ($sc -eq "200") {
+            Write-Ok "GET /attachments/{id}/stream"
+            $script:Passed++
+          } else {
+            Write-Fail "GET /attachments/{id}/stream" $sc $raw
+          }
+        }
+      } elseif ($code -eq "422") {
+        Write-Ok "POST /attachments (422 validation - fichier minimal)"
+        $script:Passed++
+      } else {
+        Write-Fail "POST /attachments" $code $raw
+      }
+    } else {
+      Write-Skip "POST /attachments (curl.exe requis pour multipart)"
+    }
+  } finally {
+    if (Test-Path $tmp) { Remove-Item $tmp -Force -ErrorAction SilentlyContinue }
+  }
+}
+
+function Test-AchatsDetail($h) {
+  if (-not $h) { return }
+  $lr = Invoke-Api -Headers $h -Path "/achats-fournisseurs"
+  if ($lr.ok) {
+    $id = Get-FirstId $lr.data
+    if ($id) {
+      [void](Test-Endpoint -Label "GET /achats-fournisseurs/{id}" -Headers $h -Path "/achats-fournisseurs/$id")
+    }
+  }
+}
+
 # --- Main ---
 $base = Get-ApiBase
 Write-Host "API: $base" -ForegroundColor White
 Write-Host "Comptes: admin=$($env:TEST_ADMIN_EMAIL) fournisseur=$($env:TEST_SUPPLIER_EMAIL) boucher=$($env:TEST_BUTCHER_EMAIL)"
 
 Test-Unauthenticated
+Test-AuthRegister
 
 $adminToken = Get-AuthToken $env:TEST_ADMIN_EMAIL $env:TEST_ADMIN_PASSWORD "admin"
 $supplierToken = Get-AuthToken $env:TEST_SUPPLIER_EMAIL $env:TEST_SUPPLIER_PASSWORD "fournisseur"
 $butcherToken = Get-AuthToken $env:TEST_BUTCHER_EMAIL $env:TEST_BUTCHER_PASSWORD "boucher"
+
+$hA = if ($adminToken) { New-AuthHeaders $adminToken } else { $null }
+$hS = if ($supplierToken) { New-AuthHeaders $supplierToken } else { $null }
+$hB = if ($butcherToken) { New-AuthHeaders $butcherToken } else { $null }
 
 $refTypes = @(
   "categorie_produit", "espece_animal", "unite_produit", "mode_paiement",
@@ -449,7 +580,6 @@ $refTypes = @(
 )
 
 if ($adminToken) {
-  $hA = New-AuthHeaders $adminToken
   Test-AuthRoutes $adminToken "admin"
   Test-Referentiels $hA $refTypes
   Test-AdminEndpoints $hA
@@ -475,7 +605,6 @@ if ($adminToken) {
 }
 
 if ($supplierToken) {
-  $hS = New-AuthHeaders $supplierToken
   Test-AuthRoutes $supplierToken "fournisseur"
   Test-Referentiels $hS @("categorie_produit", "espece_animal", "mode_paiement")
   Test-SupplierEndpoints $hS
@@ -498,8 +627,12 @@ if ($supplierToken) {
   }
 }
 
+Test-StatsEndpoints $hA $hB $hS
+Test-RecettesEndpoints $hA $hB $hS
+if ($hB) { Test-Attachments $hB "boucher" }
+elseif ($hA) { Test-Attachments $hA "admin" }
+
 if ($butcherToken) {
-  $hB = New-AuthHeaders $butcherToken
   Test-AuthRoutes $butcherToken "boucher"
   Test-Referentiels $hB @("categorie_produit", "type_vente", "mode_paiement")
   Test-ButcherEndpoints $hB

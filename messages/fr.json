@@ -109,11 +109,23 @@
     "mobilePayments": "Paiements",
     "mobileReports": "Rapports"
   },
-  "placeholder": {
-    "title": "Bientôt disponible",
-    "body": "Cette section sera branchée sur l’API dans une prochaine itération."
-  },
   "settings": {
+    "profile": {
+      "title": "Profil",
+      "subtitle": "Nom et adresse e-mail du compte",
+      "name": "Nom",
+      "email": "E-mail",
+      "role": "Rôle",
+      "save": "Enregistrer",
+      "saved": "Profil mis à jour.",
+      "missingUserId": "Identifiant utilisateur manquant."
+    },
+    "preferences": {
+      "title": "Préférences",
+      "subtitle": "Langue de l’interface",
+      "language": "Langue",
+      "languageHint": "Le choix est enregistré dans ce navigateur pour vos prochaines visites."
+    },
     "firstPassword": {
       "title": "Changement de mot de passe obligatoire",
       "subtitle": "Vous utilisez encore le mot de passe initial fourni à la création du compte. Définissez un mot de passe personnel avant de poursuivre.",
@@ -310,6 +322,7 @@
     "listSubtitle": "Historique",
     "detailTitle": "Détail de l’abattage",
     "detailSubtitle": "Informations sur l’animal",
+    "audioNotes": "Notes audio",
     "animal": "Animal",
     "weight": "Poids",
     "price": "Prix d’achat",
@@ -455,19 +468,48 @@
   },
   "reports": {
     "salesTitle": "Rapport de ventes",
-    "salesSubtitle": "Synthèse et filtres",
+    "salesSubtitle": "Synthèse API (ventes et statistiques)",
+    "stocksTitle": "Rapport de stocks",
+    "stocksSubtitle": "Niveaux actuels et alertes",
+    "financialTitle": "Rapport financier",
+    "financialSubtitle": "Versements et indicateurs fournisseur",
     "dateFrom": "Du",
     "dateTo": "Au",
     "meatType": "Type de viande",
     "totalAmount": "Montant total",
     "totalQty": "Quantité totale",
     "avgSale": "Vente moyenne",
-    "byMeat": "Par type de viande",
+    "salesCount": "Nombre de ventes",
+    "byMeat": "Top produits",
+    "periode": "Période",
+    "periodeWeek": "7 derniers jours",
+    "periodeMonth": "30 derniers jours",
+    "periodeYear": "12 derniers mois",
+    "status": "Statut",
+    "statusOk": "Normal",
+    "statusAlert": "Alerte",
     "tableDate": "Date",
     "tableMeat": "Viande",
     "tableQty": "Quantité",
     "tableUnit": "Prix unit.",
     "tableTotal": "Total",
-    "tableCustomer": "Client"
+    "tableCustomer": "Client",
+    "tableType": "Type",
+    "tableProduct": "Produit",
+    "tableThreshold": "Seuil alerte",
+    "stockRefs": "Références en stock",
+    "stockAlerts": "Alertes rupture",
+    "searchProduct": "Rechercher un produit",
+    "versementsTitle": "Versements",
+    "versementPending": "En attente",
+    "versementValid": "Validés",
+    "versementRejected": "Rejetés",
+    "totalDue": "Total dû",
+    "totalReceived": "Total perçu",
+    "operations": "opérations",
+    "supplierActivity": "Activité abattage",
+    "slaughterCount": "Abattages",
+    "slaughterWeight": "Poids total",
+    "avgYield": "Rendement moyen"
   }
 }

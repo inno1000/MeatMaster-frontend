@@ -49,6 +49,9 @@ export const UserSchema = z.object({
   butcheryIds: z.array(z.string()).default([]),
   /** Identifiant API de l’entité `fournisseurs` liée au compte (achats animaux, etc.). */
   fournisseurEntityId: z.string().optional(),
+  /** User API du fournisseur assigné à la boucherie du boucher (versements). */
+  supplierUserId: z.string().optional(),
+  supplierName: z.string().optional(),
   /** Mot de passe encore celui par défaut (ou flag API) : changement obligatoire avant le reste de l’app. */
   mustChangePassword: z.boolean().optional(),
 });

@@ -1,6 +1,8 @@
 "use client";
 
-import { useEffect } from "react";
+import { withLocaleParams } from "@/lib/with-locale-params";
+
+import { useEffect, useState } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import { z } from "zod";
 import { formResolver } from "@/lib/form-resolver";
@@ -15,7 +17,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AudioRecorder } from "@/components/shared/audio-recorder";
-import { boucherieV1, isApiEnabled } from "@/lib/api";
+import { boucherieV1, isApiEnabled, uploadAudioBlobs } from "@/lib/api";
 import { formatError } from "@/lib/format-error";
 import { unwrapDataArray, unwrapDataObject } from "@/lib/api/unwrap";
 
@@ -50,8 +52,9 @@ const Schema = z
 
 type FormValues = z.infer<typeof Schema>;
 
-export default function VenteEnregistrerPage() {
+function VenteEnregistrerPage() {
   const t = useTranslations("vente");
+  const [audioBlobs, setAudioBlobs] = useState<Blob[]>([]);
   const tCommon = useTranslations("common");
   const {
     register,
@@ -113,11 +116,13 @@ export default function VenteEnregistrerPage() {
 
   const onSubmit = handleSubmit(async (values) => {
     try {
+      const attachmentIds = await uploadAudioBlobs(audioBlobs);
       const createdRaw = await boucherieV1.ventes.create({
         type_vente: values.typeVente,
         client_id: values.clientId || undefined,
         notes: values.notes || undefined,
         date_vente: values.date,
+        ...(attachmentIds.length > 0 ? { attachment_ids: attachmentIds } : {}),
         lignes: [
           {
             produit_id: values.productId,
@@ -292,7 +297,7 @@ export default function VenteEnregistrerPage() {
               </AlertDescription>
             </Alert>
           ) : null}
-          <AudioRecorder />
+          <AudioRecorder onBlobsChange={setAudioBlobs} />
           <Button type="submit" disabled={isSubmitting}>
             {t("submit")}
           </Button>
@@ -301,3 +306,5 @@ export default function VenteEnregistrerPage() {
     </div>
   );
 }
+
+export default withLocaleParams(VenteEnregistrerPage);

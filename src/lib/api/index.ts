@@ -15,10 +15,18 @@ export {
   extractUserPayload,
 } from "@/lib/api/services/auth";
 export { boucherieV1 } from "@/lib/api/services/boucherie-v1";
+export {
+  uploadAttachment,
+  uploadAudioBlobs,
+  fetchAttachmentBlob,
+} from "@/lib/api/services/attachments";
+export type { AttachmentDto } from "@/lib/api/services/attachments";
 export type {
   AnimauxListParams,
   DistributionsListParams,
+  RecettesListParams,
   ReceptionsListParams,
+  StatsParams,
   VentesListParams,
   VersementsListParams,
 } from "@/lib/api/services/boucherie-v1";

@@ -1,5 +1,7 @@
 "use client";
 
+import { withLocaleParams } from "@/lib/with-locale-params";
+
 import { useForm } from "react-hook-form";
 import { useQueryClient } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
@@ -20,7 +22,7 @@ import { formatError } from "@/lib/format-error";
 import { formResolver } from "@/lib/form-resolver";
 import { getDefaultNewUserPassword } from "@/lib/default-password";
 
-export default function AdminCreateSupplierPage() {
+function AdminCreateSupplierPage() {
   const t = useTranslations("admin");
   const queryClient = useQueryClient();
   const {
@@ -142,3 +144,5 @@ export default function AdminCreateSupplierPage() {
     </div>
   );
 }
+
+export default withLocaleParams(AdminCreateSupplierPage);

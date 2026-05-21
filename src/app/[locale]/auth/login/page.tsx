@@ -1,5 +1,7 @@
 "use client";
 
+import { withLocaleParams } from "@/lib/with-locale-params";
+
 import { useTranslations } from "next-intl";
 import { LoginForm } from "@/components/auth/login-form";
 import { Link } from "@/i18n/navigation";
@@ -13,7 +15,7 @@ import {
 import { LocaleSwitcher } from "@/components/shared/locale-switcher";
 import { AppLogo } from "@/components/shared/app-logo";
 
-export default function LoginPage() {
+function LoginPage() {
   const t = useTranslations("auth.login");
   const tReg = useTranslations("auth.register");
   const tCommon = useTranslations("common");
@@ -51,3 +53,5 @@ export default function LoginPage() {
     </div>
   );
 }
+
+export default withLocaleParams(LoginPage);

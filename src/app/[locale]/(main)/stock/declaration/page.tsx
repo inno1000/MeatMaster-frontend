@@ -1,5 +1,7 @@
 "use client";
 
+import { withLocaleParams } from "@/lib/with-locale-params";
+
 import { useQuery } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -26,7 +28,7 @@ const Schema = z.object({
 
 type FormValues = z.infer<typeof Schema>;
 
-export default function StockDeclarationPage() {
+function StockDeclarationPage() {
   const t = useTranslations("stockDeclaration");
   const tCommon = useTranslations("common");
   const {
@@ -130,3 +132,5 @@ export default function StockDeclarationPage() {
     </div>
   );
 }
+
+export default withLocaleParams(StockDeclarationPage);

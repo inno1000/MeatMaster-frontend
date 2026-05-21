@@ -119,7 +119,7 @@ Header : `Authorization: Bearer <token>`. Corps vide.
 
 ## 2. Utilisateurs & annuaire plateforme (admin)
 
-Remplace le store local `user-directory-store` + la section admin « fournisseurs ↔ boucheries ».
+Liaison fournisseur ↔ boucheries : `PATCH /api/v1/users/{id}` (`boucherie_ids`) et page admin « fournisseurs ↔ boucheries ».
 
 ### 2.1 `GET /api/v1/users`
 
@@ -242,7 +242,7 @@ CRUD standard (`get`, `update`, `remove` côté client) ; le backend expose une 
 
 ## 4. Abattages (slaughters)
 
-Remplace `MOCK_SLAUGHTER_ANIMALS` et le formulaire multi-animaux.
+Abattages : `GET/POST /api/v1/abattages`, animaux `GET /api/v1/animaux`, distributions imbriquées.
 
 ### 4.1 Modèle métier cible
 
@@ -572,10 +572,12 @@ Agrégats pour l’écran rapport ventes (totaux, moyenne, ventilation par type)
 
 ## 9. Fichiers & pièces jointes audio
 
-Plusieurs formulaires incluent un composant **enregistrement audio** (blobs locaux aujourd’hui). Flux recommandé :
+Flux implémenté (max **3** fichiers par enregistrement, 5 Mo chacun) :
 
-1. `POST /attachments` en `multipart/form-data` avec champ `file` (audio/webm, etc.) → réponse `{ "id": "uuid", "url": "..." }`.
-2. Référencer les IDs pièce jointe dans les corps prévus par le backend (ex. `POST /abattages`, `POST /ventes`, `POST …/ventes/{id}/paiements`, réceptions stock) une fois les champs exposés dans Scribe.
+1. **`POST /api/v1/attachments`** — `multipart/form-data`, champ `file` (`audio/webm`, `audio/ogg`, …) → `{ "data": { "id", "original_name", "mime_type", "size_bytes", "stream_url", "created_at" } }`.
+2. **`GET /api/v1/attachments/{id}/stream`** — lecture du flux (Bearer requis ; le front charge via `fetch` + blob URL pour `<audio>`).
+3. Corps optionnel **`attachment_ids: string[]`** sur : `POST /abattages`, `POST /ventes`, `POST /versements`, `POST /receptions`, `POST /boucheries`. Les IDs doivent appartenir à l’utilisateur connecté et ne pas déjà être liés.
+4. Les réponses `show` / `create` incluent `attachments[]` lorsque la relation est chargée (ex. détail abattage).
 
 ---
 
@@ -586,6 +588,14 @@ Backend : **`GET /api/v1/referentiels/:type`** — liste les valeurs globales **
 Exemples de **`type`** (collection Postman / Scribe) : `espece_animal`, `categorie_produit`, `unite_produit`, `mode_paiement`, `statut_animal`, `type_vente`, `statut_vente`, `statut_livraison`, `type_mouvement`.
 
 À utiliser côté front pour remplacer les listes en dur (`MEAT`, modes de paiement, statuts de vente/livraison, etc.).
+
+---
+
+## 10bis. Fournisseur ↔ boucheries (règle métier)
+
+- Un **fournisseur** peut desservir **plusieurs boucheries** (`boucherie_ids` sur `PATCH /users/{id}` pour un compte `fournisseur`).
+- Une **boucherie** ne peut être liée qu’à **un seul fournisseur** (contrainte unique sur `fournisseur_boucherie.boucherie_id`).
+- Un **boucher** (`users.boucherie_id`) hérite du fournisseur de sa boucherie : champs `fournisseur_user_id` et `fournisseur_assigne` sur `/auth/me` et les réponses user.
 
 ---
 

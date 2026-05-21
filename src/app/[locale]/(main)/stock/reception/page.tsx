@@ -1,5 +1,8 @@
 "use client";
 
+import { withLocaleParams } from "@/lib/with-locale-params";
+
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -13,7 +16,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { AudioRecorder } from "@/components/shared/audio-recorder";
 import { nativeSelectClass } from "@/lib/ui-classes";
-import { boucherieV1 } from "@/lib/api";
+import { boucherieV1, uploadAudioBlobs } from "@/lib/api";
 import { formatError } from "@/lib/format-error";
 import { unwrapDataArray } from "@/lib/api/unwrap";
 import { pickDisplayLabel } from "@/lib/display/reference-label";
@@ -27,8 +30,9 @@ const Schema = z.object({
 
 type FormValues = z.infer<typeof Schema>;
 
-export default function StockReceptionPage() {
+function StockReceptionPage() {
   const t = useTranslations("stockReception");
+  const [audioBlobs, setAudioBlobs] = useState<Blob[]>([]);
   const tCommon = useTranslations("common");
   const {
     register,
@@ -52,11 +56,13 @@ export default function StockReceptionPage() {
 
   const onSubmit = handleSubmit(async (values) => {
     try {
+      const attachmentIds = await uploadAudioBlobs(audioBlobs);
       await boucherieV1.receptions.create({
         distribution_id: values.distributionId,
         quantite_recue: values.quantity,
         date_reception: values.dateReception,
         notes: values.notes || undefined,
+        ...(attachmentIds.length > 0 ? { attachment_ids: attachmentIds } : {}),
       });
       toast.success(t("toastOk"));
       reset();
@@ -127,7 +133,7 @@ export default function StockReceptionPage() {
             <Label htmlFor="notes">{t("notes")}</Label>
             <Input id="notes" {...register("notes")} />
           </div>
-          <AudioRecorder />
+          <AudioRecorder onBlobsChange={setAudioBlobs} />
           <Button type="submit" disabled={isSubmitting}>
             {t("submit")}
           </Button>
@@ -136,3 +142,5 @@ export default function StockReceptionPage() {
     </div>
   );
 }
+
+export default withLocaleParams(StockReceptionPage);

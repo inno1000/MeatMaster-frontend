@@ -1,5 +1,7 @@
 "use client";
 
+import { withLocaleParams } from "@/lib/with-locale-params";
+
 import { useMemo, useState } from "react";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
@@ -15,7 +17,7 @@ import { unwrapDataArray } from "@/lib/api/unwrap";
 import { mapApiBoucherieRow } from "@/lib/api/mappers/boucherie-record";
 import { pickDisplayLabel } from "@/lib/display/reference-label";
 
-export default function VersementListePage() {
+function VersementListePage() {
   const t = useTranslations("versement");
   const tCommon = useTranslations("common");
   const user = useAuthStore((s) => s.user);
@@ -204,3 +206,5 @@ export default function VersementListePage() {
     </div>
   );
 }
+
+export default withLocaleParams(VersementListePage);

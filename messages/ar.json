@@ -109,11 +109,23 @@
     "mobilePayments": "التحويلات",
     "mobileReports": "التقارير"
   },
-  "placeholder": {
-    "title": "قريبًا",
-    "body": "سيتم ربط هذا القسم بواجهة البرمجة في تحديث لاحق."
-  },
   "settings": {
+    "profile": {
+      "title": "الملف الشخصي",
+      "subtitle": "الاسم والبريد الإلكتروني",
+      "name": "الاسم",
+      "email": "البريد",
+      "role": "الدور",
+      "save": "حفظ",
+      "saved": "تم تحديث الملف.",
+      "missingUserId": "معرّف المستخدم مفقود."
+    },
+    "preferences": {
+      "title": "التفضيلات",
+      "subtitle": "لغة الواجهة",
+      "language": "اللغة",
+      "languageHint": "يُحفظ الاختيار في هذا المتصفح للزيارات القادمة."
+    },
     "firstPassword": {
       "title": "يجب تغيير كلمة المرور",
       "subtitle": "ما زلت تستخدم كلمة المرور الأولية عند إنشاء الحساب. عيّن كلمة مرور شخصية قبل المتابعة.",
@@ -310,6 +322,7 @@
     "listSubtitle": "السجل",
     "detailTitle": "تفاصيل الذبح",
     "detailSubtitle": "معلومات عن الحيوان",
+    "audioNotes": "ملاحظات صوتية",
     "animal": "حيوان",
     "weight": "الوزن",
     "price": "سعر الشراء",
@@ -455,19 +468,48 @@
   },
   "reports": {
     "salesTitle": "تقرير المبيعات",
-    "salesSubtitle": "ملخص وعوامل تصفية",
+    "salesSubtitle": "ملخص من الواجهة البرمجية",
+    "stocksTitle": "تقرير المخزون",
+    "stocksSubtitle": "المستويات والتنبيهات",
+    "financialTitle": "تقرير مالي",
+    "financialSubtitle": "المدفوعات ومؤشرات المورد",
     "dateFrom": "من",
     "dateTo": "إلى",
     "meatType": "نوع اللحم",
     "totalAmount": "المبلغ الإجمالي",
     "totalQty": "الكمية الإجمالية",
     "avgSale": "متوسط البيع",
-    "byMeat": "حسب نوع اللحم",
+    "salesCount": "عدد المبيعات",
+    "byMeat": "أفضل المنتجات",
+    "periode": "الفترة",
+    "periodeWeek": "7 أيام",
+    "periodeMonth": "30 يوماً",
+    "periodeYear": "12 شهراً",
+    "status": "الحالة",
+    "statusOk": "طبيعي",
+    "statusAlert": "تنبيه",
     "tableDate": "التاريخ",
     "tableMeat": "اللحم",
     "tableQty": "الكمية",
     "tableUnit": "سعر الوحدة",
     "tableTotal": "الإجمالي",
-    "tableCustomer": "العميل"
+    "tableCustomer": "العميل",
+    "tableType": "النوع",
+    "tableProduct": "المنتج",
+    "tableThreshold": "حد التنبيه",
+    "stockRefs": "مراجع المخزون",
+    "stockAlerts": "تنبيهات النقص",
+    "searchProduct": "بحث منتج",
+    "versementsTitle": "المدفوعات",
+    "versementPending": "قيد الانتظار",
+    "versementValid": "مقبولة",
+    "versementRejected": "مرفوضة",
+    "totalDue": "الإجمالي المستحق",
+    "totalReceived": "الإجمالي المستلم",
+    "operations": "عمليات",
+    "supplierActivity": "نشاط الذبح",
+    "slaughterCount": "عمليات الذبح",
+    "slaughterWeight": "الوزن الإجمالي",
+    "avgYield": "متوسط العائد"
   }
 }

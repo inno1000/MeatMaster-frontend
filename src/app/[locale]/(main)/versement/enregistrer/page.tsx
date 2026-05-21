@@ -1,5 +1,8 @@
 "use client";
 
+import { withLocaleParams } from "@/lib/with-locale-params";
+
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { useQuery } from "@tanstack/react-query";
 import { z } from "zod";
@@ -13,10 +16,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { AudioRecorder } from "@/components/shared/audio-recorder";
-import { boucherieV1 } from "@/lib/api";
+import { boucherieV1, uploadAudioBlobs } from "@/lib/api";
 import { formatError } from "@/lib/format-error";
 import { unwrapDataArray } from "@/lib/api/unwrap";
 import { coerceApiScalarId } from "@/lib/api/coerce-id";
+import { useAuthStore } from "@/lib/stores/auth-store";
 
 const Schema = z.object({
   fournisseurUserId: z.string().min(1, "Choisissez un fournisseur"),
@@ -29,13 +33,18 @@ const Schema = z.object({
 
 type FormValues = z.infer<typeof Schema>;
 
-export default function VersementEnregistrerPage() {
+function VersementEnregistrerPage() {
   const t = useTranslations("versement");
+  const [audioBlobs, setAudioBlobs] = useState<Blob[]>([]);
   const tCommon = useTranslations("common");
+  const authUser = useAuthStore((s) => s.user);
+  const assignedSupplierId = authUser?.supplierUserId ?? "";
+  const hasAssignedSupplier = assignedSupplierId.length > 0;
   const {
     register,
     handleSubmit,
     reset,
+    setValue,
     formState: { errors, isSubmitting },
   } = useForm<FormValues>({
     resolver: formResolver(Schema),
@@ -57,10 +66,21 @@ export default function VersementEnregistrerPage() {
   const supplierUsersQuery = useQuery({
     queryKey: ["users", "suppliers-for-versement"],
     queryFn: async () => unwrapDataArray(await boucherieV1.users.list()),
+    enabled: !hasAssignedSupplier,
   });
+
+  useEffect(() => {
+    if (hasAssignedSupplier) {
+      setValue("fournisseurUserId", assignedSupplierId, { shouldValidate: true });
+    }
+  }, [assignedSupplierId, hasAssignedSupplier, setValue]);
+
+  const assignedSupplierLabel =
+    authUser?.supplierName?.trim() || assignedSupplierId;
 
   const onSubmit = handleSubmit(async (values) => {
     try {
+      const attachmentIds = await uploadAudioBlobs(audioBlobs);
       await boucherieV1.versements.create({
         fournisseur_user_id: coerceApiScalarId(values.fournisseurUserId),
         montant: values.amount,
@@ -68,6 +88,7 @@ export default function VersementEnregistrerPage() {
         date_versement: values.dateVersement,
         reference: values.reference,
         notes: values.notes || undefined,
+        ...(attachmentIds.length > 0 ? { attachment_ids: attachmentIds } : {}),
       });
       toast.success(t("toastOk"));
       reset();
@@ -86,41 +107,56 @@ export default function VersementEnregistrerPage() {
         <form onSubmit={onSubmit} className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="fournisseurUserId">{t("supplierUser")}</Label>
-            <select
-              id="fournisseurUserId"
-              className={nativeSelectClass}
-              {...register("fournisseurUserId")}
-            >
-              <option value="">—</option>
-              {(supplierUsersQuery.data ?? [])
-                .filter((item) => {
-                  const row = item as Record<string, unknown>;
-                  const r = String(row.role ?? "").toLowerCase();
-                  const roles = Array.isArray(row.roles)
-                    ? (row.roles as unknown[]).map((x) => String(x).toLowerCase())
-                    : [];
-                  return (
-                    r === "caissier" ||
-                    r === "fournisseur" ||
-                    roles.includes("caissier") ||
-                    roles.includes("fournisseur")
-                  );
-                })
-                .map((item) => {
-                  const row = item as Record<string, unknown>;
-                  const id = String(row.id ?? "");
-                  const primary = String(row.name ?? row.email ?? "").trim();
-                  const label = primary || tCommon("noLabel");
-                  return (
-                    <option key={id} value={id}>
-                      {label}
-                      {row.email && primary !== String(row.email).trim()
-                        ? ` · ${String(row.email)}`
-                        : ""}
-                    </option>
-                  );
-                })}
-            </select>
+            {hasAssignedSupplier ? (
+              <>
+                <input type="hidden" {...register("fournisseurUserId")} />
+                <p
+                  id="fournisseurUserId"
+                  className="rounded-md border border-border bg-muted/40 px-3 py-2 text-sm font-medium"
+                >
+                  {assignedSupplierLabel || assignedSupplierId}
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  Fournisseur assigné à votre boucherie (un seul par établissement).
+                </p>
+              </>
+            ) : (
+              <select
+                id="fournisseurUserId"
+                className={nativeSelectClass}
+                {...register("fournisseurUserId")}
+              >
+                <option value="">—</option>
+                {(supplierUsersQuery.data ?? [])
+                  .filter((item) => {
+                    const row = item as Record<string, unknown>;
+                    const r = String(row.role ?? "").toLowerCase();
+                    const roles = Array.isArray(row.roles)
+                      ? (row.roles as unknown[]).map((x) => String(x).toLowerCase())
+                      : [];
+                    return (
+                      r === "caissier" ||
+                      r === "fournisseur" ||
+                      roles.includes("caissier") ||
+                      roles.includes("fournisseur")
+                    );
+                  })
+                  .map((item) => {
+                    const row = item as Record<string, unknown>;
+                    const id = String(row.id ?? "");
+                    const primary = String(row.name ?? row.email ?? "").trim();
+                    const label = primary || tCommon("noLabel");
+                    return (
+                      <option key={id} value={id}>
+                        {label}
+                        {row.email && primary !== String(row.email).trim()
+                          ? ` · ${String(row.email)}`
+                          : ""}
+                      </option>
+                    );
+                  })}
+              </select>
+            )}
             {errors.fournisseurUserId ? (
               <p className="text-sm text-destructive">
                 {errors.fournisseurUserId.message}
@@ -176,7 +212,7 @@ export default function VersementEnregistrerPage() {
             <Label htmlFor="notes">Notes</Label>
             <Input id="notes" {...register("notes")} />
           </div>
-          <AudioRecorder />
+          <AudioRecorder onBlobsChange={setAudioBlobs} />
           <Button type="submit" disabled={isSubmitting}>
             {t("submit")}
           </Button>
@@ -185,3 +221,5 @@ export default function VersementEnregistrerPage() {
     </div>
   );
 }
+
+export default withLocaleParams(VersementEnregistrerPage);

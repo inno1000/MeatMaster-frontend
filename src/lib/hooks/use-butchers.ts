@@ -10,18 +10,26 @@ import { boucherieV1 } from "@/lib/api/services/boucherie-v1";
 import { unwrapDataArray } from "@/lib/api/unwrap";
 import { mapApiBoucherieRow } from "@/lib/api/mappers/boucherie-record";
 
+export type CreateButcherPayload = ButcherFormInput & {
+  attachmentIds?: string[];
+};
+
 const fetchButchers = async () => {
   const raw = await boucherieV1.boucheries.list();
   return unwrapDataArray(raw).map(mapApiBoucherieRow);
 };
 
-const createButcher = async (body: ButcherFormInput) => {
+const createButcher = async (body: CreateButcherPayload) => {
+  const { attachmentIds, ...fields } = body;
   return boucherieV1.boucheries.create({
-    nom: body.name,
-    adresse: body.address,
-    ville: body.city,
-    telephone: body.phone,
+    nom: fields.nom,
+    adresse: fields.adresse,
+    ville: fields.ville,
+    telephone: fields.telephone,
     actif: true,
+    ...(attachmentIds && attachmentIds.length > 0
+      ? { attachment_ids: attachmentIds }
+      : {}),
   });
 };
 
@@ -39,7 +47,7 @@ export const useCreateButcher = () => {
 
   return useMutation({
     mutationKey: ["butchers", "create"],
-    mutationFn: (body: ButcherFormInput) => createButcher(body),
+    mutationFn: (body: CreateButcherPayload) => createButcher(body),
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ["butchers"] });
       toast.success(t("toastOk"));

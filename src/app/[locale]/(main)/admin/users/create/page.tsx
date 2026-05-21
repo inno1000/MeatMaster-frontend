@@ -1,5 +1,7 @@
 "use client";
 
+import { withLocaleParams } from "@/lib/with-locale-params";
+
 import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -24,7 +26,7 @@ import { formResolver } from "@/lib/form-resolver";
 import { nativeSelectClass } from "@/lib/ui-classes";
 import { getDefaultNewUserPassword } from "@/lib/default-password";
 
-export default function AdminCreateUserPage() {
+function AdminCreateUserPage() {
   const t = useTranslations("admin");
   const queryClient = useQueryClient();
   const {
@@ -211,3 +213,5 @@ export default function AdminCreateUserPage() {
     </div>
   );
 }
+
+export default withLocaleParams(AdminCreateUserPage);

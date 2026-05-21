@@ -7,7 +7,6 @@ import { NextIntlClientProvider } from "next-intl";
 import { NuqsAdapter } from "nuqs/adapters/next/app";
 import { Toaster } from "sonner";
 import { useAuthStore } from "@/lib/stores/auth-store";
-import { useUserDirectoryStore } from "@/lib/stores/user-directory-store";
 
 type ProvidersProps = {
   children: ReactNode;
@@ -39,7 +38,6 @@ export const Providers = ({ children, locale, messages }: ProvidersProps) => {
 
   useEffect(() => {
     void useAuthStore.persist.rehydrate();
-    void useUserDirectoryStore.persist.rehydrate();
   }, []);
 
   return (

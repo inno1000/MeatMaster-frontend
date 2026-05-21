@@ -1,6 +1,8 @@
 "use client";
 
-import { useEffect, useMemo } from "react";
+import { withLocaleParams } from "@/lib/with-locale-params";
+
+import { useEffect, useMemo, useState } from "react";
 import { useFieldArray, useForm, useWatch } from "react-hook-form";
 import { z } from "zod";
 import { formResolver } from "@/lib/form-resolver";
@@ -15,7 +17,7 @@ import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { nativeSelectClass } from "@/lib/ui-classes";
 import { AudioRecorder } from "@/components/shared/audio-recorder";
-import { boucherieV1 } from "@/lib/api";
+import { boucherieV1, uploadAudioBlobs } from "@/lib/api";
 import { formatError } from "@/lib/format-error";
 import { unwrapDataArray, unwrapDataObject } from "@/lib/api/unwrap";
 import { coerceApiScalarId } from "@/lib/api/coerce-id";
@@ -111,8 +113,9 @@ function defaultDistributionLignes(
   }));
 }
 
-export default function AbattageEnregistrerPage() {
+function AbattageEnregistrerPage() {
   const t = useTranslations("abattage");
+  const [audioBlobs, setAudioBlobs] = useState<Blob[]>([]);
   const queryClient = useQueryClient();
   const user = useAuthStore((s) => s.user);
   const appRole = normalizeAppRole(user?.role);
@@ -373,12 +376,15 @@ export default function AbattageEnregistrerPage() {
         0,
       );
 
+      const attachmentIds = await uploadAudioBlobs(audioBlobs);
+
       const abattageBody: Record<string, unknown> = {
         animal_id: coerceApiScalarId(values.animalId),
         date_abattage: values.dateAbattage,
         poids_carcasse_kg: poidsCarcasse,
         stocks,
         notes: values.notes || undefined,
+        ...(attachmentIds.length > 0 ? { attachment_ids: attachmentIds } : {}),
       };
 
       const abRaw = await boucherieV1.abattages.create(abattageBody);
@@ -759,7 +765,7 @@ export default function AbattageEnregistrerPage() {
               </Button>
             </div>
 
-            <AudioRecorder />
+            <AudioRecorder onBlobsChange={setAudioBlobs} />
             <Button type="submit" disabled={isSubmitting} className="w-full sm:w-auto">
               {t("submitSlaughterWithDistribution")}
             </Button>
@@ -769,3 +775,5 @@ export default function AbattageEnregistrerPage() {
     </div>
   );
 }
+
+export default withLocaleParams(AbattageEnregistrerPage);

@@ -1,5 +1,7 @@
 "use client";
 
+import { withLocaleParams } from "@/lib/with-locale-params";
+
 import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
@@ -15,7 +17,7 @@ import { formatError } from "@/lib/format-error";
 import { isApiEnabled } from "@/lib/api/config";
 import { mapApiBoucherieRow } from "@/lib/api/mappers/boucherie-record";
 
-export default function AdminUsersListPage() {
+function AdminUsersListPage() {
   const t = useTranslations("admin");
   const tCommon = useTranslations("common");
   const apiOk = isApiEnabled();
@@ -119,3 +121,5 @@ export default function AdminUsersListPage() {
     </div>
   );
 }
+
+export default withLocaleParams(AdminUsersListPage);

@@ -1,5 +1,7 @@
 "use client";
 
+import { withLocaleParams } from "@/lib/with-locale-params";
+
 import { useForm } from "react-hook-form";
 import { formResolver } from "@/lib/form-resolver";
 import { useTranslations } from "next-intl";
@@ -24,7 +26,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
-export default function RegisterPage() {
+function RegisterPage() {
   const t = useTranslations("auth.register");
   const tLogin = useTranslations("auth.login");
   const tCommon = useTranslations("common");
@@ -138,3 +140,5 @@ export default function RegisterPage() {
     </div>
   );
 }
+
+export default withLocaleParams(RegisterPage);
