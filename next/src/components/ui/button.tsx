@@ -23,14 +23,14 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
           size === "icon" &&
             "size-11 shrink-0 p-0 [&_svg]:pointer-events-none [&_svg]:size-5",
           variant === "primary" &&
-            "bg-primary text-primary-foreground shadow-sm shadow-primary/25 hover:brightness-110 hover:shadow-md hover:shadow-primary/20",
+            "bg-primary text-primary-foreground hover:brightness-110",
           variant === "secondary" &&
-            "bg-muted text-foreground hover:bg-muted/90",
+            "border border-primary/12 bg-secondary text-secondary-foreground hover:bg-secondary/85",
           variant === "outline" &&
             "border border-border/80 bg-card/80 backdrop-blur-sm hover:border-border hover:bg-muted/60",
           variant === "ghost" && "hover:bg-muted/80",
           variant === "destructive" &&
-            "bg-destructive text-white shadow-sm hover:brightness-110",
+            "bg-destructive text-white hover:brightness-110",
           className,
         )}
         ref={ref}

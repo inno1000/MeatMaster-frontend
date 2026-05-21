@@ -3,6 +3,7 @@
 import { useForm, Controller } from "react-hook-form";
 import { formResolver } from "@/lib/form-resolver";
 import { useTranslations } from "next-intl";
+import { Store } from "lucide-react";
 import { ParentCard } from "@/components/shared/parent-card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -48,7 +49,7 @@ export default function BoucherieEnregistrerPage() {
     register,
     control,
     handleSubmit,
-    formState: { errors },
+    formState: { errors, isSubmitting },
   } = useForm<ButcherFormInput>({
     resolver: formResolver(ButcherFormSchema),
     defaultValues: {
@@ -77,7 +78,7 @@ export default function BoucherieEnregistrerPage() {
         <h1 className="text-2xl font-bold">{t("createTitle")}</h1>
         <p className="text-muted-foreground">{t("createSubtitle")}</p>
       </div>
-      <ParentCard title={t("createTitle")}>
+      <ParentCard title={t("createTitle")} titleIcon={Store}>
         <form onSubmit={onSubmit} className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="name">{t("name")}</Label>
@@ -113,11 +114,19 @@ export default function BoucherieEnregistrerPage() {
             <div className="space-y-2">
               <Label htmlFor="postal">{t("postal")}</Label>
               <Input id="postal" {...register("postal_code")} />
+              {errors.postal_code ? (
+                <p className="text-sm text-destructive">
+                  {errors.postal_code.message}
+                </p>
+              ) : null}
             </div>
           </div>
           <div className="space-y-2">
             <Label htmlFor="phone">{t("phone")}</Label>
             <Input id="phone" {...register("phone")} />
+            {errors.phone ? (
+              <p className="text-sm text-destructive">{errors.phone.message}</p>
+            ) : null}
           </div>
           <div className="space-y-2">
             <Label htmlFor="email">{t("email")}</Label>
@@ -129,15 +138,24 @@ export default function BoucherieEnregistrerPage() {
           <div className="space-y-2">
             <Label htmlFor="website">{t("website")}</Label>
             <Input id="website" placeholder="example.com" {...register("website")} />
+            {errors.website ? (
+              <p className="text-sm text-destructive">{errors.website.message}</p>
+            ) : null}
           </div>
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-2">
               <Label htmlFor="open">{t("opening")}</Label>
               <Input id="open" type="time" {...register("openingHour")} />
+              {errors.openingHour ? (
+                <p className="text-sm text-destructive">{errors.openingHour.message}</p>
+              ) : null}
             </div>
             <div className="space-y-2">
               <Label htmlFor="close">{t("closing")}</Label>
               <Input id="close" type="time" {...register("closingHour")} />
+              {errors.closingHour ? (
+                <p className="text-sm text-destructive">{errors.closingHour.message}</p>
+              ) : null}
             </div>
           </div>
 
@@ -199,6 +217,9 @@ export default function BoucherieEnregistrerPage() {
                 </option>
               ))}
             </select>
+            {errors.owner ? (
+              <p className="text-sm text-destructive">{errors.owner.message}</p>
+            ) : null}
           </div>
 
           <Controller
@@ -247,7 +268,7 @@ export default function BoucherieEnregistrerPage() {
           />
 
           <AudioRecorder />
-          <Button type="submit" disabled={createButcher.isPending}>
+          <Button type="submit" disabled={createButcher.isPending || isSubmitting}>
             {t("submit")}
           </Button>
         </form>

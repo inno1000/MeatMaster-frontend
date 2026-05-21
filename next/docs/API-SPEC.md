@@ -2,11 +2,15 @@
 
 Ce document décrit les **endpoints REST** attendus par le frontend actuel (remplacement des mocks) et les **structures JSON** associées.
 
-**Variable d’environnement** : `NEXT_PUBLIC_API_URL` = **origine seule** du serveur (sans `/api/v1`), alignée sur la collection Postman — par exemple `https://boucherie-api.onrender.com`. Le client ajoute ensuite `/api/v1/...` (`config.ts`, `v1-url.ts`).
+**Variables d’environnement** : `NEXT_PUBLIC_API_URL` = **origine seule** du serveur (sans chemin API), par exemple `https://boucherie-api.onrender.com`. **`NEXT_PUBLIC_API_PREFIX`** (optionnel, défaut **`/api/v1`**) = segment après l’origine pour toutes les routes REST (`config.ts`, `v1-url.ts`).
 
 **Documentation officielle (Scribe)** : [Boucherie API](https://boucherie-api.onrender.com/docs/). Liens directs : boucheries [`GET api/v1/boucheries`](https://boucherie-api.onrender.com/docs/#boucheries-GETapi-v1-boucheries), ventes [`GET api/v1/ventes`](https://boucherie-api.onrender.com/docs/#ventes-GETapi-v1-ventes).
 
-**Collection Postman** : export équivalent (variable `baseUrl` → `https://boucherie-api.onrender.com`, chemins `api/v1/...`). Les corps / réponses ci‑dessous sont **alignés** sur cette collection et sur `services/auth.ts` + `boucherie-v1.ts`.
+**Guide d’utilisation (flux par rôle)** : [https://boucherie-api.onrender.com/guide](https://boucherie-api.onrender.com/guide).
+
+**Collection Postman** : export équivalent (variable `baseUrl` → `https://boucherie-api.onrender.com`, chemins `api/v1/...`). Les corps / réponses ci‑dessous sont **alignés** sur cette collection, le guide et sur `services/auth.ts` + `boucherie-v1.ts`.
+
+**Création de comptes (`POST /api/v1/users`)** : pour **`boucher`** uniquement, envoyer **`boucherie_id`** (obligatoire). Les **`admin`** ne sont pas rattachés à une boucherie. Pour **`fournisseur`**, envoyer un objet optionnel **`fournisseur`** `{ nom, contact, telephone, email?, adresse? }` ; les rattachements multi‑boucheries se font ensuite (ex. écran admin ou `PATCH /users/{id}`).
 
 **Conventions générales**
 
@@ -25,7 +29,7 @@ Ce document décrit les **endpoints REST** attendus par le frontend actuel (remp
 - `supplier` — **fournisseur** : inclut tout ce que l’ancien écran « caissier » couvrait (ventes, liste des versements, etc.) **plus** les fonctions fournisseur (abattages, rapports). Une seule entrée UI ; pas de rôle `caissier` dans le state applicatif.
 - `admin` — coordination plateforme (équivalent API `admin`).
 
-**Compatibilité API Laravel** : si le backend renvoie encore `role: "caissier"` (ou `fournisseur`), le front le mappe vers **`supplier`** (`auth-user.ts`). Les valeurs d’inscription possibles côté API (`caissier`, etc.) restent acceptées dans le corps JSON ; le client normalise toujours vers `butcher` | `supplier` | `admin`.
+**Compatibilité API Laravel** : le backend expose `role: "fournisseur"` ; le front mappe vers **`supplier`** (`auth-user.ts`). Un ancien `caissier` éventuel est encore accepté à la lecture. Les corps JSON utilisent **`admin`**, **`boucher`**, **`fournisseur`** ; le state client reste `butcher` | `supplier` | `admin`.
 
 Les règles d’accès UI sont dans `src/lib/authz.ts` ; le backend doit **refuser** toute ressource hors périmètre même si l’URL est devinée.
 
@@ -37,7 +41,7 @@ Tous les chemins sont sous **`/api/v1/auth/...`** (full URL : `{NEXT_PUBLIC_API_
 
 ### 1.1 `POST /api/v1/auth/register`
 
-**Requête** (corps JSON API)
+**Requête** (corps JSON API — voir aussi collection Postman / [guide](https://boucherie-api.onrender.com/guide))
 
 ```json
 {
@@ -45,12 +49,16 @@ Tous les chemins sont sous **`/api/v1/auth/...`** (full URL : `{NEXT_PUBLIC_API_
   "email": "user@example.com",
   "password": "secretsecret",
   "password_confirmation": "secretsecret",
-  "boucherie_id": "uuid-optionnel-selon-règle-métier",
-  "role": "caissier"
+  "role": "boucher",
+  "boucherie_id": "uuid-de-la-boucherie"
 }
 ```
 
-`role` : valeurs attendues côté API (`admin`, `boucher`, `caissier`, etc. — voir doc Scribe).
+Pour un **`admin`**, ne pas envoyer de **`boucherie_id`** (compte non rattaché à une boucherie).
+
+Pour un **fournisseur**, le corps peut inclure un objet **`fournisseur`** (nom, contact, téléphone, etc.), comme pour `POST /api/v1/users`.
+
+`role` : valeurs attendues côté API (`admin`, `boucher`, `fournisseur`, etc. — voir doc Scribe).
 
 **Réponse `201`**
 
@@ -113,9 +121,9 @@ Header : `Authorization: Bearer <token>`. Corps vide.
 
 Remplace le store local `user-directory-store` + la section admin « fournisseurs ↔ boucheries ».
 
-### 2.1 `GET /admin/users` ou `GET /users`
+### 2.1 `GET /api/v1/users`
 
-Liste des comptes (admin). Filtres query optionnels : `?role=supplier&butcheryId=`.
+Liste paginée des comptes (admin). Le frontend appelle `boucherieV1.users.list()` (`GET /api/v1/users`). Filtres query selon règles backend.
 
 **Réponse `200`**
 
@@ -135,7 +143,7 @@ Liste des comptes (admin). Filtres query optionnels : `?role=supplier&butcheryId
 }
 ```
 
-### 2.2 `PUT /admin/users/:userId/butcheries` (affectation ; les mises à jour user utilisent **`PUT /users/:id`** côté API)
+### 2.2 `PUT /admin/users/:userId/butcheries` (affectation ; les mises à jour user utilisent **`PATCH /users/:id`** côté API — aligné guide Scribe / Laravel)
 
 Affectation **exclusive** des boucheries desservies par un **fournisseur** (liste complète remplacée).
 

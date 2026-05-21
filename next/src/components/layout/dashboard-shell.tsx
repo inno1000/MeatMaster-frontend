@@ -2,13 +2,12 @@
 
 import * as Dialog from "@radix-ui/react-dialog";
 import * as Separator from "@radix-ui/react-separator";
-import { Menu, UserRound } from "lucide-react";
+import { ChevronDown, Menu, UserRound } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { usePathname } from "@/i18n/navigation";
-import { Link } from "@/i18n/navigation";
+import { Link, usePathname } from "@/i18n/navigation";
 import { cn } from "@/lib/utils";
 import { mainNavigation, type NavEntry } from "@/lib/nav-config";
-import { filterNavigationByRole } from "@/lib/authz";
+import { filterNavigationByRole, normalizeAppRole } from "@/lib/authz";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -19,22 +18,50 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { AppLogo } from "@/components/shared/app-logo";
 import { LocaleSwitcher } from "@/components/shared/locale-switcher";
+import { MobileTabBar } from "@/components/layout/mobile-tab-bar";
 import { useAuthStore } from "@/lib/stores/auth-store";
-import { useState, type ReactNode } from "react";
+import {
+  useCallback,
+  useLayoutEffect,
+  useState,
+  type ReactNode,
+} from "react";
 import { motion } from "framer-motion";
 
-const navLinkClass = (active: boolean) =>
-  cn(
-    "flex min-h-11 items-center gap-3 rounded-xl px-3 py-2.5 text-base font-medium transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary sm:text-sm",
-    active
-      ? "bg-primary/12 text-primary shadow-sm ring-1 ring-primary/15"
-      : "text-muted-foreground hover:bg-muted/80 hover:text-foreground",
-  );
+const navRootLinkBase =
+  "flex min-h-11 items-center gap-3 rounded-xl px-3 py-2.5 text-base font-medium transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary sm:text-sm";
+
+const navChildLinkBase =
+  "flex min-h-11 items-center gap-3 rounded-xl px-3 py-2.5 text-base transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary sm:text-sm";
+
+const navLinkActiveClass =
+  "bg-primary/12 font-medium text-primary ring-1 ring-primary/15 shadow-none";
+
+const pathMatchesNavHref = (href: string, pathname: string) =>
+  pathname === href || pathname.startsWith(`${href}/`);
+
+/** Groupe dont une entrée enfant correspond à la page courante (pour ouvrir un seul bloc). */
+const getActiveGroupTitleKey = (
+  entries: NavEntry[],
+  pathname: string,
+): string | null => {
+  for (const entry of entries) {
+    if (entry.type !== "group") continue;
+    for (const child of entry.group.children) {
+      if (pathMatchesNavHref(child.href, pathname)) {
+        return entry.group.titleKey;
+      }
+    }
+  }
+  return null;
+};
 
 const renderNav = (
   entry: NavEntry,
   pathname: string,
   t: ReturnType<typeof useTranslations>,
+  expandedGroupKeys: Set<string>,
+  toggleGroup: (groupTitleKey: string) => void,
   onNavigate?: () => void,
   keyPrefix = "",
 ) => {
@@ -49,57 +76,91 @@ const renderNav = (
 
   if (entry.type === "link") {
     const Icon = entry.icon;
-    const active =
-      pathname === entry.href || pathname.startsWith(`${entry.href}/`);
+    const active = pathMatchesNavHref(entry.href, pathname);
     return (
       <Link
         key={entry.href}
         href={entry.href}
         onClick={onNavigate}
-        className={navLinkClass(active)}
+        className={cn(
+          navRootLinkBase,
+          active
+            ? navLinkActiveClass
+            : "text-muted-foreground hover:bg-muted/80 hover:text-foreground",
+        )}
       >
-        <Icon className="size-5 shrink-0 sm:size-4" aria-hidden />
+        <Icon
+          className={cn(
+            "size-5 shrink-0 sm:size-4",
+            active ? "text-primary" : "text-muted-foreground",
+          )}
+          aria-hidden
+        />
         {t(entry.titleKey)}
       </Link>
     );
   }
 
   const GroupIcon = entry.group.icon;
+  const groupKey = entry.group.titleKey;
+  const isExpanded = expandedGroupKeys.has(groupKey);
+
   return (
-    <div key={entry.group.titleKey} className="space-y-1">
-      <div
-        className="flex min-h-11 items-center gap-3 rounded-xl px-3 py-2.5 text-base font-semibold tracking-tight text-muted-foreground sm:text-sm"
-        role="presentation"
+    <div key={groupKey} className="space-y-1">
+      <button
+        type="button"
+        onClick={() => toggleGroup(groupKey)}
+        aria-expanded={isExpanded}
+        className={cn(
+          "flex w-full min-h-11 cursor-pointer items-center gap-2 rounded-xl bg-muted/35 px-3 py-2.5 text-start text-base font-semibold tracking-tight text-foreground transition-colors hover:bg-muted/55 sm:text-sm",
+          "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background",
+        )}
       >
-        <GroupIcon className="size-5 shrink-0 sm:size-4" aria-hidden />
-        {t(entry.group.titleKey)}
-      </div>
-      <div className="space-y-0.5 pl-1 sm:pl-2">
-        {entry.group.children.map((child) => {
-          const ChildIcon = child.icon;
-          const active =
-            pathname === child.href || pathname.startsWith(`${child.href}/`);
-          return (
-            <Link
-              key={child.href}
-              href={child.href}
-              onClick={onNavigate}
-              className={cn(
-                "flex min-h-11 items-center gap-3 rounded-xl px-3 py-2.5 text-base transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary sm:text-sm",
-                active
-                  ? "bg-primary/12 font-medium text-primary shadow-sm ring-1 ring-primary/15"
-                  : "text-muted-foreground hover:bg-muted/80 hover:text-foreground",
-              )}
-            >
-              <ChildIcon
-                className="size-4 shrink-0 opacity-70 sm:size-3.5"
-                aria-hidden
-              />
-              {t(child.titleKey)}
-            </Link>
-          );
-        })}
-      </div>
+        <GroupIcon
+          className="size-5 shrink-0 text-muted-foreground sm:size-4"
+          aria-hidden
+        />
+        <span className="min-w-0 flex-1 leading-snug">
+          {t(entry.group.titleKey)}
+        </span>
+        <ChevronDown
+          className={cn(
+            "size-4 shrink-0 opacity-70 transition-transform duration-200",
+            isExpanded ? "rotate-180" : "rotate-0",
+          )}
+          aria-hidden
+        />
+      </button>
+      {isExpanded ? (
+        <div className="space-y-0.5 pl-1 sm:pl-2">
+          {entry.group.children.map((child) => {
+            const ChildIcon = child.icon;
+            const active = pathMatchesNavHref(child.href, pathname);
+            return (
+              <Link
+                key={child.href}
+                href={child.href}
+                onClick={onNavigate}
+                className={cn(
+                  navChildLinkBase,
+                  active
+                    ? navLinkActiveClass
+                    : "text-muted-foreground hover:bg-muted/80 hover:text-foreground",
+                )}
+              >
+                <ChildIcon
+                  className={cn(
+                    "size-4 shrink-0 opacity-70 sm:size-3.5",
+                    active ? "text-primary opacity-100" : "text-muted-foreground",
+                  )}
+                  aria-hidden
+                />
+                {t(child.titleKey)}
+              </Link>
+            );
+          })}
+        </div>
+      ) : null}
     </div>
   );
 };
@@ -110,15 +171,42 @@ export const DashboardShell = ({ children }: { children: ReactNode }) => {
   const logout = useAuthStore((s) => s.logout);
   const user = useAuthStore((s) => s.user);
   const [mobileOpen, setMobileOpen] = useState(false);
-  const navEntries = filterNavigationByRole(
-    mainNavigation,
-    user?.role ?? "butcher",
+  const [expandedGroupKeys, setExpandedGroupKeys] = useState<Set<string>>(
+    () => new Set(),
   );
+
+  const appRole = normalizeAppRole(user?.role);
+
+  const navEntries = filterNavigationByRole(mainNavigation, appRole);
+
+  /** À chaque changement de route ou de rôle : un seul bloc ouvert, celui de la page courante. */
+  useLayoutEffect(() => {
+    const entries = filterNavigationByRole(mainNavigation, appRole);
+    const key = getActiveGroupTitleKey(entries, pathname);
+    setExpandedGroupKeys(key ? new Set([key]) : new Set());
+  }, [pathname, appRole]);
+
+  const toggleGroup = useCallback((groupTitleKey: string) => {
+    setExpandedGroupKeys((prev) => {
+      if (prev.has(groupTitleKey)) {
+        return new Set();
+      }
+      return new Set([groupTitleKey]);
+    });
+  }, []);
 
   const sidebarNav = (
     <nav className="flex flex-1 flex-col gap-1 overflow-y-auto overscroll-y-contain px-2 py-4 pb-safe safe-pad-x">
       {navEntries.map((entry, i) =>
-        renderNav(entry, pathname, t, () => setMobileOpen(false), `nav-${i}`),
+        renderNav(
+          entry,
+          pathname,
+          t,
+          expandedGroupKeys,
+          toggleGroup,
+          () => setMobileOpen(false),
+          `nav-${i}`,
+        ),
       )}
       <div className="mt-auto border-t border-border pt-4 text-center">
         <span className="text-xs text-muted-foreground">
@@ -145,23 +233,22 @@ export const DashboardShell = ({ children }: { children: ReactNode }) => {
 
       <Dialog.Root open={mobileOpen} onOpenChange={setMobileOpen}>
         <div className="flex min-h-dvh min-w-0 min-h-0 flex-1 flex-col">
-          <header className="safe-pad-t sticky top-0 z-50 flex min-h-14 shrink-0 items-center gap-2 border-b border-border/60 bg-card/90 px-3 shadow-sm shadow-black/[0.03] backdrop-blur-md supports-[backdrop-filter]:bg-card/80 sm:gap-3 sm:px-4 md:px-6">
-            <div className="flex shrink-0 md:hidden">
-              <Dialog.Trigger asChild>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="icon"
-                  aria-label={t("nav.openMenu")}
-                >
-                  <Menu className="size-5" />
-                </Button>
-              </Dialog.Trigger>
+          <header className="safe-pad-t sticky top-0 z-50 flex min-h-14 shrink-0 items-center gap-2 border-b border-border/60 bg-card/95 px-3 backdrop-blur-md supports-[backdrop-filter]:bg-card/85 sm:gap-3 sm:px-4 md:px-6">
+            <div className="flex shrink-0 items-center gap-2">
+              <div className="md:hidden">
+                <Dialog.Trigger asChild>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="icon"
+                    aria-label={t("nav.openMenu")}
+                  >
+                    <Menu className="size-5" />
+                  </Button>
+                </Dialog.Trigger>
+              </div>
             </div>
-            <div className="flex min-w-0 flex-1 justify-center md:hidden">
-              {brand}
-            </div>
-            <div className="hidden flex-1 md:block" aria-hidden />
+            <div className="min-w-0 flex-1" aria-hidden />
             <div className="flex shrink-0 items-center gap-2 sm:gap-3">
               <LocaleSwitcher />
               <DropdownMenu>
@@ -196,7 +283,7 @@ export const DashboardShell = ({ children }: { children: ReactNode }) => {
 
           <Dialog.Portal>
             <Dialog.Overlay className="fixed inset-0 z-50 bg-black/45 backdrop-blur-[2px] data-[state=open]:animate-in data-[state=closed]:animate-out" />
-            <Dialog.Content className="fixed start-0 top-0 z-50 flex h-[100dvh] max-h-[100dvh] w-[min(100vw,20rem)] flex-col border-e border-border/60 bg-card/95 shadow-float outline-none backdrop-blur-xl data-[state=open]:slide-in-from-left data-[state=closed]:slide-out-to-left rtl:data-[state=open]:slide-in-from-right rtl:data-[state=closed]:slide-out-to-right">
+            <Dialog.Content className="fixed start-0 top-0 z-50 flex h-[100dvh] max-h-[100dvh] w-[min(100vw,20rem)] flex-col border-e border-border/60 bg-card/95 outline-none backdrop-blur-xl data-[state=open]:slide-in-from-left data-[state=closed]:slide-out-to-left rtl:data-[state=open]:slide-in-from-right rtl:data-[state=closed]:slide-out-to-right">
               <Dialog.Title className="sr-only">{t("nav.openMenu")}</Dialog.Title>
               <Dialog.Description className="sr-only">
                 {t("common.appName")}
@@ -208,7 +295,7 @@ export const DashboardShell = ({ children }: { children: ReactNode }) => {
             </Dialog.Content>
           </Dialog.Portal>
 
-          <main className="safe-pad-x flex-1 overflow-y-auto overflow-x-hidden px-3 py-4 sm:px-4 sm:py-6 md:px-8 md:py-10">
+          <main className="safe-pad-x flex-1 overflow-y-auto overflow-x-hidden px-3 pb-[calc(5.65rem+env(safe-area-inset-bottom,0px))] pt-4 sm:px-4 sm:pt-6 md:px-8 md:pb-10 md:pt-10">
             <motion.div
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
@@ -219,6 +306,7 @@ export const DashboardShell = ({ children }: { children: ReactNode }) => {
             </motion.div>
           </main>
 
+          <MobileTabBar role={appRole} />
         </div>
       </Dialog.Root>
     </div>

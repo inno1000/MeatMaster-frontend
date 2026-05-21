@@ -3,32 +3,46 @@
 @theme {
   --font-sans: var(--font-poppins), ui-sans-serif, system-ui, sans-serif;
 
-  /* Fond légèrement chaud, texte neutre profond */
-  --color-background: oklch(0.985 0.006 95);
-  --color-foreground: oklch(0.22 0.02 265);
+  /* Fond neutre grisâtre / blanchâtre ; primaires et accents gardent la charte bordeaux */
+  --color-background: oklch(0.965 0.006 264);
+  --color-foreground: oklch(0.22 0.02 264);
 
-  --color-card: oklch(0.998 0.004 95);
-  --color-card-foreground: oklch(0.22 0.02 265);
+  --color-card: oklch(0.995 0.004 264);
+  --color-card-foreground: oklch(0.22 0.02 264);
 
-  /* Accent : teal profond (fraîcheur / pro), lisible sur mobile */
-  --color-primary: oklch(0.48 0.12 185);
-  --color-primary-foreground: oklch(0.99 0.005 95);
+  /* Primaire bordeaux — lisible sur mobile & boutons */
+  --color-primary: oklch(0.43 0.14 12);
+  --color-primary-foreground: oklch(0.985 0.012 95);
 
-  --color-muted: oklch(0.955 0.012 95);
-  --color-muted-foreground: oklch(0.45 0.02 265);
+  /* Surfaces secondaires neutres */
+  --color-secondary: oklch(0.94 0.008 264);
+  --color-secondary-foreground: oklch(0.32 0.025 264);
 
-  --color-border: oklch(0.91 0.008 95);
-  --color-destructive: oklch(0.52 0.2 25);
-  --color-ring: oklch(0.48 0.12 185);
+  /* Accent doré / ambre (stats, succès doux, reliefs) */
+  --color-accent: oklch(0.62 0.13 58);
+  --color-accent-foreground: oklch(0.26 0.06 22);
+
+  --color-muted: oklch(0.93 0.007 264);
+  --color-muted-foreground: oklch(0.45 0.018 264);
+
+  --color-border: oklch(0.885 0.012 264);
+  --color-destructive: oklch(0.51 0.21 22);
+  --color-ring: oklch(0.43 0.14 12);
+
+  /* Zones couleur (navigation, accents) — dominante bordeaux + touches complémentaires */
+  --color-zone-wine: oklch(0.43 0.14 12);
+  --color-zone-sage: oklch(0.48 0.11 158);
+  --color-zone-amber: oklch(0.62 0.14 58);
+  --color-zone-ocean: oklch(0.52 0.12 245);
+  --color-zone-clay: oklch(0.58 0.12 48);
+  --color-zone-rust: oklch(0.5 0.14 32);
+  --color-zone-teal: oklch(0.48 0.1 195);
+  --color-zone-plum: oklch(0.52 0.13 305);
+  --color-zone-slate: oklch(0.48 0.06 265);
 
   --radius-lg: 0.875rem;
   --radius-xl: 1rem;
   --radius-2xl: 1.25rem;
-
-  /* Ombre douce type “app 2025” */
-  --shadow-card: 0 1px 0 oklch(0 0 0 / 0.04),
-    0 8px 24px -8px oklch(0.2 0.04 265 / 0.08);
-  --shadow-float: 0 12px 40px -12px oklch(0.2 0.04 265 / 0.12);
 }
 
 @layer base {
@@ -47,7 +61,7 @@
   }
 
   ::selection {
-    background: oklch(0.48 0.12 185 / 0.18);
+    background: oklch(0.43 0.14 12 / 0.22);
     color: var(--color-foreground);
   }
 
@@ -91,33 +105,13 @@
     padding-bottom: max(1rem, env(safe-area-inset-bottom, 0px));
   }
 
-  /** Fond principal app (dashboard) */
+  /** Fond app : aligné sur le thème, sans dégradé coloré. */
   .bg-app {
-    background: radial-gradient(
-        120% 80% at 100% -10%,
-        oklch(0.48 0.12 185 / 0.07),
-        transparent 55%
-      ),
-      radial-gradient(
-        80% 60% at 0% 100%,
-        oklch(0.55 0.08 200 / 0.06),
-        transparent 50%
-      ),
-      var(--color-background);
+    @apply bg-background;
   }
 
-  /** Pages auth : halos décoratifs */
+  /** Pages auth : même fond neutre que l’app. */
   .auth-ambient {
-    background: radial-gradient(
-        ellipse 85% 70% at 50% -30%,
-        oklch(0.48 0.14 185 / 0.14),
-        transparent 55%
-      ),
-      radial-gradient(
-        ellipse 60% 50% at 100% 100%,
-        oklch(0.55 0.1 200 / 0.1),
-        transparent 45%
-      ),
-      oklch(0.97 0.008 95);
+    @apply bg-background;
   }
 }

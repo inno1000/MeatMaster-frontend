@@ -1,6 +1,7 @@
 "use client";
 
 import { useTranslations } from "next-intl";
+import { Store } from "lucide-react";
 import { ParentCard } from "@/components/shared/parent-card";
 import { useButchers } from "@/lib/hooks/use-butchers";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -19,7 +20,20 @@ export default function BoucherieListePage() {
   const visibleData =
     user?.role === "butcher" && data
       ? data.filter((row) => user.butcheries.includes(String(row.name ?? "")))
-      : data;
+      : user?.role === "supplier" && data
+        ? data.filter((row) => {
+            const rowId = String(row.id ?? "");
+            const ids = user.butcheryIds ?? [];
+            if (ids.length > 0 && rowId) {
+              return ids.includes(rowId);
+            }
+            const names = user.butcheries ?? [];
+            if (names.length > 0) {
+              return names.includes(String(row.name ?? ""));
+            }
+            return true;
+          })
+        : data;
 
   return (
     <div className="space-y-6">
@@ -29,7 +43,7 @@ export default function BoucherieListePage() {
           {t("listSubtitle")}
         </p>
       </div>
-      <ParentCard title={t("listTitle")}>
+      <ParentCard title={t("listTitle")} titleIcon={Store}>
         {!apiOk ? (
           <Alert variant="destructive">
             <AlertDescription>{tCommon("apiNotConfigured")}</AlertDescription>

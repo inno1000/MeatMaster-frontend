@@ -54,7 +54,7 @@ export const Providers = ({ children, locale, messages }: ProvidersProps) => {
             toastOptions={{
               classNames: {
                 toast:
-                  "rounded-2xl border-border/60 bg-card/95 shadow-float backdrop-blur-md",
+                  "rounded-2xl border-border/60 bg-card/95 backdrop-blur-md",
                 title: "font-semibold tracking-tight",
                 description: "text-muted-foreground",
               },

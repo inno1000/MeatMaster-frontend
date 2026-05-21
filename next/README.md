@@ -4,12 +4,12 @@ Application **canonique** du dépôt : tout le développement MeatMaster se fait
 
 ## Données
 
-**Connexion, inscription, déconnexion** et **liste / création des boucheries** passent uniquement par l’API (`/api/v1`) : définir **`NEXT_PUBLIC_API_URL`** (voir `.env.local.example`). Sans cette variable, la connexion échoue et la liste des boucheries affiche un message de configuration. Les **autres écrans** (stock, ventes, abattages, admin démo, etc.) utilisent encore des mocks ou des placeholders jusqu’à branchement ultérieur.
+**Connexion, inscription, déconnexion** et **liste / création des boucheries** passent par l’API : définir **`NEXT_PUBLIC_API_URL`** et optionnellement **`NEXT_PUBLIC_API_PREFIX`** (défaut `/api/v1`, voir `next/.env.local.example`).
 
 ## Prérequis
 
 - Node.js 20+
-- Backend : copier `next/.env.local.example` → `.env.local` et définir `NEXT_PUBLIC_API_URL` (ex. `https://boucherie-api.onrender.com`) pour l’auth et les boucheries.
+- Backend : copier `next/.env.local.example` → `next/.env.local` et définir `NEXT_PUBLIC_API_URL` (ex. `https://boucherie-api.onrender.com`). Ajuster `NEXT_PUBLIC_API_PREFIX` si le backend n’utilise pas `/api/v1`.
 
 ## Installation
 
@@ -41,7 +41,7 @@ Les routes sont préfixées par la locale : **`/fr/...`**, **`/en/...`** et **`/
 ## Authentification
 
 Le jeton **Sanctum** (`token` Laravel) est stocké via **Zustand** (`persist` / `localStorage`). Les routes sous `(main)` sont protégées par `AuthGuard`.  
-Rôles API : **`boucher`** → `butcher` ; **`caissier`** (ou équivalent) → **`supplier`** (fournisseur : ventes + périmètre abattages / rapports, voir `authz.ts`). **`supplier`** est le seul rôle UI pour ce métier — il n’y a plus de `caissier` dans le state client.
+Rôles API : **`boucher`** → `butcher` ; **`fournisseur`** → **`supplier`** (fournisseur : ventes + périmètre abattages / rapports, voir `authz.ts`). **`supplier`** est le seul rôle UI pour ce métier. L’ancien nom API `caissier` est encore reconnu côté mapping si besoin.
 
 ## Client API (`/api/v1`)
 

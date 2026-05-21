@@ -6,6 +6,7 @@ import { z } from "zod";
 import { formResolver } from "@/lib/form-resolver";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
+import { Wallet } from "lucide-react";
 import { ParentCard } from "@/components/shared/parent-card";
 import { nativeSelectClass } from "@/lib/ui-classes";
 import { Button } from "@/components/ui/button";
@@ -15,13 +16,14 @@ import { AudioRecorder } from "@/components/shared/audio-recorder";
 import { boucherieV1 } from "@/lib/api";
 import { formatError } from "@/lib/format-error";
 import { unwrapDataArray } from "@/lib/api/unwrap";
+import { coerceApiScalarId } from "@/lib/api/coerce-id";
 
 const Schema = z.object({
-  fournisseurUserId: z.coerce.number().positive(),
+  fournisseurUserId: z.string().min(1, "Choisissez un fournisseur"),
   amount: z.coerce.number().positive("Requis"),
   method: z.string().min(1, "Requis"),
   dateVersement: z.string().min(1, "Requis"),
-  reference: z.string().min(1, "Requis"),
+  reference: z.string().trim().min(1, "Référence requise"),
   notes: z.string().optional(),
 });
 
@@ -29,6 +31,7 @@ type FormValues = z.infer<typeof Schema>;
 
 export default function VersementEnregistrerPage() {
   const t = useTranslations("versement");
+  const tCommon = useTranslations("common");
   const {
     register,
     handleSubmit,
@@ -37,7 +40,7 @@ export default function VersementEnregistrerPage() {
   } = useForm<FormValues>({
     resolver: formResolver(Schema),
     defaultValues: {
-      fournisseurUserId: 0,
+      fournisseurUserId: "",
       amount: 0,
       method: "mobile_money",
       dateVersement: new Date().toISOString().slice(0, 10),
@@ -51,10 +54,15 @@ export default function VersementEnregistrerPage() {
       unwrapDataArray(await boucherieV1.referentiels.list("mode_paiement")),
   });
 
+  const supplierUsersQuery = useQuery({
+    queryKey: ["users", "suppliers-for-versement"],
+    queryFn: async () => unwrapDataArray(await boucherieV1.users.list()),
+  });
+
   const onSubmit = handleSubmit(async (values) => {
     try {
       await boucherieV1.versements.create({
-        fournisseur_user_id: values.fournisseurUserId,
+        fournisseur_user_id: coerceApiScalarId(values.fournisseurUserId),
         montant: values.amount,
         mode_paiement: values.method,
         date_versement: values.dateVersement,
@@ -74,15 +82,45 @@ export default function VersementEnregistrerPage() {
         <h1 className="text-2xl font-bold">{t("createTitle")}</h1>
         <p className="text-muted-foreground">{t("createSubtitle")}</p>
       </div>
-      <ParentCard title={t("createTitle")}>
+      <ParentCard title={t("createTitle")} titleIcon={Wallet}>
         <form onSubmit={onSubmit} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="fournisseurUserId">ID fournisseur</Label>
-            <Input
+            <Label htmlFor="fournisseurUserId">{t("supplierUser")}</Label>
+            <select
               id="fournisseurUserId"
-              type="number"
+              className={nativeSelectClass}
               {...register("fournisseurUserId")}
-            />
+            >
+              <option value="">—</option>
+              {(supplierUsersQuery.data ?? [])
+                .filter((item) => {
+                  const row = item as Record<string, unknown>;
+                  const r = String(row.role ?? "").toLowerCase();
+                  const roles = Array.isArray(row.roles)
+                    ? (row.roles as unknown[]).map((x) => String(x).toLowerCase())
+                    : [];
+                  return (
+                    r === "caissier" ||
+                    r === "fournisseur" ||
+                    roles.includes("caissier") ||
+                    roles.includes("fournisseur")
+                  );
+                })
+                .map((item) => {
+                  const row = item as Record<string, unknown>;
+                  const id = String(row.id ?? "");
+                  const primary = String(row.name ?? row.email ?? "").trim();
+                  const label = primary || tCommon("noLabel");
+                  return (
+                    <option key={id} value={id}>
+                      {label}
+                      {row.email && primary !== String(row.email).trim()
+                        ? ` · ${String(row.email)}`
+                        : ""}
+                    </option>
+                  );
+                })}
+            </select>
             {errors.fournisseurUserId ? (
               <p className="text-sm text-destructive">
                 {errors.fournisseurUserId.message}
@@ -103,6 +141,7 @@ export default function VersementEnregistrerPage() {
               className={nativeSelectClass}
               {...register("method")}
             >
+              <option value="">—</option>
               {(modePaiementQuery.data ?? []).map((item) => {
                 const ref = item as { valeur?: unknown; libelle?: unknown };
                 const value = String(ref.valeur ?? "");
@@ -113,10 +152,16 @@ export default function VersementEnregistrerPage() {
                 );
               })}
             </select>
+            {errors.method ? (
+              <p className="text-sm text-destructive">{errors.method.message}</p>
+            ) : null}
           </div>
           <div className="space-y-2">
             <Label htmlFor="dateVersement">Date</Label>
             <Input id="dateVersement" type="date" {...register("dateVersement")} />
+            {errors.dateVersement ? (
+              <p className="text-sm text-destructive">{errors.dateVersement.message}</p>
+            ) : null}
           </div>
           <div className="space-y-2">
             <Label htmlFor="reference">{t("reference")}</Label>

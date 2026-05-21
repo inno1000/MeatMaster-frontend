@@ -227,7 +227,7 @@ export function AudioRecorder({ className }: { className?: string }) {
             type="button"
             size="icon"
             disabled={recordDisabled}
-            className="size-[72px] shrink-0 rounded-full shadow-md"
+            className="size-[72px] shrink-0 rounded-full"
             variant={isRecording && !isPaused ? "secondary" : "primary"}
             onClick={() => toggleRecording()}
             aria-label={t("ariaRecord")}
@@ -238,7 +238,7 @@ export function AudioRecorder({ className }: { className?: string }) {
             type="button"
             size="icon"
             variant="destructive"
-            className="size-[72px] shrink-0 rounded-full shadow-md"
+            className="size-[72px] shrink-0 rounded-full"
             disabled={!isRecording}
             onClick={() => stopRecording()}
             aria-label={t("ariaStop")}
@@ -252,7 +252,7 @@ export function AudioRecorder({ className }: { className?: string }) {
             className={cn(
               "rounded-lg border px-3 py-3 text-center text-sm font-semibold sm:text-base",
               isRecording && !isPaused
-                ? "border-emerald-500/40 bg-emerald-500/10 text-emerald-800 dark:text-emerald-200"
+                ? "border-accent/45 bg-accent/15 text-accent-foreground"
                 : "border-sky-500/40 bg-sky-500/10 text-sky-900 dark:text-sky-100",
             )}
           >

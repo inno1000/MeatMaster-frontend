@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
+import { ScrollText, SlidersHorizontal } from "lucide-react";
 import { ParentCard } from "@/components/shared/parent-card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,9 +12,11 @@ import { ScrollRegion } from "@/components/ui/scroll-region";
 import { nativeSelectClass } from "@/lib/ui-classes";
 import { boucherieV1 } from "@/lib/api";
 import { unwrapDataArray } from "@/lib/api/unwrap";
+import { pickDisplayLabel } from "@/lib/display/reference-label";
 
 export default function StockJournalPage() {
   const t = useTranslations("stockJournal");
+  const tCommon = useTranslations("common");
   const [stockId, setStockId] = useState("");
   const [from, setFrom] = useState("");
   const [to, setTo] = useState("");
@@ -37,7 +40,11 @@ export default function StockJournalPage() {
           date: String(row.created_at ?? ""),
           type: String(row.type ?? ""),
           qty: Number(row.quantite ?? 0),
-          user: String(row.user_id ?? row.user ?? "—"),
+          user: pickDisplayLabel(row.user as Record<string, unknown> | undefined, [
+            "name",
+            "nom",
+            "email",
+          ]) || "—",
           motif: String(row.motif ?? ""),
         };
       })
@@ -53,7 +60,7 @@ export default function StockJournalPage() {
           {t("subtitle")}
         </p>
       </div>
-      <ParentCard title={t("filters")}>
+      <ParentCard title={t("filters")} titleIcon={SlidersHorizontal}>
         <div className="flex flex-wrap gap-4">
           <div className="space-y-2">
             <Label htmlFor="stock">Stock</Label>
@@ -66,10 +73,11 @@ export default function StockJournalPage() {
               <option value="">—</option>
               {(stocksQuery.data ?? []).map((item) => {
                 const stock = item as { id?: unknown; produit?: unknown };
-                const produit = (stock.produit ?? {}) as { nom?: unknown };
+                const produit = (stock.produit ?? {}) as Record<string, unknown>;
+                const label = pickDisplayLabel(produit) || tCommon("noLabel");
                 return (
                   <option key={String(stock.id ?? "")} value={String(stock.id ?? "")}>
-                    #{String(stock.id ?? "")} · {String(produit.nom ?? stock.id ?? "")}
+                    {label}
                   </option>
                 );
               })}
@@ -90,7 +98,7 @@ export default function StockJournalPage() {
           </div>
         </div>
       </ParentCard>
-      <ParentCard title={t("title")}>
+      <ParentCard title={t("title")} titleIcon={ScrollText}>
         <ScrollRegion>
           <table className="w-full min-w-[560px] text-left text-sm">
             <thead className="border-b border-border bg-muted/50">

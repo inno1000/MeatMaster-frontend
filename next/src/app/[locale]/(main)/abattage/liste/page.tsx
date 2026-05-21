@@ -11,13 +11,16 @@ import { Button } from "@/components/ui/button";
 import { Link } from "@/i18n/navigation";
 import { nativeSelectClass } from "@/lib/ui-classes";
 import { ScrollRegion } from "@/components/ui/scroll-region";
-import { Beef, XCircle } from "lucide-react";
+import { Beef, ClipboardList, Plus, Scale, XCircle } from "lucide-react";
 import { boucherieV1 } from "@/lib/api";
 import { formatError } from "@/lib/format-error";
 import { unwrapDataArray } from "@/lib/api/unwrap";
+import { mapApiBoucherieRow } from "@/lib/api/mappers/boucherie-record";
+import { pickDisplayLabel } from "@/lib/display/reference-label";
 
 export default function AbattageListePage() {
   const t = useTranslations("abattage");
+  const tCommon = useTranslations("common");
   const [search, setSearch] = useState("");
   const [statut, setStatut] = useState("");
   const queryClient = useQueryClient();
@@ -30,14 +33,78 @@ export default function AbattageListePage() {
     },
   });
 
+  const boucheriesQuery = useQuery({
+    queryKey: ["boucheries", "ref-labels"],
+    queryFn: async () =>
+      unwrapDataArray(await boucherieV1.boucheries.list()).map(mapApiBoucherieRow),
+  });
+
+  const produitsQuery = useQuery({
+    queryKey: ["produits", "ref-labels"],
+    queryFn: async () => unwrapDataArray(await boucherieV1.produits.list()),
+  });
+
+  const abattagesQuery = useQuery({
+    queryKey: ["abattages", "ref-labels"],
+    queryFn: async () => unwrapDataArray(await boucherieV1.abattages.list()),
+  });
+
   const rows = useMemo(() => {
+    const boucherieById = new Map<string, string>();
+    for (const row of boucheriesQuery.data ?? []) {
+      const id = String(row.id ?? "");
+      if (!id) continue;
+      const name = String(row.name ?? "").trim();
+      boucherieById.set(id, name || tCommon("noLabel"));
+    }
+
+    const produitById = new Map<string, string>();
+    for (const item of produitsQuery.data ?? []) {
+      const r = item as Record<string, unknown>;
+      const id = String(r.id ?? "");
+      if (!id) continue;
+      produitById.set(id, pickDisplayLabel(r) || tCommon("noLabel"));
+    }
+
+    const abattageById = new Map<string, string>();
+    for (const item of abattagesQuery.data ?? []) {
+      const r = item as Record<string, unknown>;
+      const id = String(r.id ?? "");
+      if (!id) continue;
+      const label = String(r.date_abattage ?? "").trim();
+      abattageById.set(id, label || tCommon("noLabel"));
+    }
+
     const mapped = (distributionsQuery.data ?? []).map((item) => {
       const row = item as Record<string, unknown>;
+      const abId = String(row.abattage_id ?? "");
+      const bcId = String(row.boucherie_id ?? "");
+      const prId = String(row.produit_id ?? "");
+      const abNested = row.abattage as Record<string, unknown> | undefined;
+      const bcNested = row.boucherie as Record<string, unknown> | undefined;
+      const prNested = row.produit as Record<string, unknown> | undefined;
+
+      const abattageLabel =
+        String(abNested?.date_abattage ?? "").trim() ||
+        pickDisplayLabel(abNested, ["reference", "nom", "name"]) ||
+        (abId ? abattageById.get(abId) : undefined) ||
+        tCommon("noLabel");
+
+      const boucherieLabel =
+        pickDisplayLabel(bcNested) ||
+        (bcId ? boucherieById.get(bcId) : undefined) ||
+        tCommon("noLabel");
+
+      const produitLabel =
+        pickDisplayLabel(prNested) ||
+        (prId ? produitById.get(prId) : undefined) ||
+        tCommon("noLabel");
+
       return {
         id: String(row.id ?? ""),
-        abattageId: String(row.abattage_id ?? ""),
-        boucherieId: String(row.boucherie_id ?? ""),
-        produitId: String(row.produit_id ?? ""),
+        abattageLabel,
+        boucherieLabel,
+        produitLabel,
         quantite: Number(row.quantite ?? 0),
         statut: String(row.statut ?? ""),
         date: String(row.created_at ?? ""),
@@ -49,11 +116,19 @@ export default function AbattageListePage() {
     const q = search.toLowerCase();
     return mapped.filter(
       (a) =>
-        a.id.toLowerCase().includes(q) ||
-        a.abattageId.toLowerCase().includes(q) ||
-        a.boucherieId.toLowerCase().includes(q),
+        a.abattageLabel.toLowerCase().includes(q) ||
+        a.boucherieLabel.toLowerCase().includes(q) ||
+        a.produitLabel.toLowerCase().includes(q) ||
+        a.statut.toLowerCase().includes(q),
     );
-  }, [distributionsQuery.data, search]);
+  }, [
+    distributionsQuery.data,
+    search,
+    boucheriesQuery.data,
+    produitsQuery.data,
+    abattagesQuery.data,
+    tCommon,
+  ]);
 
   const totalWeight = rows.reduce((acc, a) => acc + a.quantite, 0);
   const cancelDistribution = async (id: string) => {
@@ -82,12 +157,13 @@ export default function AbattageListePage() {
           <p className="text-sm text-muted-foreground">Distributions</p>
         </div>
         <div className="rounded-xl border border-border bg-card p-4 text-center">
+          <Scale className="mx-auto mb-2 size-8 text-accent" aria-hidden />
           <p className="text-2xl font-bold">{totalWeight.toFixed(2)} kg</p>
           <p className="text-sm text-muted-foreground">Quantité totale</p>
         </div>
       </div>
 
-      <ParentCard title={t("listTitle")}>
+      <ParentCard title={t("listTitle")} titleIcon={ClipboardList}>
         <div className="mb-4 grid gap-4 sm:grid-cols-2 md:grid-cols-3">
           <div className="space-y-2 sm:col-span-2">
             <Label htmlFor="search">{t("search")}</Label>
@@ -113,20 +189,22 @@ export default function AbattageListePage() {
           </div>
         </div>
         <div className="mb-4">
-          <Button type="button" className="w-full sm:w-auto" asChild>
-            <Link href="/abattage/enregistrer">{t("newSlaughter")}</Link>
+          <Button type="button" className="w-full gap-2 sm:w-auto" asChild>
+            <Link href="/abattage/enregistrer">
+              <Plus className="size-4 shrink-0" aria-hidden />
+              {t("newSlaughter")}
+            </Link>
           </Button>
         </div>
         <ScrollRegion>
-          <table className="w-full min-w-[900px] text-left text-sm">
+          <table className="w-full min-w-[720px] text-left text-sm">
             <thead className="border-b border-border bg-muted/50">
               <tr>
-                <th className="p-3">ID</th>
-                <th className="p-3">Abattage</th>
-                <th className="p-3">Boucherie</th>
-                <th className="p-3">Produit</th>
-                <th className="p-3">Quantité</th>
-                <th className="p-3">Statut</th>
+                <th className="p-3">{t("tableSlaughter")}</th>
+                <th className="p-3">{t("tableButchery")}</th>
+                <th className="p-3">{t("tableProduct")}</th>
+                <th className="p-3">{t("tableQty")}</th>
+                <th className="p-3">{t("tableStatus")}</th>
                 <th className="p-3">{t("tableDate")}</th>
                 <th className="p-3">{t("tableActions")}</th>
               </tr>
@@ -134,10 +212,9 @@ export default function AbattageListePage() {
             <tbody>
               {rows.map((a) => (
                 <tr key={a.id} className="border-b border-border">
-                  <td className="p-3">{a.id}</td>
-                  <td className="p-3">{a.abattageId}</td>
-                  <td className="p-3">{a.boucherieId}</td>
-                  <td className="p-3">{a.produitId}</td>
+                  <td className="p-3">{a.abattageLabel}</td>
+                  <td className="p-3">{a.boucherieLabel}</td>
+                  <td className="p-3">{a.produitLabel}</td>
                   <td className="p-3">{a.quantite}</td>
                   <td className="p-3">{a.statut}</td>
                   <td className="p-3">{a.date}</td>

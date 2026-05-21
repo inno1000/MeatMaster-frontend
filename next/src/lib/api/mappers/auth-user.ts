@@ -1,7 +1,7 @@
 import type { User, UserRole } from "@/lib/schemas/auth";
 
-/** Rôles renvoyés par l’API Laravel (`caissier` = ancien nom métier, fusionné côté UI dans `supplier`). */
-export type ApiRole = "admin" | "boucher" | "caissier";
+/** Rôles renvoyés par l’API Laravel (`fournisseur` ; `caissier` encore accepté pour d’anciennes lignes). */
+export type ApiRole = "admin" | "boucher" | "fournisseur";
 
 export const mapApiRoleToApp = (role: string): UserRole => {
   const r = role.toLowerCase();
@@ -11,32 +11,74 @@ export const mapApiRoleToApp = (role: string): UserRole => {
   if (r === "boucher") {
     return "butcher";
   }
-  /** Fournisseur : l’API peut exposer `caissier` ou un futur `fournisseur` — une seule entrée UI `supplier`. */
-  if (r === "caissier" || r === "fournisseur") {
+  /** Fournisseur : une seule entrée UI `supplier`. */
+  if (r === "fournisseur" || r === "caissier") {
     return "supplier";
   }
   return "butcher";
 };
 
 export type ApiUserPayload = {
+  id?: string | number;
   name?: string;
   email?: string;
   role?: string;
   boucherie?: { nom?: string | null; id?: string | number | null } | null;
   boucherie_nom?: string | null;
+  /** Plusieurs boucheries (fournisseur), ids normalisés dans `extractUserPayload`. */
+  boucherie_ids?: string[];
+  /** Noms issus de `boucheries[]` ou fusion avec la boucherie unique. */
+  boucherie_names_from_pivot?: string[];
+  /** Identifiant métier `fournisseurs` (ex. `fournisseur_id` sur le user Laravel). */
+  fournisseurEntityId?: string | number;
+  /** Si l’API impose un changement de mot de passe (nom Laravel ou camelCase). */
+  must_change_password?: boolean;
 };
 
-export const toAppUser = (token: string, payload: ApiUserPayload): User => {
+export type ToAppUserOptions = {
+  /** Connexion avec le mot de passe d’organisation encore égal au défaut. */
+  loginPasswordMatchesOrgDefault?: boolean;
+};
+
+export const toAppUser = (
+  token: string,
+  payload: ApiUserPayload,
+  opts?: ToAppUserOptions,
+): User => {
   const role = mapApiRoleToApp(payload.role ?? "boucher");
-  const boucherieName =
+  const butcheryIds = payload.boucherie_ids ?? [];
+  const pivotNames = payload.boucherie_names_from_pivot ?? [];
+  const singleName =
     payload.boucherie?.nom ?? payload.boucherie_nom ?? undefined;
-  const butcheries = boucherieName ? [boucherieName] : [];
+  const butcheries =
+    pivotNames.length > 0
+      ? pivotNames
+      : singleName
+        ? [singleName]
+        : [];
+
+  const mustChangePassword =
+    payload.must_change_password === true ||
+    opts?.loginPasswordMatchesOrgDefault === true;
+
+  const fournisseurEntityId =
+    payload.fournisseurEntityId !== undefined &&
+    payload.fournisseurEntityId !== null
+      ? String(payload.fournisseurEntityId)
+      : undefined;
 
   return {
     token,
+    id:
+      payload.id !== undefined && payload.id !== null
+        ? String(payload.id)
+        : undefined,
     email: payload.email ?? "",
     name: payload.name ?? "",
     role,
     butcheries,
+    butcheryIds,
+    ...(fournisseurEntityId ? { fournisseurEntityId } : {}),
+    ...(mustChangePassword ? { mustChangePassword: true as const } : {}),
   };
 };

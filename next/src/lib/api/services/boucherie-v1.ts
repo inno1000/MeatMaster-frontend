@@ -1,8 +1,8 @@
 /**
  * Appels HTTP vers l’API Laravel documentée (`/api/v1/...`).
  * Les réponses sont laissées souples (`unknown`) : enveloppes `data` / pagination selon le backend.
- * Mise à jour des ressources CRUD : **PUT** uniquement. **PATCH** réservé aux routes documentées
- * (référentiels, `ventes/.../statut`, `ventes/.../livraison`).
+ * CRUD : **PUT** pour la plupart des ressources ; **PATCH** pour référentiels, statuts ventes /
+ * livraisons, versements, distributions, et **`users`** (guide + alignement Sanctum).
  */
 import { apiClient } from "@/lib/api/client";
 import { v1Url, v1UrlWithQuery } from "@/lib/api/v1-url";
@@ -70,7 +70,7 @@ export const boucherieV1 = {
       apiClient.post<unknown>(v1Url("/users"), body),
     get: (id: string) => apiClient.get<unknown>(v1Url(`/users/${enc(id)}`)),
     update: (id: string, body: Record<string, unknown>) =>
-      apiClient.put<unknown>(v1Url(`/users/${enc(id)}`), body),
+      apiClient.patch<unknown>(v1Url(`/users/${enc(id)}`), body),
     remove: (id: string) =>
       apiClient.delete<unknown>(v1Url(`/users/${enc(id)}`)),
   },

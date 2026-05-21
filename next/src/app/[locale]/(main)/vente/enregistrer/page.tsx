@@ -7,6 +7,7 @@ import { formResolver } from "@/lib/form-resolver";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import { useQuery } from "@tanstack/react-query";
+import { ShoppingCart } from "lucide-react";
 import { ParentCard } from "@/components/shared/parent-card";
 import { nativeSelectClass } from "@/lib/ui-classes";
 import { Button } from "@/components/ui/button";
@@ -20,23 +21,29 @@ import { unwrapDataArray, unwrapDataObject } from "@/lib/api/unwrap";
 
 const Schema = z
   .object({
-    date: z.string().min(1),
-    typeVente: z.string().min(1),
+    date: z.string().min(1, "Date requise"),
+    typeVente: z.string().min(1, "Type de vente requis"),
     clientId: z.string().optional(),
-    productId: z.string().min(1),
+    productId: z.string().min(1, "Produit requis"),
     soldQty: z.coerce.number().positive("Requis"),
-    unitPrice: z.coerce.number().nonnegative(),
+    unitPrice: z.coerce.number().positive("Prix unitaire requis"),
     notes: z.string().optional(),
-    createDelivery: z.boolean().default(false),
     deliveryAddress: z.string().optional(),
     deliveryDate: z.string().optional(),
   })
   .superRefine((data, ctx) => {
-    if (data.createDelivery && !data.deliveryAddress) {
+    if (data.typeVente === "livraison" && !data.deliveryAddress?.trim()) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         path: ["deliveryAddress"],
-        message: "required",
+        message: "Adresse de livraison requise",
+      });
+    }
+    if (data.typeVente === "livraison" && !data.deliveryDate) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["deliveryDate"],
+        message: "Date prévue requise",
       });
     }
   });
@@ -62,7 +69,6 @@ export default function VenteEnregistrerPage() {
       soldQty: 1,
       unitPrice: 0,
       notes: "",
-      createDelivery: false,
       deliveryAddress: "",
       deliveryDate: new Date().toISOString().slice(0, 10),
     },
@@ -122,7 +128,7 @@ export default function VenteEnregistrerPage() {
       });
       const created = unwrapDataObject(createdRaw);
       const saleId = String(created.id ?? "");
-      if (values.createDelivery && saleId) {
+      if (values.typeVente === "livraison" && saleId) {
         await boucherieV1.ventes.createLivraison(saleId, {
           adresse_livraison: values.deliveryAddress,
           statut: "en_attente",
@@ -143,7 +149,7 @@ export default function VenteEnregistrerPage() {
           {t("createSubtitle")}
         </p>
       </div>
-      <ParentCard title={t("createTitle")}>
+      <ParentCard title={t("createTitle")} titleIcon={ShoppingCart}>
         {!isApiEnabled() ? (
           <Alert className="mb-4">
             <AlertDescription>{tCommon("apiNotConfigured")}</AlertDescription>
@@ -193,7 +199,7 @@ export default function VenteEnregistrerPage() {
                 const obj = item as { id?: unknown; nom?: unknown; name?: unknown };
                 return (
                   <option key={String(obj.id ?? "")} value={String(obj.id ?? "")}>
-                    {String(obj.nom ?? obj.name ?? obj.id ?? "")}
+                    {String(obj.nom ?? obj.name ?? "").trim() || tCommon("noLabel")}
                   </option>
                 );
               })}
@@ -216,7 +222,7 @@ export default function VenteEnregistrerPage() {
                 };
                 return (
                   <option key={String(obj.id ?? "")} value={String(obj.id ?? "")}>
-                    {String(obj.nom ?? obj.name ?? obj.id ?? "")}
+                    {String(obj.nom ?? obj.name ?? "").trim() || tCommon("noLabel")}
                     {" · "}
                     {Number(obj.prix_unitaire ?? 0).toLocaleString()} FCFA
                   </option>
@@ -235,6 +241,7 @@ export default function VenteEnregistrerPage() {
               id="soldQty"
               type="number"
               step="0.01"
+                min="0.01"
               {...register("soldQty")}
             />
             {errors.soldQty ? (
@@ -249,8 +256,12 @@ export default function VenteEnregistrerPage() {
               id="unitPrice"
               type="number"
               step="1"
+                min="1"
               {...register("unitPrice")}
             />
+              {errors.unitPrice ? (
+                <p className="text-sm text-destructive">{errors.unitPrice.message}</p>
+              ) : null}
           </div>
           <div className="space-y-2">
             <Label htmlFor="notes">{t("notes")}</Label>
@@ -268,6 +279,9 @@ export default function VenteEnregistrerPage() {
               <div className="space-y-2">
                 <Label htmlFor="deliveryDate">Date prévue</Label>
                 <Input id="deliveryDate" type="date" {...register("deliveryDate")} />
+                {errors.deliveryDate ? (
+                  <p className="text-sm text-destructive">{errors.deliveryDate.message}</p>
+                ) : null}
               </div>
             </>
           ) : null}

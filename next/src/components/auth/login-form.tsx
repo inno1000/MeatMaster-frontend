@@ -40,9 +40,14 @@ export const LoginForm = () => {
     try {
       await login(data.email, data.password);
       toast.success(tCommon("success"));
+      const currentUser = useAuthStore.getState().user;
+      if (currentUser?.mustChangePassword === true) {
+        setReturnUrl(null);
+        router.replace("/settings/first-password");
+        return;
+      }
       const next = returnUrl;
       setReturnUrl(null);
-      const currentUser = useAuthStore.getState().user;
       const roleDefault = currentUser
         ? getDefaultPathForRole(currentUser.role)
         : "/dashboard";

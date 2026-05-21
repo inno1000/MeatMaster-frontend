@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { useTranslations } from "next-intl";
+import { PieChart, Receipt } from "lucide-react";
 import { ParentCard } from "@/components/shared/parent-card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -108,7 +109,7 @@ export default function ReportsSalesPage() {
         </div>
       </div>
 
-      <ParentCard title={t("salesTitle")}>
+      <ParentCard title={t("salesTitle")} titleIcon={Receipt}>
         <div className="mb-4 grid gap-4 sm:grid-cols-2 md:grid-cols-3">
           <div className="space-y-2">
             <Label>{t("dateFrom")}</Label>
@@ -163,7 +164,7 @@ export default function ReportsSalesPage() {
         </ScrollRegion>
       </ParentCard>
 
-      <ParentCard title={t("byMeat")}>
+      <ParentCard title={t("byMeat")} titleIcon={PieChart}>
         <ul className="space-y-2 text-sm">
           {byMeat.map(([name, v]) => (
             <li key={name} className="flex justify-between border-b border-border py-2">

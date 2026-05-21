@@ -24,7 +24,7 @@ export function LocaleSwitcher({ className }: { className?: string }) {
       role="group"
       aria-label={t("switchLanguage")}
       className={cn(
-        "inline-flex shrink-0 rounded-full border border-border/60 bg-muted/50 p-1 shadow-sm ring-1 ring-black/[0.02]",
+        "inline-flex shrink-0 rounded-full border border-border/60 bg-muted/50 p-1",
         className,
       )}
     >

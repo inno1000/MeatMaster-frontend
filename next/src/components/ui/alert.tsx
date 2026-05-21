@@ -9,7 +9,7 @@ export const Alert = React.forwardRef<
     ref={ref}
     role="alert"
     className={cn(
-      "relative w-full rounded-2xl border p-4 text-sm shadow-sm ring-1 ring-black/[0.02]",
+      "relative w-full rounded-2xl border p-4 text-sm",
       variant === "default" && "border-border/70 bg-muted/40 text-foreground",
       variant === "destructive" &&
         "border-destructive/50 bg-destructive/10 text-destructive",

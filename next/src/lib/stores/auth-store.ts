@@ -10,6 +10,8 @@ interface AuthState {
   setReturnUrl: (url: string | null) => void;
   login: (email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
+  /** Après changement du mot de passe provisoire — débloque l’application. */
+  markPasswordChanged: () => void;
 }
 
 export const useAuthStore = create<AuthState>()(
@@ -31,6 +33,14 @@ export const useAuthStore = create<AuthState>()(
           await apiLogout(token);
         }
         set({ user: null, returnUrl: null });
+      },
+
+      markPasswordChanged: () => {
+        const u = get().user;
+        if (!u) {
+          return;
+        }
+        set({ user: { ...u, mustChangePassword: false } });
       },
     }),
     {

@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
+import { History, LayoutGrid, SlidersHorizontal, Coins, AlertTriangle, Flame } from "lucide-react";
 import { ParentCard } from "@/components/shared/parent-card";
 import { ScrollRegion } from "@/components/ui/scroll-region";
 import { cn } from "@/lib/utils";
@@ -14,6 +15,7 @@ import { unwrapDataArray } from "@/lib/api/unwrap";
 
 export const StockManagementView = () => {
   const t = useTranslations("stockManagement");
+  const tCommon = useTranslations("common");
   const [meatFilter, setMeatFilter] = useState("");
   const [movFilter, setMovFilter] = useState("");
 
@@ -44,7 +46,7 @@ export const StockManagementView = () => {
           const enAlerte = Boolean(row.en_alerte ?? (seuil > 0 && qty <= seuil));
           return {
             id: String(row.id ?? ""),
-            name: String(produit.nom ?? row.produit_id ?? ""),
+            name: String(produit.nom ?? "").trim() || tCommon("noLabel"),
             currentStock: qty,
             minThreshold: seuil,
             unit: String(produit.unite ?? "kg"),
@@ -60,7 +62,7 @@ export const StockManagementView = () => {
             : true,
         )
         .filter((r) => (movFilter ? r.movementType === movFilter : true)),
-    [stocksQuery.data, meatFilter, movFilter],
+    [stocksQuery.data, meatFilter, movFilter, tCommon],
   );
 
   const lowCount = rows.filter((m) => m.status !== "normal").length;
@@ -69,8 +71,8 @@ export const StockManagementView = () => {
 
   const statusBadge = (status: "normal" | "critical") => {
     const map = {
-      normal: "bg-emerald-500/15 text-emerald-900",
-      critical: "bg-red-500/15 text-red-900",
+      normal: "bg-accent/18 text-accent-foreground",
+      critical: "bg-destructive/15 text-destructive",
     };
     return map[status];
   };
@@ -83,25 +85,40 @@ export const StockManagementView = () => {
       </div>
 
       <div className="grid gap-4 sm:grid-cols-3">
-        <div className="rounded-xl border border-border bg-card p-4">
+        <div className="flex gap-3 rounded-xl border border-border bg-card p-4">
+          <span className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-primary/12 text-primary">
+            <Coins className="size-5" aria-hidden />
+          </span>
+          <div>
           <p className="text-sm text-muted-foreground">{t("totalValue")}</p>
           <p className="text-2xl font-semibold">
             {totalValue.toLocaleString()} FCFA
           </p>
+          </div>
         </div>
-        <div className="rounded-xl border border-border bg-card p-4">
+        <div className="flex gap-3 rounded-xl border border-border bg-card p-4">
+          <span className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-amber-500/15 text-amber-700">
+            <AlertTriangle className="size-5" aria-hidden />
+          </span>
+          <div>
           <p className="text-sm text-muted-foreground">{t("lowStock")}</p>
           <p className="text-2xl font-semibold text-amber-700">{lowCount}</p>
+          </div>
         </div>
-        <div className="rounded-xl border border-border bg-card p-4">
+        <div className="flex gap-3 rounded-xl border border-border bg-card p-4">
+          <span className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-destructive/12 text-destructive">
+            <Flame className="size-5" aria-hidden />
+          </span>
+          <div>
           <p className="text-sm text-muted-foreground">{t("criticalStock")}</p>
           <p className="text-2xl font-semibold text-red-700">
             {rows.filter((m) => m.status === "critical").length}
           </p>
+          </div>
         </div>
       </div>
 
-      <ParentCard title={t("filters")}>
+      <ParentCard title={t("filters")} titleIcon={SlidersHorizontal}>
         <div className="grid gap-4 md:grid-cols-2">
           <div className="space-y-2">
             <Label htmlFor="meat">{t("meatType")}</Label>
@@ -129,7 +146,7 @@ export const StockManagementView = () => {
         </div>
       </ParentCard>
 
-      <ParentCard title={t("title")}>
+      <ParentCard title={t("title")} titleIcon={LayoutGrid}>
         <ScrollRegion>
           <table className="w-full min-w-[640px] text-left text-sm">
             <thead className="border-b border-border bg-muted/50">
@@ -173,7 +190,7 @@ export const StockManagementView = () => {
         </ScrollRegion>
       </ParentCard>
 
-      <ParentCard title={t("history")}>
+      <ParentCard title={t("history")} titleIcon={History}>
         <ScrollRegion>
           <table className="w-full min-w-[480px] text-left text-sm">
             <thead className="border-b border-border bg-muted/50">

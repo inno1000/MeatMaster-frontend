@@ -27,9 +27,9 @@ export default function LoginPage() {
       <div className="flex flex-1 items-center justify-center px-4 py-8 safe-pad-x safe-pad-b">
       <div className="w-full max-w-md">
         <div className="mb-8 flex flex-col items-center gap-3 text-center">
-          <AppLogo variant="hero" alt={tCommon("appName")} />
+          <AppLogo variant="auth" alt={tCommon("appName")} />
         </div>
-        <Card className="shadow-float ring-1 ring-black/[0.04]">
+        <Card>
           <CardHeader>
             <CardTitle className="text-2xl">{t("title")}</CardTitle>
             <CardDescription>{t("subtitle")}</CardDescription>

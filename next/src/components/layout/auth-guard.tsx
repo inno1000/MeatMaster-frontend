@@ -7,7 +7,11 @@ import {
   useLayoutEffect,
   type ReactNode,
 } from "react";
-import { canAccessPath, getDefaultPathForRole } from "@/lib/authz";
+import {
+  canAccessPath,
+  getDefaultPathForRole,
+  normalizeAppRole,
+} from "@/lib/authz";
 
 export const AuthGuard = ({ children }: { children: ReactNode }) => {
   const user = useAuthStore((s) => s.user);
@@ -15,12 +19,13 @@ export const AuthGuard = ({ children }: { children: ReactNode }) => {
   const pathname = usePathname();
   const router = useRouter();
 
-  /** Anciennes sessions JSON : `caissier` → `supplier` avant contrôle d’accès. */
+  /** Anciennes sessions persistées avec un rôle API brut (`caissier` / `fournisseur`) → `supplier`. */
   useLayoutEffect(() => {
     if (!user?.token) {
       return;
     }
-    if ((user.role as string) === "caissier") {
+    const raw = user.role as string;
+    if (raw === "caissier" || raw === "fournisseur") {
       useAuthStore.setState({
         user: { ...user, role: "supplier" },
       });
@@ -33,8 +38,18 @@ export const AuthGuard = ({ children }: { children: ReactNode }) => {
       router.replace("/auth/login");
       return;
     }
-    if (!canAccessPath(user.role, pathname)) {
-      router.replace(getDefaultPathForRole(user.role));
+    if (user.mustChangePassword === true) {
+      const onFirstPassword =
+        pathname === "/settings/first-password" ||
+        pathname.startsWith("/settings/first-password/");
+      if (!onFirstPassword) {
+        router.replace("/settings/first-password");
+      }
+      return;
+    }
+    const appRole = normalizeAppRole(user.role);
+    if (!canAccessPath(appRole, pathname)) {
+      router.replace(getDefaultPathForRole(appRole));
     }
   }, [user, router, pathname, setReturnUrl]);
 

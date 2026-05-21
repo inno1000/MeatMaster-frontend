@@ -6,6 +6,7 @@ import { z } from "zod";
 import { formResolver } from "@/lib/form-resolver";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
+import { ClipboardPenLine } from "lucide-react";
 import { ParentCard } from "@/components/shared/parent-card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -14,18 +15,20 @@ import { nativeSelectClass } from "@/lib/ui-classes";
 import { boucherieV1 } from "@/lib/api";
 import { formatError } from "@/lib/format-error";
 import { unwrapDataArray } from "@/lib/api/unwrap";
+import { pickDisplayLabel } from "@/lib/display/reference-label";
 
 const Schema = z.object({
-  stockId: z.string().min(1),
-  type: z.string().min(1),
-  declaredQty: z.coerce.number().positive(),
-  reason: z.string().min(1),
+  stockId: z.string().min(1, "Stock requis"),
+  type: z.string().min(1, "Type de mouvement requis"),
+  declaredQty: z.coerce.number().positive("Quantité requise"),
+  reason: z.string().trim().min(1, "Motif requis"),
 });
 
 type FormValues = z.infer<typeof Schema>;
 
 export default function StockDeclarationPage() {
   const t = useTranslations("stockDeclaration");
+  const tCommon = useTranslations("common");
   const {
     register,
     handleSubmit,
@@ -61,7 +64,7 @@ export default function StockDeclarationPage() {
         <h1 className="text-2xl font-bold">{t("title")}</h1>
         <p className="text-muted-foreground">{t("subtitle")}</p>
       </div>
-      <ParentCard title={t("title")}>
+      <ParentCard title={t("title")} titleIcon={ClipboardPenLine}>
         <form onSubmit={onSubmit} className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="stockId">Stock</Label>
@@ -69,10 +72,11 @@ export default function StockDeclarationPage() {
               <option value="">—</option>
               {(stocksQuery.data ?? []).map((item) => {
                 const stock = item as { id?: unknown; produit?: unknown };
-                const produit = (stock.produit ?? {}) as { nom?: unknown };
+                const produit = (stock.produit ?? {}) as Record<string, unknown>;
+                const label = pickDisplayLabel(produit) || tCommon("noLabel");
                 return (
                   <option key={String(stock.id ?? "")} value={String(stock.id ?? "")}>
-                    #{String(stock.id ?? "")} · {String(produit.nom ?? stock.id ?? "")}
+                    {label}
                   </option>
                 );
               })}
@@ -90,6 +94,9 @@ export default function StockDeclarationPage() {
               <option value="entree">Entrée</option>
               <option value="sortie">Sortie</option>
             </select>
+            {errors.type ? (
+              <p className="text-sm text-destructive">{errors.type.message}</p>
+            ) : null}
           </div>
           <div className="space-y-2">
             <Label htmlFor="declaredQty">{t("declaredQty")}</Label>
@@ -97,6 +104,7 @@ export default function StockDeclarationPage() {
               id="declaredQty"
               type="number"
               step="0.01"
+              min="0.01"
               {...register("declaredQty")}
             />
             {errors.declaredQty ? (

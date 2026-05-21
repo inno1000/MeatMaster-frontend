@@ -1,12 +1,15 @@
-/** Normalise les listes Laravel `{ data: [...] }` ou tableau brut. */
+/** Normalise les listes Laravel `{ data: [...] }`, `{ items: [...] }`, ou tableau brut. */
 export function unwrapDataArray(data: unknown): unknown[] {
   if (Array.isArray(data)) {
     return data;
   }
   if (data && typeof data === "object") {
-    const inner = (data as { data?: unknown }).data;
-    if (Array.isArray(inner)) {
-      return inner;
+    const o = data as Record<string, unknown>;
+    if (Array.isArray(o.data)) {
+      return o.data;
+    }
+    if (Array.isArray(o.items)) {
+      return o.items;
     }
   }
   return [];
@@ -46,4 +49,15 @@ export function unwrapLaravelPagination(data: unknown): LaravelPagination {
     total: num(meta.total, 0),
     perPage: num(meta.per_page, 15),
   };
+}
+
+/** Liste paginée Laravel : `{ data: [...], meta: { total }, links }` — `total` préfère `meta.total`. */
+export function unwrapPaginatedRows(data: unknown): {
+  rows: unknown[];
+  total: number;
+} {
+  const rows = unwrapDataArray(data);
+  const meta = unwrapLaravelPagination(data);
+  const total = meta.total > 0 ? meta.total : rows.length;
+  return { rows, total };
 }

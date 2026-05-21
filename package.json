@@ -8,6 +8,7 @@
     "build": "npm run build --prefix ./next",
     "start": "npm run start --prefix ./next",
     "lint": "npm run lint --prefix ./next",
+    "mobile:android:branding": "node scripts/generate-android-branding.mjs",
     "build:mobile": "npm run build --prefix ./next && npx cap sync android",
     "android:assemble": "npm run build:mobile && android\\gradlew.bat assembleDebug",
     "android:assemble:release": "npm run build:mobile && android\\gradlew.bat assembleRelease",
@@ -60,6 +61,7 @@
   },
   "devDependencies": {
     "@mdi/font": "7.4.47",
+    "@resvg/resvg-js": "^2.6.2",
     "@rushstack/eslint-patch": "1.7.2",
     "@types/chance": "1.1.6",
     "@types/node": "^20.11.18",
@@ -69,6 +71,7 @@
     "@vue/tsconfig": "0.5.1",
     "eslint": "8.56.0",
     "eslint-plugin-vue": "9.21.1",
+    "jimp": "^1.6.1",
     "prettier": "3.2.5",
     "sass": "1.70.0",
     "sass-loader": "14.1.0",

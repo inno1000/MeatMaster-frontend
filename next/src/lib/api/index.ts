@@ -1,4 +1,11 @@
-export { isApiEnabled, getApiBaseUrl, API_V1_PREFIX } from "@/lib/api/config";
+export {
+  isApiEnabled,
+  getApiBaseUrl,
+  getApiPrefix,
+  API_PREFIX,
+  /** @deprecated Utiliser `API_PREFIX`. */
+  API_V1_PREFIX,
+} from "@/lib/api/config";
 export { v1Url, v1UrlWithQuery } from "@/lib/api/v1-url";
 export { apiClient, apiUrl, ApiError, safeApiCall } from "@/lib/api/client";
 export {

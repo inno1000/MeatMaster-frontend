@@ -6,6 +6,7 @@ import { z } from "zod";
 import { formResolver } from "@/lib/form-resolver";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
+import { PackageOpen } from "lucide-react";
 import { ParentCard } from "@/components/shared/parent-card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -15,9 +16,10 @@ import { nativeSelectClass } from "@/lib/ui-classes";
 import { boucherieV1 } from "@/lib/api";
 import { formatError } from "@/lib/format-error";
 import { unwrapDataArray } from "@/lib/api/unwrap";
+import { pickDisplayLabel } from "@/lib/display/reference-label";
 
 const Schema = z.object({
-  distributionId: z.string().min(1),
+  distributionId: z.string().min(1, "Distribution requise"),
   quantity: z.coerce.number().positive("Requis"),
   dateReception: z.string().min(1, "Requis"),
   notes: z.string().optional(),
@@ -27,6 +29,7 @@ type FormValues = z.infer<typeof Schema>;
 
 export default function StockReceptionPage() {
   const t = useTranslations("stockReception");
+  const tCommon = useTranslations("common");
   const {
     register,
     handleSubmit,
@@ -68,7 +71,7 @@ export default function StockReceptionPage() {
         <h1 className="text-2xl font-bold">{t("title")}</h1>
         <p className="text-muted-foreground">{t("subtitle")}</p>
       </div>
-      <ParentCard title={t("title")}>
+      <ParentCard title={t("title")} titleIcon={PackageOpen}>
         <form onSubmit={onSubmit} className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="distributionId">Distribution</Label>
@@ -79,10 +82,21 @@ export default function StockReceptionPage() {
             >
               <option value="">—</option>
               {(distributionsQuery.data ?? []).map((item) => {
-                const d = item as { id?: unknown; abattage_id?: unknown; quantite?: unknown };
+                const d = item as Record<string, unknown>;
+                const q = String(d.quantite ?? "").trim();
+                const created = String(d.created_at ?? "").slice(0, 10);
+                const produit = pickDisplayLabel(
+                  d.produit as Record<string, unknown> | undefined,
+                );
+                const parts = [
+                  created && created !== "" ? created : null,
+                  q ? `${q} kg` : null,
+                  produit || null,
+                ].filter(Boolean);
+                const label = parts.length > 0 ? parts.join(" · ") : tCommon("noLabel");
                 return (
                   <option key={String(d.id ?? "")} value={String(d.id ?? "")}>
-                    #{String(d.id ?? "")} · abattage {String(d.abattage_id ?? "")} · {String(d.quantite ?? "")} kg
+                    {label}
                   </option>
                 );
               })}
@@ -95,7 +109,7 @@ export default function StockReceptionPage() {
           </div>
           <div className="space-y-2">
             <Label htmlFor="quantity">{t("quantity")}</Label>
-            <Input id="quantity" type="number" step="0.01" {...register("quantity")} />
+            <Input id="quantity" type="number" step="0.01" min="0.01" {...register("quantity")} />
             {errors.quantity ? (
               <p className="text-sm text-destructive">
                 {errors.quantity.message}

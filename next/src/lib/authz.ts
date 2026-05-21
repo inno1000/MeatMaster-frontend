@@ -1,17 +1,36 @@
 import type { UserRole } from "@/lib/schemas/auth";
 import type { NavEntry } from "@/lib/nav-config";
 
-/** Fournisseur = rôle UI `supplier` (ventes, versements liste, abattages, rapports — pas stock ni CRUD boucheries ni saisie versement boucherie). */
+/** Normalise les rôles API / sessions anciennes vers le rôle UI. */
+export const normalizeAppRole = (role: string | undefined): UserRole => {
+  const r = (role ?? "").toLowerCase();
+  if (r === "admin") {
+    return "admin";
+  }
+  if (r === "butcher" || r === "boucher") {
+    return "butcher";
+  }
+  if (r === "supplier" || r === "fournisseur" || r === "caissier") {
+    return "supplier";
+  }
+  return "butcher";
+};
+
+/** Fournisseur = abattages, versements (liste), rapport financier — pas ventes ni stock ni boucheries. */
 const roleRouteRules: Array<{ prefix: string; roles: UserRole[] }> = [
   { prefix: "/abattage", roles: ["supplier"] },
-  { prefix: "/reports", roles: ["supplier"] },
+  { prefix: "/reports/sales", roles: ["butcher", "admin"] },
+  { prefix: "/reports/stocks", roles: ["butcher", "admin"] },
+  { prefix: "/reports/financial", roles: ["butcher", "supplier", "admin"] },
+  { prefix: "/reports", roles: ["butcher", "admin"] },
   { prefix: "/stock", roles: ["butcher"] },
-  { prefix: "/vente", roles: ["butcher", "supplier"] },
+  { prefix: "/vente", roles: ["butcher"] },
   { prefix: "/boucherie", roles: ["butcher"] },
   { prefix: "/versement/enregistrer", roles: ["butcher"] },
   { prefix: "/versement/liste", roles: ["butcher", "supplier"] },
-  { prefix: "/dashboard", roles: ["butcher", "supplier"] },
-  { prefix: "/settings", roles: ["butcher", "supplier"] },
+  { prefix: "/dashboard", roles: ["butcher", "supplier", "admin"] },
+  { prefix: "/settings", roles: ["butcher", "supplier", "admin"] },
+  { prefix: "/admin", roles: ["admin"] },
 ];
 
 export const canAccessPath = (role: UserRole, pathname: string): boolean => {
@@ -26,24 +45,24 @@ export const canAccessPath = (role: UserRole, pathname: string): boolean => {
   if (normalized.startsWith("/auth")) {
     return true;
   }
-  if (role === "admin") {
-    return true;
-  }
 
-  const match = roleRouteRules.find(
-    (rule) => normalized === rule.prefix || normalized.startsWith(`${rule.prefix}/`),
+  const appRole = normalizeAppRole(role);
+  const matches = roleRouteRules.filter(
+    (rule) =>
+      normalized === rule.prefix || normalized.startsWith(`${rule.prefix}/`),
   );
-  if (!match) {
+  if (matches.length === 0) {
     return false;
   }
-  return match.roles.includes(role);
+  const match = matches.sort((a, b) => b.prefix.length - a.prefix.length)[0];
+  return match.roles.includes(appRole);
 };
 
 export const getDefaultPathForRole = (role: UserRole): string =>
   role === "supplier"
     ? "/abattage/liste"
     : role === "admin"
-      ? "/admin/platform"
+      ? "/admin/users/list"
       : "/dashboard";
 
 export const filterNavigationByRole = (

@@ -1,6 +1,5 @@
 import type { LucideIcon } from "lucide-react";
 import {
-  ShieldCheck,
   Beef,
   Building2,
   ChartBar,
@@ -8,9 +7,14 @@ import {
   CreditCard,
   FileText,
   LayoutDashboard,
+  Link2,
+  List,
   Package,
   Settings,
   ShoppingCart,
+  Truck,
+  UserPlus,
+  Users,
 } from "lucide-react";
 
 export type NavLeaf = {
@@ -135,6 +139,11 @@ export const mainNavigation: NavEntry[] = [
       icon: Beef,
       children: [
         {
+          titleKey: "nav.slaughterPurchase",
+          href: "/abattage/achats",
+          icon: CircleDot,
+        },
+        {
           titleKey: "nav.slaughterCreate",
           href: "/abattage/enregistrer",
           icon: CircleDot,
@@ -180,18 +189,56 @@ export const mainNavigation: NavEntry[] = [
   {
     type: "group",
     group: {
-      titleKey: "nav.adminGroup",
-      icon: ShieldCheck,
+      titleKey: "nav.adminModuleUsers",
+      icon: Users,
       children: [
         {
-          titleKey: "nav.adminPlatform",
-          href: "/admin/platform",
-          icon: CircleDot,
+          titleKey: "nav.adminListUsers",
+          href: "/admin/users/list",
+          icon: List,
         },
         {
-          titleKey: "nav.adminUsers",
-          href: "/admin/users",
-          icon: CircleDot,
+          titleKey: "nav.adminFormUser",
+          href: "/admin/users/create",
+          icon: UserPlus,
+        },
+      ],
+    },
+  },
+  {
+    type: "group",
+    group: {
+      titleKey: "nav.adminModuleSuppliers",
+      icon: Truck,
+      children: [
+        {
+          titleKey: "nav.adminFormSupplier",
+          href: "/admin/users/suppliers/create",
+          icon: Users,
+        },
+        {
+          titleKey: "nav.adminFormSupplierButcheries",
+          href: "/admin/users/suppliers/butcheries",
+          icon: Link2,
+        },
+      ],
+    },
+  },
+  {
+    type: "group",
+    group: {
+      titleKey: "nav.adminModuleButcheries",
+      icon: Building2,
+      children: [
+        {
+          titleKey: "nav.adminListButcheries",
+          href: "/admin/butcheries/list",
+          icon: List,
+        },
+        {
+          titleKey: "nav.adminFormButchery",
+          href: "/admin/butcheries/create",
+          icon: Building2,
         },
       ],
     },

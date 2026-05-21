@@ -1,10 +1,11 @@
-import { API_V1_PREFIX, getApiBaseUrl } from "@/lib/api/config";
+import { getApiBaseUrl, getApiPrefix } from "@/lib/api/config";
 
-/** Construit une URL absolue vers un chemin sous `/api/v1`. */
+/** Construit une URL absolue vers un chemin sous le préfixe API (`NEXT_PUBLIC_API_PREFIX`, défaut `/api/v1`). */
 export const v1Url = (path: string): string => {
   const base = getApiBaseUrl();
+  const prefix = getApiPrefix();
   const p = path.startsWith("/") ? path : `/${path}`;
-  return `${base}${API_V1_PREFIX}${p}`;
+  return `${base}${prefix}${p}`;
 };
 
 export type QueryParamRecord = Record<

@@ -5,7 +5,7 @@ import { toast } from "sonner";
 import { ParentCard } from "@/components/shared/parent-card";
 import type { SlaughterAnimal } from "@/lib/mock-data/slaughter";
 import { Button } from "@/components/ui/button";
-import { Beef, Home, MapPin, Pencil, Phone, Trash2 } from "lucide-react";
+import { Beef, Home, MapPin, Pencil, Phone, Share2, Trash2 } from "lucide-react";
 
 type Props = {
   animal: SlaughterAnimal;
@@ -42,8 +42,9 @@ export const AbattageDetailView = ({ animal }: Props) => {
       </div>
 
       <ParentCard
-        title={`${t("animal")} #${animal.id}`}
-        subtitle={`${t("tableDate")}: ${animal.date}`}
+        title={t("animal")}
+        subtitle={`${animal.date} · ${animal.weight} kg`}
+        titleIcon={Beef}
       >
         <div className="grid gap-6 lg:grid-cols-3">
           <div className="space-y-4 rounded-xl border border-border p-4 lg:col-span-2">
@@ -82,7 +83,7 @@ export const AbattageDetailView = ({ animal }: Props) => {
         </div>
       </ParentCard>
 
-      <ParentCard title={t("distribution")}>
+      <ParentCard title={t("distribution")} titleIcon={Share2}>
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {animal.butchers.map((b) => (
             <div
@@ -90,7 +91,7 @@ export const AbattageDetailView = ({ animal }: Props) => {
               className="rounded-xl border border-border p-4"
             >
               <div className="mb-3 flex items-center gap-2">
-                <Home className="size-5 text-emerald-600" aria-hidden />
+                <Home className="size-5 text-accent" aria-hidden />
                 <h3 className="font-semibold">{b.name}</h3>
               </div>
               <p className="text-lg font-bold">
