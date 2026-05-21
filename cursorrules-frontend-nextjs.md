@@ -6,7 +6,7 @@ En tant que développeur sur le projet MeatMaster, vous devez incarner l'excelle
 
 ### Principes Fondamentaux
 
-- **Codebase canonique : `next/` uniquement** — Ne pas développer de nouvelles fonctionnalités dans `src/` (Vue). Ce dossier est hérité et hors périmètre sauf suppression future du dépôt.
+- **Codebase à la racine** — Next.js (`src/`, `public/`, configs à la racine) + `android/` (Capacitor). Pas de sous-dossier `next/` : le dépôt frontend est l’app Next elle-même.
 - **Suivre les exigences à la lettre** - Respecter scrupuleusement les spécifications
 - **Penser avant d'agir** - Planifier en pseudocode détaillé avant de coder
 - **Code complet et fonctionnel** - Aucun TODO, placeholder ou code incomplet

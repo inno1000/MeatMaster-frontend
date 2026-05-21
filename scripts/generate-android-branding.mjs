@@ -1,5 +1,5 @@
 /**
- * Génère splash + icônes Android à partir de next/public/logo.svg (sans sharp).
+ * Génère splash + icônes Android à partir de public/logo.svg (sans sharp).
  * Exécution : depuis la racine du repo, `node scripts/generate-android-branding.mjs`
  */
 import { readFile, mkdir, writeFile } from "node:fs/promises";
@@ -10,7 +10,7 @@ import { Jimp, rgbaToInt } from "jimp";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const root = join(__dirname, "..");
-const svgPath = join(root, "next", "public", "logo.svg");
+const svgPath = join(root, "public", "logo.svg");
 const resRoot = join(root, "android", "app", "src", "main", "res");
 
 const BG = rgbaToInt(250, 252, 253, 255);

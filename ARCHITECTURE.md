@@ -1,13 +1,12 @@
 # Architecture — MeatMaster (frontend Next.js)
 
-> **Frontend canonique :** `next/` (Next.js 16, App Router, React 19, Tailwind 4, next-intl).  
-> L’ancien frontend Vue dans `src/` n’est plus la cible d’évolution ; il peut rester dans le dépôt jusqu’à suppression.
+> **Frontend :** Next.js 16 à la racine du dépôt (App Router, React 19, Tailwind 4, next-intl) + empaquetage mobile **`android/`** (Capacitor, WebView sur `out/`).
 
 ## Diagramme d’ensemble
 
 ```mermaid
 graph TB
-    subgraph "Frontend — Next.js (next/)"
+    subgraph "Frontend — Next.js (racine)"
         A[Tableau de bord] --> B[Gestion des stocks]
         A --> C[Ventes]
         A --> D[Versements]
@@ -174,8 +173,8 @@ sequenceDiagram
 
 ## Évolutivité
 
-- Modules par fonctionnalité sous `next/src/app/[locale]/(main)/...`
-- Client HTTP et schémas dans `next/src/lib/`
+- Modules par fonctionnalité sous `src/app/[locale]/(main)/...`
+- Client HTTP et schémas dans `src/lib/`
 - Intégration progressive avec l’API Laravel sans casser les mocks de développement
 
 ---

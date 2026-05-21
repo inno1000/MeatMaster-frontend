@@ -1,50 +1,69 @@
 # MeatMaster — Frontend
 
-Application web de suivi de la distribution de viande pour les boucheries.
+Application de suivi de la distribution de viande pour les boucheries (Next.js + Capacitor Android).
 
-## Application active : Next.js
+## Structure
 
-Tout le développement produit se fait dans le dossier **[`next/`](next/)** (Next.js App Router, Tailwind CSS 4, next-intl, TanStack Query, Zustand).
+| Dossier / fichier | Rôle |
+|-------------------|------|
+| `src/` | Code Next.js (App Router, composants, API client) |
+| `public/` | Assets statiques |
+| `messages/` | Traductions (fr, en, ar) |
+| `android/` | Projet Capacitor Android (WebView → `out/`) |
+| `scripts/` | Utilitaires (branding Android, tests API) |
+| `docs/` | Spécifications (ex. `API-SPEC.md`) |
 
-Le dossier **`src/`** à la racine correspond à l’ancienne application **Vue 3 / Vite / Vuetify** : elle **n’est plus maintenue**. Elle peut être supprimée du dépôt lorsque vous validerez que la migration vers Next.js est terminée.
+## Prérequis
 
-## Démarrage rapide
+- Node.js **20+**
+- Backend Laravel : définir `NEXT_PUBLIC_API_URL` (voir `.env.local.example`)
 
-Prérequis : **Node.js 20+**.
+## Installation
 
 ```bash
-cd next
 npm install
+cp .env.local.example .env.local   # puis renseigner l’URL de l’API
 npm run dev
 ```
 
-Depuis la **racine** du dépôt, après installation des dépendances dans `next/` :
+## Scripts
 
-```bash
-npm install --prefix next
-npm run dev
-```
+| Commande | Description |
+|----------|-------------|
+| `npm run dev` | Serveur de développement |
+| `npm run build` | Build statique → dossier `out/` |
+| `npm run lint` | ESLint |
+| `npm run build:mobile` | Build + `cap sync android` |
+| `npm run android:assemble` | APK debug |
+| `npm run mobile:android:branding` | Splash / icônes depuis `public/logo.svg` |
 
-Les scripts racine **`dev`**, **`build`**, **`start`** et **`lint`** délèguent à l’application dans `next/`.
+## URLs
+
+Routes préfixées par locale : **`/fr/...`**, **`/en/...`**, **`/ar/...`** (défaut : français). La locale `ar` active le RTL.
+
+- Connexion : `/fr/auth/login`
+- Tableau de bord : `/fr/dashboard`
+
+## Authentification
+
+Jeton **Sanctum** stocké via Zustand (`localStorage`). Routes `(main)` protégées par `AuthGuard`.  
+Rôles UI : `admin`, `butcher`, `supplier` (mappés depuis `admin`, `boucher`, `fournisseur` côté API).
+
+## Client API
+
+- `import { boucherieV1, apiLogin } from "@/lib/api"`
+- Préfixe par défaut : `/api/v1` (`NEXT_PUBLIC_API_PREFIX`)
+
+## Mobile (Capacitor)
+
+- Config : `capacitor.config.ts` — `webDir: "out"`
+- Build : `npm run build:mobile`
+- WebView : schéma `https` pour Android
 
 ## Documentation
 
 | Fichier | Contenu |
-|--------|---------|
-| [`next/README.md`](next/README.md) | Scripts, `.env`, routes `/fr` · `/en`, stack technique |
-| [`cursorrules-frontend-nextjs.md`](cursorrules-frontend-nextjs.md) | Guide de développement Next.js (MeatMaster) |
-| [`ARCHITECTURE.md`](ARCHITECTURE.md) | Vue d’ensemble technique (cible Next.js) |
-
-## Ancienne app Vue (local uniquement)
-
-Si vous devez encore lancer l’UI historique :
-
-```bash
-npm run vue:dev
-```
-
-Le build Capacitor historique pointe vers `dist/` (sortie Vite). Un futur empaquetage mobile devra cibler la sortie Next.js (ex. `next/out` avec export statique) — voir la section Capacitor dans `next/README.md`.
-
----
-
-*Le dépôt s’appuie historiquement sur le template [Berry Free Vue](https://github.com/codedthemes/berry-free-vue-admin-template) (MIT) pour la partie `src/` héritée.*
+|---------|---------|
+| [`docs/API-SPEC.md`](docs/API-SPEC.md) | Contrat API |
+| [`ARCHITECTURE.md`](ARCHITECTURE.md) | Vue d’ensemble fonctionnelle |
+| [`cursorrules-frontend-nextjs.md`](cursorrules-frontend-nextjs.md) | Guide de développement |
