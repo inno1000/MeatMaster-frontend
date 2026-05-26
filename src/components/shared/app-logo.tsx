@@ -2,7 +2,7 @@ import { cn } from "@/lib/utils";
 
 type AppLogoProps = {
   className?: string;
-  /** Hauteur approximative ; largeur proportionnelle au SVG */
+  /** Hauteur approximative ; largeur proportionnelle au logo */
   variant?: "sidebar" | "hero" | "auth";
   alt?: string;
 };
@@ -14,18 +14,18 @@ export function AppLogo({
 }: AppLogoProps) {
   return (
     <img
-      src="/logo.svg"
+      src="/logo-app-ui.png"
       alt={alt}
       className={cn(
         "object-contain select-none",
         variant === "sidebar" && "object-left",
         (variant === "hero" || variant === "auth") && "object-center",
         variant === "sidebar" &&
-          "h-9 w-auto max-w-[min(160px,55vw)] sm:max-w-[180px]",
+          "h-10 w-auto max-w-[min(200px,62vw)] sm:max-w-[220px]",
         variant === "hero" &&
-          "mx-auto h-14 w-auto max-w-[min(280px,85vw)] sm:h-16",
+          "mx-auto h-16 w-auto max-w-[min(320px,92vw)] sm:h-20",
         variant === "auth" &&
-          "mx-auto h-24 w-auto max-w-[min(340px,88vw)] sm:h-28 md:h-32",
+          "mx-auto h-28 w-auto max-w-[min(420px,94vw)] sm:h-32 md:h-36",
         className,
       )}
       draggable={false}

@@ -1,6 +1,22 @@
+import { Capacitor } from "@capacitor/core";
+
+/** API de prod (Render) — secours si le build Android n’a pas injecté NEXT_PUBLIC_API_URL. */
+const DEFAULT_PRODUCTION_API_URL = "https://boucherie-api.onrender.com";
+
 /** URL de base sans slash final (ex. https://boucherie-api.onrender.com). */
-export const getApiBaseUrl = (): string =>
-  (process.env.NEXT_PUBLIC_API_URL ?? "").trim().replace(/\/$/, "");
+export const getApiBaseUrl = (): string => {
+  const fromEnv = (process.env.NEXT_PUBLIC_API_URL ?? "").trim().replace(/\/$/, "");
+  if (fromEnv) {
+    return fromEnv;
+  }
+
+  // Capacitor sert l’app sur https://localhost — sans URL absolue, fetch() cible localhost.
+  if (typeof window !== "undefined" && Capacitor.isNativePlatform()) {
+    return DEFAULT_PRODUCTION_API_URL;
+  }
+
+  return "";
+};
 
 export const isApiEnabled = (): boolean => Boolean(getApiBaseUrl());
 

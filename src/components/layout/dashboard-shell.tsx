@@ -196,19 +196,21 @@ export const DashboardShell = ({ children }: { children: ReactNode }) => {
   }, []);
 
   const sidebarNav = (
-    <nav className="flex flex-1 flex-col gap-1 overflow-y-auto overscroll-y-contain px-2 py-4 pb-safe safe-pad-x">
-      {navEntries.map((entry, i) =>
-        renderNav(
-          entry,
-          pathname,
-          t,
-          expandedGroupKeys,
-          toggleGroup,
-          () => setMobileOpen(false),
-          `nav-${i}`,
-        ),
-      )}
-      <div className="mt-auto border-t border-border pt-4 text-center">
+    <nav className="flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto overscroll-y-contain px-3 py-4 safe-pad-x">
+      <div className="flex flex-col gap-1">
+        {navEntries.map((entry, i) =>
+          renderNav(
+            entry,
+            pathname,
+            t,
+            expandedGroupKeys,
+            toggleGroup,
+            () => setMobileOpen(false),
+            `nav-${i}`,
+          ),
+        )}
+      </div>
+      <div className="mt-auto border-t border-border/60 px-1 pt-4 pb-2 text-center">
         <span className="text-xs text-muted-foreground">
           {t("common.appName")} {t("common.version")}
         </span>
@@ -283,7 +285,7 @@ export const DashboardShell = ({ children }: { children: ReactNode }) => {
 
           <Dialog.Portal>
             <Dialog.Overlay className="fixed inset-0 z-50 bg-black/45 backdrop-blur-[2px] data-[state=open]:animate-in data-[state=closed]:animate-out" />
-            <Dialog.Content className="fixed start-0 top-0 z-50 flex h-[100dvh] max-h-[100dvh] w-[min(100vw,20rem)] flex-col border-e border-border/60 bg-card/95 outline-none backdrop-blur-xl data-[state=open]:slide-in-from-left data-[state=closed]:slide-out-to-left rtl:data-[state=open]:slide-in-from-right rtl:data-[state=closed]:slide-out-to-right">
+            <Dialog.Content className="fixed start-0 top-0 z-50 flex h-[100dvh] max-h-[100dvh] w-[min(100vw,20rem)] flex-col border-e border-border/60 bg-card/95 outline-none backdrop-blur-xl pb-[env(safe-area-inset-bottom,0px)] data-[state=open]:slide-in-from-left data-[state=closed]:slide-out-to-left rtl:data-[state=open]:slide-in-from-right rtl:data-[state=closed]:slide-out-to-right">
               <Dialog.Title className="sr-only">{t("nav.openMenu")}</Dialog.Title>
               <Dialog.Description className="sr-only">
                 {t("common.appName")}
@@ -295,7 +297,7 @@ export const DashboardShell = ({ children }: { children: ReactNode }) => {
             </Dialog.Content>
           </Dialog.Portal>
 
-          <main className="safe-pad-x flex-1 overflow-y-auto overflow-x-hidden px-3 pb-[calc(5.65rem+env(safe-area-inset-bottom,0px))] pt-4 sm:px-4 sm:pt-6 md:px-8 md:pb-10 md:pt-10">
+          <main className="safe-pad-x flex-1 overflow-y-auto overflow-x-hidden px-3 pb-[calc(5.75rem+env(safe-area-inset-bottom,0px))] pt-4 sm:px-4 sm:pt-6 md:px-8 md:pb-10 md:pt-10">
             <motion.div
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}

@@ -8,6 +8,9 @@ export type CategorieProduitRef = {
   ordre: number;
 };
 
+/** Catégories utilisées à l'abattage (hors volaille produit). */
+export const ABATTAGE_EXCLUDED_CATEGORIES = ["volaille"] as const;
+
 /** Extrait le code catégorie (`categorie_produit` string ou objet référentiel). */
 export function getProduitCategoryCode(produit: ProduitRow): string {
   const raw =
@@ -49,7 +52,23 @@ export function parseCategoriesFromReferentiel(
       ordre: Number(r.ordre ?? 999),
     });
   }
-  return rows.sort((a, b) => a.ordre - b.ordre || a.libelle.localeCompare(b.libelle, "fr"));
+  return rows
+    .filter((r) => !ABATTAGE_EXCLUDED_CATEGORIES.includes(r.valeur as (typeof ABATTAGE_EXCLUDED_CATEGORIES)[number]))
+    .sort((a, b) => a.ordre - b.ordre || a.libelle.localeCompare(b.libelle, "fr"));
+}
+
+/** Lignes API abattage / distribution à partir des poids saisis par catégorie. */
+export function buildLignesFromCategoryWeights(
+  entries: { categorieValeur: string; poidsKg: unknown }[],
+): { categorie: string; poids_kg: number }[] {
+  const lignes: { categorie: string; poids_kg: number }[] = [];
+  for (const e of entries) {
+    const kg = Number(e.poidsKg) || 0;
+    if (kg > 0) {
+      lignes.push({ categorie: e.categorieValeur, poids_kg: kg });
+    }
+  }
+  return lignes;
 }
 
 /** Premier produit du catalogue pour une catégorie donnée. */

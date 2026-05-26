@@ -42,10 +42,12 @@ function Invoke-Api {
     [int[]]$ExpectStatus = @(200)
   )
   $uri = "$(Get-ApiBase)$Path"
+  $timeoutSec = if ($env:API_TIMEOUT_SEC) { [int]$env:API_TIMEOUT_SEC } else { 120 }
   $params = @{
     Uri         = $uri
     Method      = $Method
     Headers     = $Headers
+    TimeoutSec  = $timeoutSec
     ErrorAction = "Stop"
   }
   if ($null -ne $Body) {

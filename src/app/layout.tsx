@@ -17,8 +17,8 @@ const notoSansArabic = Noto_Sans_Arabic({
 
 export const metadata: Metadata = {
   icons: {
-    icon: "/logo.svg",
-    apple: "/logo.svg",
+    icon: "/logo-app-ui.png",
+    apple: "/logo-app-ui.png",
   },
 };
 

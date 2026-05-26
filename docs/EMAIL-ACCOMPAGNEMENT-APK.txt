@@ -1,0 +1,23 @@
+Objet : MeatMaster v1.2.0 — APK Android + guide de recette mobile
+
+Bonjour,
+
+Veuillez trouver en pièce jointe l’application Android MeatMaster (fichier .apk) ainsi que le guide de recette joint (GUIDE-RECETTE-MOBILE-CLIENT.pdf ou .md).
+
+Cette version est destinée à la validation fonctionnelle sur téléphone ou tablette Android, en connexion Internet, sur l’environnement de démonstration en ligne.
+
+Comptes de test :
+• Administrateur : herve@example.net / admin1234
+• Fournisseur : ali@test.com / ali12345
+• Boucher : test@gmail.com / test1234
+
+Installation : ouvrir le fichier APK sur l’appareil, autoriser l’installation si Android le demande, puis lancer MeatMaster.
+
+Le guide (GUIDE-RECETTE-MOBILE-CLIENT) décrit chaque fonctionnalité avec les actions pas à pas à réaliser sur le téléphone, les résultats attendus et des cases OK/KO. Il inclut un parcours métier complet en 8 étapes. Merci de nous retourner le document annoté (PDF ou scan) avec vos remarques et captures d’écran en cas d’anomalie.
+
+Note : au premier lancement après une période d’inactivité, la connexion peut prendre 1 à 2 minutes (réveil du serveur).
+
+Restant à votre disposition,
+
+[Cordialement,
+Votre nom / société]

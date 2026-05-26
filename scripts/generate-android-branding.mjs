@@ -1,60 +1,95 @@
 /**
- * Génère splash + icônes Android à partir de public/logo.svg (sans sharp).
- * Exécution : depuis la racine du repo, `node scripts/generate-android-branding.mjs`
+ * Génère splash + icônes Android + logo UI transparent depuis public/logo-app.png.
+ * Exécution : `npm run mobile:android:branding`
  */
-import { readFile, mkdir, writeFile } from "node:fs/promises";
+import { mkdir, writeFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { Resvg } from "@resvg/resvg-js";
 import { Jimp, rgbaToInt } from "jimp";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const root = join(__dirname, "..");
-const svgPath = join(root, "public", "logo.svg");
+const logoPath = join(root, "public", "logo-app.png");
+const logoUiPath = join(root, "public", "logo-app-ui.png");
 const resRoot = join(root, "android", "app", "src", "main", "res");
 
-const BG = rgbaToInt(250, 252, 253, 255);
+/** Fond pages app — oklch(0.965 0.006 264) ≈ #f4f4f7 */
+const APP_BG = rgbaToInt(244, 244, 247, 255);
+const TRANSPARENT = rgbaToInt(0, 0, 0, 0);
 
-const resvgBase = {
-  font: { loadSystemFonts: true, defaultFontFamily: "sans-serif" },
-};
+/** Zone sûre icône adaptive Android (~66 % du diamètre). */
+const LAUNCHER_SAFE_SCALE = 0.62;
+const LEGACY_ICON_SCALE = 0.72;
+const SPLASH_SCALE = 0.74;
 
-async function splashAt(w, h) {
-  const targetW = Math.min(w, h) * 0.58;
-  const resvg = new Resvg(await readFile(svgPath), {
-    ...resvgBase,
-    fitTo: { mode: "width", value: Math.max(48, Math.round(targetW)) },
-  });
-  const logoBuf = Buffer.from(resvg.render().asPng());
-  const logo = await Jimp.read(logoBuf);
-  const canvas = new Jimp({ width: w, height: h, color: BG });
-  const x = Math.round((w - logo.bitmap.width) / 2);
-  const y = Math.round((h - logo.bitmap.height) / 2);
+let logoSource;
+
+async function loadLogoSource() {
+  if (!logoSource) {
+    logoSource = await Jimp.read(logoPath);
+  }
+  return logoSource;
+}
+
+function makeNearWhiteTransparent(image, threshold = 246) {
+  const { data } = image.bitmap;
+  for (let i = 0; i < data.length; i += 4) {
+    const r = data[i];
+    const g = data[i + 1];
+    const b = data[i + 2];
+    if (r >= threshold && g >= threshold && b >= threshold) {
+      data[i + 3] = 0;
+    }
+  }
+  return image;
+}
+
+/** Logo UI : fond blanc retiré pour fusionner avec bg-background. */
+async function writeUiLogo() {
+  const src = await loadLogoSource();
+  const ui = src.clone();
+  makeNearWhiteTransparent(ui);
+  await ui.write(logoUiPath);
+  console.info("Wrote public/logo-app-ui.png");
+}
+
+async function logoFitBox(maxW, maxH) {
+  const src = await loadLogoSource();
+  const logo = src.clone();
+  const ratio = Math.min(maxW / logo.bitmap.width, maxH / logo.bitmap.height, 1);
+  const w = Math.max(32, Math.round(logo.bitmap.width * ratio));
+  const h = Math.max(32, Math.round(logo.bitmap.height * ratio));
+  logo.resize({ w, h });
+  return logo;
+}
+
+async function compositeCentered(canvasW, canvasH, maxScale, bgColor) {
+  const maxW = canvasW * maxScale;
+  const maxH = canvasH * maxScale;
+  const logo = await logoFitBox(maxW, maxH);
+  const canvas = new Jimp({ width: canvasW, height: canvasH, color: bgColor });
+  const x = Math.round((canvasW - logo.bitmap.width) / 2);
+  const y = Math.round((canvasH - logo.bitmap.height) / 2);
   canvas.composite(logo, x, y);
   return canvas.getBuffer("image/png");
 }
 
-/** Icône carrée (legacy) : fond + logo */
-async function squareIcon(size, logoScale) {
-  const resvg = new Resvg(await readFile(svgPath), {
-    ...resvgBase,
-    fitTo: { mode: "width", value: Math.max(32, Math.round(size * logoScale)) },
-  });
-  const logo = await Jimp.read(Buffer.from(resvg.render().asPng()));
-  const canvas = new Jimp({ width: size, height: size, color: BG });
+async function splashAt(w, h) {
+  return compositeCentered(w, h, SPLASH_SCALE, APP_BG);
+}
+
+async function squareIcon(size) {
+  return compositeCentered(size, size, LEGACY_ICON_SCALE, APP_BG);
+}
+
+/** Premier plan adaptive : logo seul, fond transparent, dans la zone sûre. */
+async function adaptiveForeground(size) {
+  const logo = await logoFitBox(size * LAUNCHER_SAFE_SCALE, size * LAUNCHER_SAFE_SCALE);
+  const canvas = new Jimp({ width: size, height: size, color: TRANSPARENT });
   const x = Math.round((size - logo.bitmap.width) / 2);
   const y = Math.round((size - logo.bitmap.height) / 2);
   canvas.composite(logo, x, y);
   return canvas.getBuffer("image/png");
-}
-
-/** Calque premier plan adaptive (fond transparent) */
-async function adaptiveForeground(size) {
-  const resvg = new Resvg(await readFile(svgPath), {
-    ...resvgBase,
-    fitTo: { mode: "width", value: Math.max(32, Math.round(size * 0.58)) },
-  });
-  return Buffer.from(resvg.render().asPng());
 }
 
 const splashes = [
@@ -88,13 +123,13 @@ const foregrounds = [
 ];
 
 async function main() {
-  console.info("Source:", svgPath);
+  console.info("Source:", logoPath);
+  await writeUiLogo();
 
   for (const [rel, w, h] of splashes) {
     const out = join(resRoot, rel);
     await mkdir(dirname(out), { recursive: true });
-    const buf = await splashAt(w, h);
-    await writeFile(out, buf);
+    await writeFile(out, await splashAt(w, h));
     console.info("Wrote", rel, `${w}x${h}`);
   }
 
@@ -102,8 +137,7 @@ async function main() {
     for (const name of ["ic_launcher.png", "ic_launcher_round.png"]) {
       const out = join(resRoot, folder, name);
       await mkdir(dirname(out), { recursive: true });
-      const buf = await squareIcon(size, 0.62);
-      await writeFile(out, buf);
+      await writeFile(out, await squareIcon(size));
       console.info("Wrote", `${folder}/${name}`, `${size}x${size}`);
     }
   }
@@ -111,8 +145,7 @@ async function main() {
   for (const [folder, size] of foregrounds) {
     const out = join(resRoot, folder, "ic_launcher_foreground.png");
     await mkdir(dirname(out), { recursive: true });
-    const buf = await adaptiveForeground(size);
-    await writeFile(out, buf);
+    await writeFile(out, await adaptiveForeground(size));
     console.info("Wrote", `${folder}/ic_launcher_foreground.png`, `${size}x${size}`);
   }
 

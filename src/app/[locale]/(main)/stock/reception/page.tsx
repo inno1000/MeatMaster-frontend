@@ -94,10 +94,21 @@ function StockReceptionPage() {
                 const produit = pickDisplayLabel(
                   d.produit as Record<string, unknown> | undefined,
                 );
+                const lignes = Array.isArray(d.lignes)
+                  ? (d.lignes as Record<string, unknown>[])
+                  : [];
+                const categoriesLabel = lignes
+                  .map((l) => {
+                    const cat = String(l.categorie ?? "").replace(/_/g, " ");
+                    const kg = Number(l.poids_kg);
+                    return kg > 0 ? `${cat} (${kg} kg)` : cat;
+                  })
+                  .filter(Boolean)
+                  .join(", ");
                 const parts = [
                   created && created !== "" ? created : null,
                   q ? `${q} kg` : null,
-                  produit || null,
+                  categoriesLabel || produit || null,
                 ].filter(Boolean);
                 const label = parts.length > 0 ? parts.join(" · ") : tCommon("noLabel");
                 return (

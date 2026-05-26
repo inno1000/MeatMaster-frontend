@@ -23,12 +23,12 @@ import { unwrapDataArray, unwrapDataObject } from "@/lib/api/unwrap";
 import { coerceApiScalarId } from "@/lib/api/coerce-id";
 import { useAuthStore } from "@/lib/stores/auth-store";
 import { normalizeAppRole } from "@/lib/authz";
+import { filterBoucheriesForSupplier } from "@/lib/boucheries/filter-for-supplier";
 import {
+  buildLignesFromCategoryWeights,
   parseCategoriesFromReferentiel,
-  pickProduitForCategory,
   sumDistributedByCategory,
   sumWeightsByCategory,
-  type ProduitRow,
 } from "@/lib/produits/slaughter-form";
 
 const CategoryWeightSchema = z.object({
@@ -165,11 +165,6 @@ function AbattageEnregistrerPage() {
     queryFn: async () => unwrapDataArray(await boucherieV1.boucheries.list()),
   });
 
-  const produitsQuery = useQuery({
-    queryKey: ["produits", "for-slaughter"],
-    queryFn: async () => unwrapDataArray(await boucherieV1.produits.list()),
-  });
-
   const categoriesRefQuery = useQuery({
     queryKey: ["referentiels", "categorie_produit", "slaughter"],
     queryFn: async () =>
@@ -188,11 +183,6 @@ function AbattageEnregistrerPage() {
     }
     return map;
   }, [categories]);
-
-  const allProduits = useMemo(
-    () => (produitsQuery.data ?? []) as ProduitRow[],
-    [produitsQuery.data],
-  );
 
   useEffect(() => {
     if (categories.length === 0) {
@@ -287,20 +277,7 @@ function AbattageEnregistrerPage() {
     if (appRole !== "supplier") {
       return all;
     }
-    const idSet = new Set(user?.butcheryIds ?? []);
-    const nameSet = new Set(user?.butcheries ?? []);
-    if (idSet.size === 0 && nameSet.size === 0) {
-      return all;
-    }
-    return all.filter((item) => {
-      const b = item as { id?: unknown; nom?: unknown; name?: unknown };
-      const id = String(b.id ?? "");
-      if (idSet.size > 0 && id && idSet.has(id)) {
-        return true;
-      }
-      const nom = String(b.nom ?? b.name ?? "");
-      return nameSet.size > 0 && nom.length > 0 && nameSet.has(nom);
-    });
+    return filterBoucheriesForSupplier(all, user);
   }, [boucheriesQuery.data, user, appRole]);
 
   const activeCategoryCodes = useMemo(
@@ -353,28 +330,12 @@ function AbattageEnregistrerPage() {
 
   const onSubmit = handleSubmit(async (values) => {
     try {
-      const stocks: Record<string, unknown>[] = [];
-      for (const row of values.categoryWeights) {
-        const kg = Number(row.poidsKg) || 0;
-        if (kg <= 0) {
-          continue;
-        }
-        const produit = pickProduitForCategory(allProduits, row.categorieValeur);
-        if (!produit?.id) {
-          const label =
-            categoryLabelByCode.get(row.categorieValeur) ?? row.categorieValeur;
-          throw new Error(t("missingProductForCategory", { category: label }));
-        }
-        stocks.push({
-          produit_id: coerceApiScalarId(String(produit.id)),
-          quantite: kg,
-        });
+      const abattageLignes = buildLignesFromCategoryWeights(values.categoryWeights);
+      if (abattageLignes.length === 0) {
+        throw new Error(t("atLeastOneCategory"));
       }
 
-      const poidsCarcasse = stocks.reduce(
-        (sum, s) => sum + Number(s.quantite ?? 0),
-        0,
-      );
+      const poidsCarcasse = abattageLignes.reduce((sum, l) => sum + l.poids_kg, 0);
 
       const attachmentIds = await uploadAudioBlobs(audioBlobs);
 
@@ -382,7 +343,7 @@ function AbattageEnregistrerPage() {
         animal_id: coerceApiScalarId(values.animalId),
         date_abattage: values.dateAbattage,
         poids_carcasse_kg: poidsCarcasse,
-        stocks,
+        lignes: abattageLignes,
         notes: values.notes || undefined,
         ...(attachmentIds.length > 0 ? { attachment_ids: attachmentIds } : {}),
       };
@@ -394,43 +355,39 @@ function AbattageEnregistrerPage() {
       }
 
       for (const dist of values.distributions) {
+        const distLignes: {
+          categorie: string;
+          poids_kg: number;
+          prix_par_kg?: number;
+        }[] = [];
+
         for (const ligne of dist.lignes) {
           const kg = Number(ligne.quantite) || 0;
           if (kg <= 0) {
             continue;
           }
-          const produit = pickProduitForCategory(
-            allProduits,
-            ligne.categorieValeur,
-          );
-          if (!produit?.id) {
-            const label =
-              categoryLabelByCode.get(ligne.categorieValeur) ??
-              ligne.categorieValeur;
-            throw new Error(t("missingProductForCategory", { category: label }));
-          }
           const prix =
             ligne.prixVente !== "" && ligne.prixVente !== undefined
               ? Number(ligne.prixVente)
               : undefined;
-          const catLabel =
-            categoryLabelByCode.get(ligne.categorieValeur) ??
-            ligne.categorieValeur;
-          await boucherieV1.distributions.create({
-            abattage_id: abattageId,
-            boucherie_id: coerceApiScalarId(dist.boucherieId),
-            produit_id: coerceApiScalarId(String(produit.id)),
-            quantite: kg,
-            notes: [
-              `${t("productCategoryFilter")}: ${catLabel}`,
-              prix !== undefined && Number.isFinite(prix)
-                ? `${t("salePrice")}: ${prix} FCFA`
-                : null,
-            ]
-              .filter(Boolean)
-              .join(" · "),
+          distLignes.push({
+            categorie: ligne.categorieValeur,
+            poids_kg: kg,
+            ...(prix !== undefined && Number.isFinite(prix)
+              ? { prix_par_kg: prix }
+              : {}),
           });
         }
+
+        if (distLignes.length === 0) {
+          continue;
+        }
+
+        await boucherieV1.distributions.create({
+          abattage_id: abattageId,
+          boucherie_id: coerceApiScalarId(dist.boucherieId),
+          lignes: distLignes,
+        });
       }
 
       toast.success(t("slaughterWithDistributionToastOk"));
