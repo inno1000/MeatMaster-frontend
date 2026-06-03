@@ -8,7 +8,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import { useRouter } from "@/i18n/navigation";
-import { UserPlus } from "lucide-react";
+import { iconAdminUserCreate } from "@/lib/icons";
 import { ParentCard } from "@/components/shared/parent-card";
 import { DefaultPasswordNotice } from "@/components/admin/default-password-notice";
 import { Button } from "@/components/ui/button";
@@ -120,7 +120,7 @@ function AdminCreateUserPage() {
         <p className="text-sm text-muted-foreground sm:text-base">{t("pageCreateUserSubtitle")}</p>
       </div>
 
-      <ParentCard title={t("pageCreateUserTitle")} titleIcon={UserPlus}>
+      <ParentCard title={t("pageCreateUserTitle")} titleIcon={iconAdminUserCreate}>
         <DefaultPasswordNotice />
         <form onSubmit={onSubmit} className="space-y-4">
           <div className="grid gap-3 sm:grid-cols-2">

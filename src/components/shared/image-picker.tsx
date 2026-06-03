@@ -2,7 +2,11 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
-import { Camera, ImagePlus, Trash2 } from "lucide-react";
+import { iconCamera, iconDelete, iconImageAdd } from "@/lib/icons";
+
+const CameraIcon = iconCamera;
+const ImageAddIcon = iconImageAdd;
+const DeleteIcon = iconDelete;
 import {
   Card,
   CardContent,
@@ -88,7 +92,7 @@ export function ImagePicker({
       <CardHeader className="pb-2">
         <div className="flex items-start gap-3">
           <div className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-primary/10">
-            <Camera className="size-6 text-primary" aria-hidden />
+            <CameraIcon className="text-2xl text-primary" aria-hidden />
           </div>
           <div className="min-w-0 space-y-1">
             <CardTitle className="text-base sm:text-lg">{title}</CardTitle>
@@ -119,7 +123,7 @@ export function ImagePicker({
                   onClick={() => removePhoto(index)}
                   aria-label={t("removePhoto")}
                 >
-                  <Trash2 className="size-3.5" aria-hidden />
+                  <DeleteIcon className="text-base" aria-hidden />
                   {t("removePhoto")}
                 </button>
               </li>
@@ -158,7 +162,7 @@ export function ImagePicker({
               className="flex min-h-[5.75rem] flex-col items-center justify-center gap-2.5 rounded-2xl border-2 border-dashed border-primary/35 bg-primary/5 px-3 py-4 text-center transition-all hover:border-primary/60 hover:bg-primary/10 active:scale-[0.98]"
             >
               <span className="flex size-12 items-center justify-center rounded-full bg-primary/15">
-                <Camera className="size-6 text-primary" aria-hidden />
+                <CameraIcon className="text-2xl text-primary" aria-hidden />
               </span>
               <span className="text-sm font-semibold leading-tight text-foreground">
                 {t("takePhoto")}
@@ -170,7 +174,7 @@ export function ImagePicker({
               className="flex min-h-[5.75rem] flex-col items-center justify-center gap-2.5 rounded-2xl border-2 border-border bg-card px-3 py-4 text-center transition-all hover:border-primary/40 hover:bg-muted/50 active:scale-[0.98]"
             >
               <span className="flex size-12 items-center justify-center rounded-full bg-muted">
-                <ImagePlus className="size-6 text-muted-foreground" aria-hidden />
+                <ImageAddIcon className="text-2xl text-muted-foreground" aria-hidden />
               </span>
               <span className="text-sm font-semibold leading-tight text-foreground">
                 {t("chooseFromGallery")}

@@ -4,7 +4,7 @@ import { useMemo, useState } from "react";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Wallet } from "lucide-react";
+import { iconPaymentsGroup } from "@/lib/icons";
 import { SimpleStepLayout } from "@/components/simple/simple-step-layout";
 import { Button } from "@/components/ui/button";
 import { boucherieV1 } from "@/lib/api";
@@ -41,7 +41,9 @@ export function VersementListeSimple() {
       unwrapDataArray(await boucherieV1.boucheries.list()).map(mapApiBoucherieRow),
   });
 
-  const pendingRows = useMemo(() => {
+  const [tab, setTab] = useState<"pending" | "history">("pending");
+
+  const allRows = useMemo(() => {
     const butcherById = new Map<string, string>();
     for (const row of boucheriesQuery.data ?? []) {
       const id = String(row.id ?? "");
@@ -68,9 +70,20 @@ export function VersementListeSimple() {
           supplierId: String(row.fournisseur_user_id ?? ""),
         };
       })
-      .filter((r) => r.status === "en_attente")
       .filter((r) => (uid ? r.supplierId === uid : true));
   }, [rowsQuery.data, user, boucheriesQuery.data, tCommon]);
+
+  const pendingRows = useMemo(
+    () => allRows.filter((r) => r.status === "en_attente"),
+    [allRows],
+  );
+
+  const historyRows = useMemo(
+    () => allRows.filter((r) => r.status !== "en_attente"),
+    [allRows],
+  );
+
+  const displayRows = tab === "pending" ? pendingRows : historyRows;
 
   const onAccept = async (id: string) => {
     try {
@@ -108,18 +121,36 @@ export function VersementListeSimple() {
   return (
     <>
       <SimpleStepLayout
-        icon={Wallet}
+        icon={iconPaymentsGroup}
         title={t("paymentsListTitle")}
         step={1}
         totalSteps={1}
       >
+        <div className="flex gap-2 pb-2">
+          <Button
+            type="button"
+            variant={tab === "pending" ? "primary" : "outline"}
+            className="flex-1"
+            onClick={() => setTab("pending")}
+          >
+            {t("tabPending")}
+          </Button>
+          <Button
+            type="button"
+            variant={tab === "history" ? "primary" : "outline"}
+            className="flex-1"
+            onClick={() => setTab("history")}
+          >
+            {t("tabHistory")}
+          </Button>
+        </div>
         <div className="space-y-4 pb-24">
-          {pendingRows.length === 0 ? (
+          {displayRows.length === 0 ? (
             <p className="text-center text-lg text-muted-foreground">
               {tCommon("noData")}
             </p>
           ) : (
-            pendingRows.map((r) => (
+            displayRows.map((r) => (
               <div
                 key={r.id}
                 className="space-y-4 rounded-2xl border-2 border-border bg-card p-5"
@@ -128,30 +159,41 @@ export function VersementListeSimple() {
                   {t("amountBig", { amount: r.amount.toLocaleString() })}
                 </p>
                 <p className="text-center text-lg font-medium">{r.butcher}</p>
-                <div className="grid grid-cols-2 gap-3">
-                  <Button
-                    type="button"
-                    className="min-h-14 text-lg"
-                    onClick={() => void onAccept(r.id)}
-                  >
-                    {t("accept")}
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="destructive"
-                    className="min-h-14 text-lg"
-                    onClick={() =>
-                      setRejectTarget({
-                        id: r.id,
-                        butcher: r.butcher,
-                        amount: r.amount,
-                        reference: r.reference,
-                      })
-                    }
-                  >
-                    {t("reject")}
-                  </Button>
-                </div>
+                {r.reference ? (
+                  <p className="text-center text-sm text-muted-foreground">
+                    {r.reference}
+                  </p>
+                ) : null}
+                {tab === "pending" ? (
+                  <div className="grid grid-cols-2 gap-3">
+                    <Button
+                      type="button"
+                      className="min-h-14 text-lg"
+                      onClick={() => void onAccept(r.id)}
+                    >
+                      {t("accept")}
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="destructive"
+                      className="min-h-14 text-lg"
+                      onClick={() =>
+                        setRejectTarget({
+                          id: r.id,
+                          butcher: r.butcher,
+                          amount: r.amount,
+                          reference: r.reference,
+                        })
+                      }
+                    >
+                      {t("reject")}
+                    </Button>
+                  </div>
+                ) : (
+                  <p className="text-center text-sm font-semibold capitalize text-muted-foreground">
+                    {r.status}
+                  </p>
+                )}
               </div>
             ))
           )}

@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
-import { Wallet, Banknote, Smartphone } from "lucide-react";
+import { iconBanknote, iconPaymentsGroup, iconSmartphone } from "@/lib/icons";
 import { toast } from "sonner";
 import { useRouter } from "@/i18n/navigation";
 import { SimpleStepLayout } from "@/components/simple/simple-step-layout";
@@ -67,8 +67,8 @@ export function VersementSimpleFlow() {
     const refs = modePaiementQuery.data ?? [];
     if (refs.length === 0) {
       return [
-        { id: "mobile_money", label: "Mobile", icon: Smartphone },
-        { id: "especes", label: "Espèces", icon: Banknote },
+        { id: "mobile_money", label: "Mobile", icon: iconSmartphone },
+        { id: "especes", label: "Espèces", icon: iconBanknote },
       ];
     }
     return refs.map((item) => {
@@ -78,7 +78,7 @@ export function VersementSimpleFlow() {
       return {
         id,
         label: label.length > 12 ? `${label.slice(0, 10)}…` : label,
-        icon: id.includes("mobile") ? Smartphone : Banknote,
+        icon: id.includes("mobile") ? iconSmartphone : iconBanknote,
       };
     });
   }, [modePaiementQuery.data]);
@@ -122,7 +122,7 @@ export function VersementSimpleFlow() {
 
   return (
     <SimpleStepLayout
-      icon={Wallet}
+      icon={iconPaymentsGroup}
       title={t("paymentTitle")}
       step={step + 1}
       totalSteps={TOTAL_STEPS}

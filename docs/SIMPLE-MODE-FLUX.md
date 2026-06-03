@@ -1,15 +1,22 @@
-# Mode simplifié — flux validés (v1)
+# Mode simplifié — flux validés
 
-## Boucher
+Le hub **Aujourd’hui** (`/dashboard`, `GET /api/v1/dashboard/today`) est le point d’entrée pour boucher et fournisseur. Les écrans de saisie sont **toujours** en pas à pas (plus de formulaires complets pour ces rôles).
 
-1. **Vente comptoir** — `/vente/enregistrer` (wizard : type → produit → quantité/prix → confirmer)
-2. **Versement** — `/versement/enregistrer` (wizard : montant → mode → confirmer)
-3. **Réception stock** — `/stock/reception` (navigation uniquement ; formulaire standard pour v1)
+## Boucher (saisie pas à pas)
+
+1. **Réception** — `/stock/reception` (`ReceptionSimpleFlow` : distribution → quantité → confirmer)
+2. **Vente comptoir** — `/vente/enregistrer` (`VenteSimpleFlow`)
+3. **Versement** — `/versement/enregistrer` (`VersementSimpleFlow`)
 
 ## Fournisseur
 
-1. **Abattage** — `/abattage/enregistrer` (wizard : animal → poids par catégorie → distribution par boucherie → confirmer)
-2. **Versements** — `/versement/liste` (cartes + Accepter / Refuser)
-3. **Achat animal** — `/abattage/achats` (navigation ; formulaire standard pour v1)
+1. **Achat animal** — `/abattage/achats` (`AchatSimpleFlow` : espèce → poids → prix → tag)
+2. **Abattage** — `/abattage/enregistrer` (`AbattageSimpleFlow`)
+3. **Versements** — `/versement/liste` (onglets En attente / Historique + Accepter / Refuser)
 
-L’administrateur n’active pas le mode simplifié (interface complète conservée).
+L’administrateur conserve l’interface complète (pas de mode simplifié).
+
+## Navigation mobile
+
+- Dock : Accueil + 3 actions (rôle)
+- Bouton **Plus** : listes, rapports, profil, réglages

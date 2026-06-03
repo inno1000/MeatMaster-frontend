@@ -10,7 +10,7 @@ import { formResolver } from "@/lib/form-resolver";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import { useRouter } from "@/i18n/navigation";
-import { ClipboardPenLine } from "lucide-react";
+import { iconStockDeclaration } from "@/lib/icons";
 import { ParentCard } from "@/components/shared/parent-card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -78,7 +78,7 @@ function StockDeclarationPage() {
         <h1 className="text-2xl font-bold">{t("title")}</h1>
         <p className="text-muted-foreground">{t("subtitle")}</p>
       </div>
-      <ParentCard title={t("title")} titleIcon={ClipboardPenLine}>
+      <ParentCard title={t("title")} titleIcon={iconStockDeclaration}>
         <form onSubmit={onSubmit} className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="stockId">{t("stockLabel")}</Label>

@@ -2,14 +2,14 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 
 export function SelectFieldSkeleton({ className }: { className?: string }) {
-  return <Skeleton className={cn("h-10 w-full rounded-xl", className)} />;
+  return <Skeleton className={cn("h-12 w-full rounded-2xl", className)} />;
 }
 
 export function FormFieldSkeleton() {
   return (
     <div className="space-y-2">
       <Skeleton className="h-4 w-24" />
-      <Skeleton className="h-10 w-full rounded-xl" />
+      <Skeleton className="h-12 w-full rounded-2xl" />
     </div>
   );
 }
@@ -74,7 +74,7 @@ export function StatsCardsSkeleton({ count = 2 }: { count?: number }) {
       )}
     >
       {Array.from({ length: count }).map((_, i) => (
-        <Skeleton key={i} className="h-24 rounded-xl" />
+        <Skeleton key={i} className="h-28 rounded-3xl" />
       ))}
     </div>
   );
@@ -117,7 +117,7 @@ export function SimpleNumericPadSkeleton() {
 
 export function DistributionBlockSkeleton() {
   return (
-    <div className="space-y-3 rounded-xl border border-border/70 bg-muted/20 p-4">
+    <div className="space-y-3 rounded-2xl border border-border/50 bg-card p-5 shadow-card max-md:rounded-3xl">
       <Skeleton className="h-5 w-36" />
       <FormFieldSkeleton />
       <FormFieldsGridSkeleton count={2} />

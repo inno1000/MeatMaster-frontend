@@ -5,7 +5,7 @@ import { withLocaleParams } from "@/lib/with-locale-params";
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
-import { ScrollText, SlidersHorizontal } from "lucide-react";
+import { iconFilter, iconScroll } from "@/lib/icons";
 import { ParentCard } from "@/components/shared/parent-card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -68,7 +68,7 @@ function StockJournalPage() {
           {t("subtitle")}
         </p>
       </div>
-      <ParentCard title={t("filters")} titleIcon={SlidersHorizontal}>
+      <ParentCard title={t("filters")} titleIcon={iconFilter}>
         <div className="flex flex-wrap gap-4">
           <div className="space-y-2">
             <Label htmlFor="stock">{tCommon("stock")}</Label>
@@ -106,7 +106,7 @@ function StockJournalPage() {
           </div>
         </div>
       </ParentCard>
-      <ParentCard title={t("title")} titleIcon={ScrollText}>
+      <ParentCard title={t("title")} titleIcon={iconScroll}>
         {rows.length === 0 ? (
           <p className="text-center text-sm text-muted-foreground">{tCommon("noData")}</p>
         ) : (

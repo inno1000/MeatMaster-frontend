@@ -9,10 +9,14 @@ import { v1Url, v1UrlWithQuery } from "@/lib/api/v1-url";
 
 const enc = encodeURIComponent;
 
-/** Filtres `GET /animaux` (ex. `?statut=en_attente`). */
-export type AnimauxListParams = {
+export type ListLimitParams = {
   statut?: string;
+  limit?: number;
+  page?: number;
 };
+
+/** Filtres `GET /animaux` (ex. `?statut=en_attente`). */
+export type AnimauxListParams = ListLimitParams;
 
 /** Filtres `GET /ventes` (pagination Laravel : `page`, etc.). */
 export type VentesListParams = {
@@ -23,22 +27,16 @@ export type VentesListParams = {
   page?: number;
 };
 
-export type VersementsListParams = {
-  statut?: string;
-  page?: number;
-};
+export type VersementsListParams = ListLimitParams;
 
-export type DistributionsListParams = {
-  statut?: string;
-  page?: number;
-};
+export type DistributionsListParams = ListLimitParams;
 
 export type ReceptionsListParams = {
   page?: number;
 };
 
 export type StatsParams = {
-  periode?: "semaine" | "mois" | "annee";
+  periode?: "jour" | "semaine" | "mois" | "annee";
 };
 
 export type RecettesListParams = {
@@ -227,6 +225,10 @@ export const boucherieV1 = {
       apiClient.post<unknown>(v1Url("/receptions"), body),
     get: (id: string) =>
       apiClient.get<unknown>(v1Url(`/receptions/${enc(id)}`)),
+  },
+
+  dashboard: {
+    today: () => apiClient.get<unknown>(v1Url("/dashboard/today")),
   },
 
   stats: {

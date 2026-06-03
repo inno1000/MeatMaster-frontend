@@ -1,6 +1,8 @@
 "use client";
 
-import { Languages } from "lucide-react";
+import { iconLanguage } from "@/lib/icons";
+
+const LanguageIcon = iconLanguage;
 import { useLocale, useTranslations } from "next-intl";
 import { usePathname, useRouter } from "@/i18n/navigation";
 import { routing } from "@/i18n/routing";
@@ -24,11 +26,16 @@ export function LocaleSwitcher({ className }: { className?: string }) {
       role="group"
       aria-label={t("switchLanguage")}
       className={cn(
-        "inline-flex shrink-0 rounded-full border border-border/60 bg-muted/50 p-1",
+        "inline-flex items-center gap-1 rounded-full border border-border/60 bg-muted/50 p-1",
         className,
       )}
     >
-      <Languages className="mx-0.5 hidden size-4 shrink-0 text-muted-foreground sm:inline sm:self-center" aria-hidden />
+      <span
+        className="hidden size-9 shrink-0 items-center justify-center sm:inline-flex"
+        aria-hidden
+      >
+        <LanguageIcon className="text-lg leading-none text-muted-foreground" />
+      </span>
       {routing.locales.map((loc) => (
         <Button
           key={loc}

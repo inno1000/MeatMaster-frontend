@@ -2,14 +2,13 @@
 
 import * as Dialog from "@radix-ui/react-dialog";
 import * as Separator from "@radix-ui/react-separator";
-import { ChevronDown, Menu, UserRound } from "lucide-react";
+import { iconChevronDown, iconMenu, iconUserMenu } from "@/lib/icons";
 import { useTranslations } from "next-intl";
 import { Link, usePathname } from "@/i18n/navigation";
 import { cn } from "@/lib/utils";
 import { mainNavigation, type NavEntry } from "@/lib/nav-config";
 import { getSimpleNavigation } from "@/lib/simple-nav-config";
 import { filterNavigationByRole, normalizeAppRole } from "@/lib/authz";
-import { useSimpleMode } from "@/lib/hooks/use-simple-mode";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -31,16 +30,20 @@ import {
 import { motion } from "framer-motion";
 
 const navRootLinkBase =
-  "flex min-h-11 items-center gap-3 rounded-xl px-3 py-2.5 text-base font-medium transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary sm:text-sm";
+  "flex min-h-11 items-center gap-3 rounded-2xl px-3 py-2.5 text-base font-medium transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary sm:text-sm";
 
 const navChildLinkBase =
-  "flex min-h-11 items-center gap-3 rounded-xl px-3 py-2.5 text-base transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary sm:text-sm";
+  "flex min-h-11 items-center gap-3 rounded-2xl px-3 py-2.5 text-base transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary sm:text-sm";
 
 const navLinkActiveClass =
   "bg-primary/12 font-medium text-primary ring-1 ring-primary/15 shadow-none";
 
 const pathMatchesNavHref = (href: string, pathname: string) =>
   pathname === href || pathname.startsWith(`${href}/`);
+
+const ChevronIcon = iconChevronDown;
+const MenuIcon = iconMenu;
+const UserMenuIcon = iconUserMenu;
 
 /** Groupe dont une entrée enfant correspond à la page courante (pour ouvrir un seul bloc). */
 const getActiveGroupTitleKey = (
@@ -93,7 +96,7 @@ const renderNav = (
       >
         <Icon
           className={cn(
-            "size-5 shrink-0 sm:size-4",
+            "shrink-0 text-xl sm:text-lg",
             active ? "text-primary" : "text-muted-foreground",
           )}
           aria-hidden
@@ -119,15 +122,15 @@ const renderNav = (
         )}
       >
         <GroupIcon
-          className="size-5 shrink-0 text-muted-foreground sm:size-4"
+          className="shrink-0 text-xl text-muted-foreground sm:text-lg"
           aria-hidden
         />
         <span className="min-w-0 flex-1 leading-snug">
           {t(entry.group.titleKey)}
         </span>
-        <ChevronDown
+        <ChevronIcon
           className={cn(
-            "size-4 shrink-0 opacity-70 transition-transform duration-200",
+            "shrink-0 text-lg opacity-70 transition-transform duration-200",
             isExpanded ? "rotate-180" : "rotate-0",
           )}
           aria-hidden
@@ -152,7 +155,7 @@ const renderNav = (
               >
                 <ChildIcon
                   className={cn(
-                    "size-4 shrink-0 opacity-70 sm:size-3.5",
+                    "shrink-0 text-lg opacity-70 sm:text-base",
                     active ? "text-primary opacity-100" : "text-muted-foreground",
                   )}
                   aria-hidden
@@ -178,20 +181,20 @@ export const DashboardShell = ({ children }: { children: ReactNode }) => {
   );
 
   const appRole = normalizeAppRole(user?.role);
-  const simpleMode = useSimpleMode();
+  const useSimplifiedNav = appRole !== "admin";
 
-  const navEntries = simpleMode
+  const navEntries = useSimplifiedNav
     ? getSimpleNavigation(appRole)
     : filterNavigationByRole(mainNavigation, appRole);
 
   /** À chaque changement de route ou de rôle : un seul bloc ouvert, celui de la page courante. */
   useLayoutEffect(() => {
-    const entries = simpleMode
+    const entries = useSimplifiedNav
       ? getSimpleNavigation(appRole)
       : filterNavigationByRole(mainNavigation, appRole);
     const key = getActiveGroupTitleKey(entries, pathname);
     setExpandedGroupKeys(key ? new Set([key]) : new Set());
-  }, [pathname, appRole, simpleMode]);
+  }, [pathname, appRole, useSimplifiedNav]);
 
   const toggleGroup = useCallback((groupTitleKey: string) => {
     setExpandedGroupKeys((prev) => {
@@ -252,7 +255,7 @@ export const DashboardShell = ({ children }: { children: ReactNode }) => {
                     size="icon"
                     aria-label={t("nav.openMenu")}
                   >
-                    <Menu className="size-5" />
+                    <MenuIcon className="text-xl" />
                   </Button>
                 </Dialog.Trigger>
               </div>
@@ -269,7 +272,7 @@ export const DashboardShell = ({ children }: { children: ReactNode }) => {
                     className="shrink-0"
                     aria-label={t("nav.userMenu")}
                   >
-                    <UserRound className="size-5" />
+                    <UserMenuIcon className="text-xl" />
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="min-w-[12rem]">
@@ -304,7 +307,7 @@ export const DashboardShell = ({ children }: { children: ReactNode }) => {
             </Dialog.Content>
           </Dialog.Portal>
 
-          <main className="safe-pad-x flex-1 overflow-y-auto overflow-x-hidden px-3 pb-[calc(5.75rem+env(safe-area-inset-bottom,0px))] pt-4 sm:px-4 sm:pt-6 md:px-8 md:pb-10 md:pt-10">
+          <main className="safe-pad-x flex-1 overflow-y-auto overflow-x-hidden px-3 pb-[calc(6.5rem+env(safe-area-inset-bottom,0px))] pt-4 sm:px-4 sm:pt-6 md:px-8 md:pb-10 md:pt-10">
             <motion.div
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}

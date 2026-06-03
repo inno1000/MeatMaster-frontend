@@ -6,7 +6,7 @@ import { useMemo, useState } from "react";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Wallet } from "lucide-react";
+import { iconPaymentsGroup } from "@/lib/icons";
 import { ParentCard } from "@/components/shared/parent-card";
 import { ScrollRegion } from "@/components/ui/scroll-region";
 import {
@@ -23,7 +23,6 @@ import { formatError } from "@/lib/format-error";
 import { unwrapDataArray } from "@/lib/api/unwrap";
 import { mapApiBoucherieRow } from "@/lib/api/mappers/boucherie-record";
 import { pickDisplayLabel } from "@/lib/display/reference-label";
-import { useSimpleMode } from "@/lib/hooks/use-simple-mode";
 import { VersementListeSimple } from "@/components/simple/versement-liste-simple";
 import { normalizeAppRole } from "@/lib/authz";
 import {
@@ -33,7 +32,6 @@ import {
 import { rejectVersement } from "@/lib/versement/reject-versement";
 
 function VersementListePage() {
-  const simpleMode = useSimpleMode();
   const t = useTranslations("versement");
   const tCommon = useTranslations("common");
   const user = useAuthStore((s) => s.user);
@@ -134,7 +132,7 @@ function VersementListePage() {
     }
   };
 
-  if (simpleMode && isSupplier) {
+  if (isSupplier) {
     return <VersementListeSimple />;
   }
 
@@ -166,7 +164,7 @@ function VersementListePage() {
           {t("listSubtitle")}
         </p>
       </div>
-      <ParentCard title={t("listTitle")} titleIcon={Wallet}>
+      <ParentCard title={t("listTitle")} titleIcon={iconPaymentsGroup}>
         {visibleRows.length === 0 ? (
           <p className="text-center text-sm text-muted-foreground">{tCommon("noData")}</p>
         ) : (

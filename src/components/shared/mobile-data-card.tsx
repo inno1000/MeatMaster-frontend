@@ -1,7 +1,12 @@
 "use client";
 
+import type { AppIcon } from "@/lib/icon-types";
 import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
+import {
+  navToneMedallionClass,
+  type NavTone,
+} from "@/lib/nav-tone";
 
 /** Liste verticale de cartes — visible uniquement sous le breakpoint md. */
 export function MobileCardList({
@@ -11,7 +16,7 @@ export function MobileCardList({
   children: ReactNode;
   className?: string;
 }) {
-  return <div className={cn("space-y-3 md:hidden", className)}>{children}</div>;
+  return <div className={cn("space-y-4 md:hidden", className)}>{children}</div>;
 }
 
 /**
@@ -47,12 +52,89 @@ export function MobileDataCard({
   return (
     <div
       className={cn(
-        "rounded-xl border border-border bg-card p-4 shadow-sm",
+        "rounded-2xl border border-border/50 bg-card p-5 shadow-card max-md:rounded-3xl",
         className,
       )}
     >
       {children}
     </div>
+  );
+}
+
+/** Carte liste type « transaction » (icône + titre + badge). */
+export function ListCardRow({
+  icon: Icon,
+  title,
+  meta,
+  trailing,
+  badge,
+  tone = "ocean",
+  className,
+}: {
+  icon?: AppIcon;
+  title: string;
+  meta?: string;
+  trailing?: ReactNode;
+  badge?: ReactNode;
+  tone?: NavTone;
+  className?: string;
+}) {
+  return (
+    <div
+      className={cn(
+        "flex items-center gap-3 rounded-2xl border border-border/50 bg-card p-4 shadow-card max-md:rounded-3xl",
+        className,
+      )}
+    >
+      {Icon ? (
+        <span
+          className={cn(
+            "flex size-11 shrink-0 items-center justify-center rounded-xl",
+            navToneMedallionClass[tone],
+          )}
+          aria-hidden
+        >
+          <Icon className="text-2xl" />
+        </span>
+      ) : null}
+      <div className="min-w-0 flex-1">
+        <p className="truncate font-semibold">{title}</p>
+        {meta ? (
+          <p className="truncate text-sm text-muted-foreground">{meta}</p>
+        ) : null}
+      </div>
+      <div className="flex shrink-0 flex-col items-end gap-1">
+        {trailing ? (
+          <span className="text-sm font-semibold tabular-nums">{trailing}</span>
+        ) : null}
+        {badge}
+      </div>
+    </div>
+  );
+}
+
+export function StatusPill({
+  children,
+  variant = "default",
+  className,
+}: {
+  children: ReactNode;
+  variant?: "default" | "success" | "warning" | "destructive";
+  className?: string;
+}) {
+  return (
+    <span
+      className={cn(
+        "inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium",
+        variant === "success" && "bg-zone-sage/15 text-zone-sage",
+        variant === "warning" && "bg-zone-amber/15 text-zone-amber",
+        variant === "destructive" && "bg-destructive/12 text-destructive",
+        variant === "default" && "bg-primary/12 text-primary",
+        className,
+      )}
+    >
+      {children}
+    </span>
   );
 }
 

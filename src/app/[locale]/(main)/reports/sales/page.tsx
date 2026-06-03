@@ -5,7 +5,7 @@ import { withLocaleParams } from "@/lib/with-locale-params";
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
-import { PieChart, Receipt } from "lucide-react";
+import { iconPieChart, iconSaleList } from "@/lib/icons";
 import { ParentCard } from "@/components/shared/parent-card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -159,7 +159,7 @@ function ReportsSalesPage() {
       </div>
 
       {showTable ? (
-        <ParentCard title={t("salesTitle")} titleIcon={Receipt}>
+        <ParentCard title={t("salesTitle")} titleIcon={iconSaleList}>
           <div className="mb-4 grid gap-4 sm:grid-cols-2 md:grid-cols-3">
             <ReportDateRangeFields
               className="sm:col-span-2"
@@ -250,7 +250,7 @@ function ReportsSalesPage() {
         </ParentCard>
       ) : null}
 
-      <ParentCard title={t("byMeat")} titleIcon={PieChart}>
+      <ParentCard title={t("byMeat")} titleIcon={iconPieChart}>
         {statsQuery.isPending ? (
           <Skeleton className="h-24 w-full" />
         ) : byProduit.length === 0 ? (

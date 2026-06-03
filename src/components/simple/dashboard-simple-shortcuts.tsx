@@ -8,7 +8,7 @@ import { getSimpleMobileDockTabs } from "@/lib/simple-nav-config";
 
 export function DashboardSimpleShortcuts({ role }: { role: UserRole }) {
   const tSimple = useTranslations("simple");
-  const tRoot = useTranslations();
+  const tNav = useTranslations("nav");
   const tabs = getSimpleMobileDockTabs(role).filter((tab) => tab.href !== "/dashboard");
 
   return (
@@ -22,11 +22,11 @@ export function DashboardSimpleShortcuts({ role }: { role: UserRole }) {
               key={tab.href}
               href={tab.href}
               className={cn(
-                "flex min-h-[6.5rem] flex-col items-center justify-center gap-3 rounded-2xl border-2 border-border bg-card p-6 transition-colors hover:border-primary/50 hover:bg-primary/8",
+                "flex min-h-[7rem] flex-col items-center justify-center gap-3 rounded-2xl border border-border/50 bg-card p-6 shadow-card transition-all hover:border-primary/35 hover:shadow-card-hover max-md:rounded-3xl",
               )}
             >
-              <Icon className="size-12 text-primary" aria-hidden />
-              <span className="text-xl font-bold">{tRoot(tab.titleKey)}</span>
+              <Icon className="text-5xl text-primary" aria-hidden />
+              <span className="text-xl font-bold">{tNav(tab.titleKey)}</span>
             </Link>
           );
         })}

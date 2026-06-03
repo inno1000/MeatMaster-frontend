@@ -3,12 +3,14 @@
 @theme {
   --font-sans: var(--font-poppins), ui-sans-serif, system-ui, sans-serif;
 
-  /* Fond neutre grisâtre / blanchâtre ; primaires et accents gardent la charte bordeaux */
-  --color-background: oklch(0.965 0.006 264);
+  /* Fond pastel lavande-gris ; primaires bordeaux pour actions */
+  --color-background: oklch(0.97 0.012 280);
   --color-foreground: oklch(0.22 0.02 264);
 
-  --color-card: oklch(0.995 0.004 264);
+  --color-card: oklch(0.995 0.006 280);
   --color-card-foreground: oklch(0.22 0.02 264);
+
+  --color-surface-elevated: oklch(1 0 0);
 
   /* Primaire bordeaux — lisible sur mobile & boutons */
   --color-primary: oklch(0.43 0.14 12);
@@ -43,6 +45,12 @@
   --radius-lg: 0.875rem;
   --radius-xl: 1rem;
   --radius-2xl: 1.25rem;
+  --radius-3xl: 1.5rem;
+
+  --shadow-card: 0 4px 24px -4px oklch(0.35 0.04 280 / 0.08),
+    0 2px 8px -2px oklch(0.35 0.04 280 / 0.05);
+  --shadow-card-hover: 0 8px 32px -6px oklch(0.35 0.04 280 / 0.12),
+    0 4px 12px -4px oklch(0.35 0.04 280 / 0.07);
 }
 
 @layer base {
@@ -105,13 +113,82 @@
     padding-bottom: max(1rem, env(safe-area-inset-bottom, 0px));
   }
 
-  /** Fond app : aligné sur le thème, sans dégradé coloré. */
+  /** Fond app : dégradé pastel subtil (haut de page). */
   .bg-app {
-    @apply bg-background;
+    background: linear-gradient(
+      165deg,
+      oklch(0.985 0.018 280) 0%,
+      var(--color-background) 42%,
+      oklch(0.96 0.01 264) 100%
+    );
   }
 
-  /** Pages auth : même fond neutre que l’app. */
+  /** Pages auth : halo pastel autour du formulaire. */
   .auth-ambient {
-    @apply bg-background;
+    background: linear-gradient(
+      180deg,
+      oklch(0.99 0.02 280) 0%,
+      var(--color-background) 55%,
+      oklch(0.955 0.014 12 / 0.15) 100%
+    );
+  }
+
+  .shadow-card {
+    box-shadow: var(--shadow-card);
+  }
+
+  .shadow-card-hover {
+    box-shadow: var(--shadow-card-hover);
+  }
+
+  .glass-bar {
+    @apply border border-border/50 bg-card/80 backdrop-blur-xl supports-[backdrop-filter]:bg-card/70;
+  }
+
+  .surface-elevated {
+    background-color: var(--color-surface-elevated);
+  }
+
+  /** Bandeau hero dashboard (dégradé bordeaux). */
+  .hero-gradient {
+    background: linear-gradient(
+      145deg,
+      var(--color-primary) 0%,
+      oklch(0.48 0.12 12) 55%,
+      oklch(0.52 0.1 18) 100%
+    );
+  }
+
+  /** Piste scroll filtres pills. */
+  .pill-track {
+    @apply -mx-1 rounded-2xl bg-muted/40 px-1 py-1;
+  }
+
+  /** Material Icons / Symbols — Google Fonts */
+  .material-symbols-outlined,
+  .material-symbols-rounded {
+    font-weight: normal;
+    font-style: normal;
+    line-height: 1;
+    letter-spacing: normal;
+    text-transform: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    white-space: nowrap;
+    word-wrap: normal;
+    direction: ltr;
+    font-feature-settings: "liga";
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .material-symbols-outlined {
+    font-family: "Material Symbols Outlined";
+    font-variation-settings: "FILL" 0, "wght" 400, "GRAD" 0, "opsz" 24;
+  }
+
+  .material-symbols-rounded {
+    font-family: "Material Symbols Rounded";
+    font-variation-settings: "FILL" 1, "wght" 400, "GRAD" 0, "opsz" 24;
   }
 }

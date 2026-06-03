@@ -8,7 +8,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import { useRouter } from "@/i18n/navigation";
-import { Building2 } from "lucide-react";
+import { iconAdminButcheries } from "@/lib/icons";
 import { ParentCard } from "@/components/shared/parent-card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -72,7 +72,7 @@ function AdminCreateButcheryPage() {
         </p>
       </div>
 
-      <ParentCard title={t("pageCreateButcheryTitle")} titleIcon={Building2}>
+      <ParentCard title={t("pageCreateButcheryTitle")} titleIcon={iconAdminButcheries}>
         <form onSubmit={onSubmit} className="space-y-4">
           <div className="grid gap-3 sm:grid-cols-2">
             <div className="space-y-2">

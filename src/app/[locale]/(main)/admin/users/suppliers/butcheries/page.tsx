@@ -6,7 +6,7 @@ import { useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
-import { Link2 } from "lucide-react";
+import { iconAdminSupplierLink } from "@/lib/icons";
 import { ParentCard } from "@/components/shared/parent-card";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -76,7 +76,7 @@ function AdminSupplierButcheriesPage() {
         </p>
       </div>
 
-      <ParentCard title={t("pageSupplierButcheriesTitle")} titleIcon={Link2}>
+      <ParentCard title={t("pageSupplierButcheriesTitle")} titleIcon={iconAdminSupplierLink}>
         <div className="space-y-3">
           {(usersQuery.data ?? [])
             .filter((item) => {

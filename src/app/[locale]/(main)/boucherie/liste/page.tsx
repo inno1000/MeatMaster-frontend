@@ -3,7 +3,7 @@
 import { withLocaleParams } from "@/lib/with-locale-params";
 
 import { useTranslations } from "next-intl";
-import { Store } from "lucide-react";
+import { iconButcheryGroup } from "@/lib/icons";
 import { ParentCard } from "@/components/shared/parent-card";
 import { useButchers } from "@/lib/hooks/use-butchers";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -51,7 +51,7 @@ function BoucherieListePage() {
           {t("listSubtitle")}
         </p>
       </div>
-      <ParentCard title={t("listTitle")} titleIcon={Store}>
+      <ParentCard title={t("listTitle")} titleIcon={iconButcheryGroup}>
         {!apiOk ? (
           <Alert variant="destructive">
             <AlertDescription>{tCommon("apiNotConfigured")}</AlertDescription>

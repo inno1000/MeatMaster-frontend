@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
-import { ShoppingCart } from "lucide-react";
+import { iconMobileSales } from "@/lib/icons";
 import { toast } from "sonner";
 import { useRouter } from "@/i18n/navigation";
 import { SimpleStepLayout } from "@/components/simple/simple-step-layout";
@@ -111,7 +111,7 @@ export function VenteSimpleFlow() {
 
   return (
     <SimpleStepLayout
-      icon={ShoppingCart}
+      icon={iconMobileSales}
       title={t("saleTitle")}
       step={step + 1}
       totalSteps={TOTAL_STEPS}

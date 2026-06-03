@@ -17,9 +17,18 @@ export const viewport: Viewport = {
   themeColor: "#f4f6f5",
 };
 
+const MATERIAL_SYMBOLS_OUTLINED =
+  "https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap";
+const MATERIAL_SYMBOLS_ROUNDED =
+  "https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap";
+
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="fr" dir="ltr" suppressHydrationWarning>
+      <head>
+        <link rel="stylesheet" href={MATERIAL_SYMBOLS_OUTLINED} />
+        <link rel="stylesheet" href={MATERIAL_SYMBOLS_ROUNDED} />
+      </head>
       <body suppressHydrationWarning className={fontBodyClassName}>
         {children}
       </body>

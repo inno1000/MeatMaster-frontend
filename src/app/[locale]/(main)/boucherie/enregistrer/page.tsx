@@ -6,7 +6,7 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { formResolver } from "@/lib/form-resolver";
 import { useTranslations } from "next-intl";
-import { Store } from "lucide-react";
+import { iconButcheryGroup } from "@/lib/icons";
 import { ParentCard } from "@/components/shared/parent-card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -62,7 +62,7 @@ function BoucherieEnregistrerPage() {
         <h1 className="text-2xl font-bold">{t("createTitle")}</h1>
         <p className="text-muted-foreground">{t("createSubtitle")}</p>
       </div>
-      <ParentCard title={t("createTitle")} titleIcon={Store}>
+      <ParentCard title={t("createTitle")} titleIcon={iconButcheryGroup}>
         <form onSubmit={onSubmit} className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="nom">{t("name")}</Label>

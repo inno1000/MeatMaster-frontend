@@ -7,7 +7,7 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
-import { UserCircle } from "lucide-react";
+import { iconSettingsProfile } from "@/lib/icons";
 import { ParentCard } from "@/components/shared/parent-card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -97,7 +97,7 @@ function SettingsProfilePage() {
         <p className="text-sm text-muted-foreground sm:text-base">{t("subtitle")}</p>
       </div>
 
-      <ParentCard title={t("title")} titleIcon={UserCircle}>
+      <ParentCard title={t("title")} titleIcon={iconSettingsProfile}>
         {!apiOk ? (
           <Alert variant="destructive" className="mb-4">
             <AlertDescription>{tCommon("apiNotConfigured")}</AlertDescription>

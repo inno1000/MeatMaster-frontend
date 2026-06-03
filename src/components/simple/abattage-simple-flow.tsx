@@ -3,11 +3,12 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
-import { Beef } from "lucide-react";
+import { iconSlaughterCreate } from "@/lib/icons";
 import { toast } from "sonner";
 import { useRouter } from "@/i18n/navigation";
 import { SimpleStepLayout } from "@/components/simple/simple-step-layout";
 import { SimpleChoiceGrid } from "@/components/simple/simple-choice-grid";
+import { CategoryIllustration } from "@/components/simple/category-illustration";
 import { SimpleNumericPad } from "@/components/simple/simple-numeric-pad";
 import { SimpleConfirmBar } from "@/components/simple/simple-confirm-bar";
 import { AudioRecorder } from "@/components/shared/audio-recorder";
@@ -287,7 +288,7 @@ export function AbattageSimpleFlow() {
 
   return (
     <SimpleStepLayout
-      icon={Beef}
+      icon={iconSlaughterCreate}
       title={title}
       step={displayStep}
       totalSteps={totalSteps}
@@ -312,7 +313,13 @@ export function AbattageSimpleFlow() {
           <SimpleNumericPadSkeleton />
         ) : currentCategory ? (
           <div className="space-y-4">
-            <p className="text-center text-lg font-medium">{currentCategory.libelle}</p>
+            <div className="flex justify-center">
+              <CategoryIllustration
+                categorieValeur={currentCategory.valeur}
+                libelle={currentCategory.libelle}
+                size="hero"
+              />
+            </div>
             <SimpleNumericPad
               value={weights[currentCategory.valeur] ?? ""}
               onChange={(v) =>
@@ -374,7 +381,14 @@ export function AbattageSimpleFlow() {
                   over ? "border-destructive bg-destructive/5" : "border-border",
                 )}
               >
-                <p className="text-lg font-semibold">{c.libelle}</p>
+                <div className="flex items-center gap-3">
+                  <CategoryIllustration
+                    categorieValeur={c.valeur}
+                    libelle={c.libelle}
+                    size="md"
+                  />
+                  <p className="min-w-0 flex-1 text-lg font-semibold">{c.libelle}</p>
+                </div>
                 <p
                   className={cn(
                     "text-sm",
@@ -404,6 +418,26 @@ export function AbattageSimpleFlow() {
           <p className="text-center text-2xl font-bold">
             {activeCategories.reduce((s, c) => s + c.poids, 0).toFixed(1)} {t("kg")}
           </p>
+          <ul className="grid gap-2 sm:grid-cols-2">
+            {activeCategories.map((c) => (
+              <li
+                key={c.valeur}
+                className="flex items-center gap-3 rounded-xl border border-border/60 bg-muted/25 px-3 py-2"
+              >
+                <CategoryIllustration
+                  categorieValeur={c.valeur}
+                  libelle={c.libelle}
+                  size="sm"
+                />
+                <div className="min-w-0 flex-1">
+                  <p className="font-semibold leading-snug">{c.libelle}</p>
+                  <p className="text-sm tabular-nums text-muted-foreground">
+                    {c.poids.toFixed(1)} {t("kg")}
+                  </p>
+                </div>
+              </li>
+            ))}
+          </ul>
           <AudioRecorder onBlobsChange={setAudioBlobs} />
         </div>
       ) : null}

@@ -1,31 +1,48 @@
-import type { LucideIcon } from "lucide-react";
+import type { AppIcon } from "@/lib/icon-types";
 import {
-  Beef,
-  Building2,
-  ChartBar,
-  CircleDot,
-  CreditCard,
-  FileText,
-  LayoutDashboard,
-  Link2,
-  List,
-  Package,
-  Settings,
-  ShoppingCart,
-  Truck,
-  UserPlus,
-  Users,
-} from "lucide-react";
+  iconAdminButcheries,
+  iconAdminSupplierLink,
+  iconAdminSuppliers,
+  iconAdminUserCreate,
+  iconAdminUserList,
+  iconAdminUsers,
+  iconAnimalsList,
+  iconButcheryCreate,
+  iconButcheryList,
+  iconDistributionList,
+  iconHome,
+  iconPaymentsGroup,
+  iconPaymentCreate,
+  iconPaymentList,
+  iconReportFinancial,
+  iconReportSales,
+  iconReportsGroup,
+  iconReportStocks,
+  iconSalesGroup,
+  iconSaleCreate,
+  iconSaleList,
+  iconSettingsGroup,
+  iconSettingsPreferences,
+  iconSettingsProfile,
+  iconSlaughterCreate,
+  iconSlaughterGroup,
+  iconSlaughterPurchase,
+  iconStockDeclaration,
+  iconStockGroup,
+  iconStockJournal,
+  iconStockManagement,
+  iconStockReception,
+} from "@/lib/icons";
 
 export type NavLeaf = {
   titleKey: string;
   href: string;
-  icon: LucideIcon;
+  icon: AppIcon;
 };
 
 export type NavGroup = {
   titleKey: string;
-  icon: LucideIcon;
+  icon: AppIcon;
   children: NavLeaf[];
 };
 
@@ -34,134 +51,98 @@ export type NavEntry =
       type: "link";
       titleKey: string;
       href: string;
-      icon: LucideIcon;
+      icon: AppIcon;
     }
   | { type: "group"; group: NavGroup }
   | { type: "divider" };
 
+/** Navigation principale : accueil → actions → suivi → rapports → admin → réglages */
 export const mainNavigation: NavEntry[] = [
   {
     type: "link",
     titleKey: "nav.dashboard",
     href: "/dashboard",
-    icon: LayoutDashboard,
+    icon: iconHome,
   },
   {
     type: "group",
     group: {
-      titleKey: "nav.stockGroup",
-      icon: Package,
+      titleKey: "nav.actionsGroup",
+      icon: iconSalesGroup,
       children: [
-        {
-          titleKey: "nav.stockManagement",
-          href: "/stock/management",
-          icon: ChartBar,
-        },
         {
           titleKey: "nav.stockReception",
           href: "/stock/reception",
-          icon: CircleDot,
+          icon: iconStockReception,
+        },
+        {
+          titleKey: "nav.saleCreate",
+          href: "/vente/enregistrer",
+          icon: iconSaleCreate,
+        },
+        {
+          titleKey: "nav.paymentCreate",
+          href: "/versement/enregistrer",
+          icon: iconPaymentCreate,
         },
         {
           titleKey: "nav.stockDeclaration",
           href: "/stock/declaration",
-          icon: FileText,
+          icon: iconStockDeclaration,
         },
-        {
-          titleKey: "nav.stockJournal",
-          href: "/stock/journal",
-          icon: CircleDot,
-        },
-      ],
-    },
-  },
-  {
-    type: "group",
-    group: {
-      titleKey: "nav.salesGroup",
-      icon: ShoppingCart,
-      children: [
-        {
-          titleKey: "nav.saleCreate",
-          href: "/vente/enregistrer",
-          icon: CircleDot,
-        },
-        {
-          titleKey: "nav.saleList",
-          href: "/vente/liste",
-          icon: CircleDot,
-        },
-      ],
-    },
-  },
-  {
-    type: "group",
-    group: {
-      titleKey: "nav.paymentsGroup",
-      icon: CreditCard,
-      children: [
-        {
-          titleKey: "nav.paymentCreate",
-          href: "/versement/enregistrer",
-          icon: CircleDot,
-        },
-        {
-          titleKey: "nav.paymentList",
-          href: "/versement/liste",
-          icon: CircleDot,
-        },
-      ],
-    },
-  },
-  {
-    type: "group",
-    group: {
-      titleKey: "nav.butcherGroup",
-      icon: Building2,
-      children: [
-        {
-          titleKey: "nav.butcherCreate",
-          href: "/boucherie/enregistrer",
-          icon: CircleDot,
-        },
-        {
-          titleKey: "nav.butcherList",
-          href: "/boucherie/liste",
-          icon: CircleDot,
-        },
-      ],
-    },
-  },
-  {
-    type: "group",
-    group: {
-      titleKey: "nav.slaughterGroup",
-      icon: Beef,
-      children: [
         {
           titleKey: "nav.slaughterPurchase",
           href: "/abattage/achats",
-          icon: CircleDot,
+          icon: iconSlaughterPurchase,
         },
         {
           titleKey: "nav.slaughterCreate",
           href: "/abattage/enregistrer",
-          icon: CircleDot,
+          icon: iconSlaughterCreate,
         },
         {
           titleKey: "nav.slaughterList",
           href: "/abattage/animaux",
-          icon: CircleDot,
+          icon: iconAnimalsList,
+        },
+        {
+          titleKey: "nav.paymentList",
+          href: "/versement/liste",
+          icon: iconPaymentList,
+        },
+      ],
+    },
+  },
+  {
+    type: "group",
+    group: {
+      titleKey: "nav.followUpGroup",
+      icon: iconStockGroup,
+      children: [
+        {
+          titleKey: "nav.stockManagement",
+          href: "/stock/management",
+          icon: iconStockManagement,
+        },
+        {
+          titleKey: "nav.stockJournal",
+          href: "/stock/journal",
+          icon: iconStockJournal,
+        },
+        {
+          titleKey: "nav.saleList",
+          href: "/vente/liste",
+          icon: iconSaleList,
         },
         {
           titleKey: "nav.slaughterDistributionList",
           href: "/abattage/liste",
-          icon: CircleDot,
+          icon: iconDistributionList,
         },
         {
-          titleKey: "nav.slaughterDetail",
-          href: "/abattage/detail_abattage",
-          icon: CircleDot,
+          titleKey: "nav.butcherList",
+          href: "/boucherie/liste",
+          icon: iconButcheryList,
         },
       ],
     },
@@ -171,22 +152,22 @@ export const mainNavigation: NavEntry[] = [
     type: "group",
     group: {
       titleKey: "nav.reportsGroup",
-      icon: FileText,
+      icon: iconReportsGroup,
       children: [
         {
           titleKey: "nav.reportSales",
           href: "/reports/sales",
-          icon: CircleDot,
+          icon: iconReportSales,
         },
         {
           titleKey: "nav.reportStocks",
           href: "/reports/stocks",
-          icon: CircleDot,
+          icon: iconReportStocks,
         },
         {
           titleKey: "nav.reportFinancial",
           href: "/reports/financial",
-          icon: CircleDot,
+          icon: iconReportFinancial,
         },
       ],
     },
@@ -195,17 +176,17 @@ export const mainNavigation: NavEntry[] = [
     type: "group",
     group: {
       titleKey: "nav.adminModuleUsers",
-      icon: Users,
+      icon: iconAdminUsers,
       children: [
         {
           titleKey: "nav.adminListUsers",
           href: "/admin/users/list",
-          icon: List,
+          icon: iconAdminUserList,
         },
         {
           titleKey: "nav.adminFormUser",
           href: "/admin/users/create",
-          icon: UserPlus,
+          icon: iconAdminUserCreate,
         },
       ],
     },
@@ -214,17 +195,17 @@ export const mainNavigation: NavEntry[] = [
     type: "group",
     group: {
       titleKey: "nav.adminModuleSuppliers",
-      icon: Truck,
+      icon: iconAdminSuppliers,
       children: [
         {
           titleKey: "nav.adminFormSupplier",
           href: "/admin/users/suppliers/create",
-          icon: Users,
+          icon: iconAdminUsers,
         },
         {
           titleKey: "nav.adminFormSupplierButcheries",
           href: "/admin/users/suppliers/butcheries",
-          icon: Link2,
+          icon: iconAdminSupplierLink,
         },
       ],
     },
@@ -233,17 +214,17 @@ export const mainNavigation: NavEntry[] = [
     type: "group",
     group: {
       titleKey: "nav.adminModuleButcheries",
-      icon: Building2,
+      icon: iconAdminButcheries,
       children: [
         {
           titleKey: "nav.adminListButcheries",
-          href: "/admin/butcheries/list",
-          icon: List,
+          href: "/admin/boucheries/list",
+          icon: iconAdminUserList,
         },
         {
           titleKey: "nav.adminFormButchery",
           href: "/admin/butcheries/create",
-          icon: Building2,
+          icon: iconButcheryCreate,
         },
       ],
     },
@@ -252,19 +233,29 @@ export const mainNavigation: NavEntry[] = [
     type: "group",
     group: {
       titleKey: "nav.settingsGroup",
-      icon: Settings,
+      icon: iconSettingsGroup,
       children: [
         {
           titleKey: "nav.settingsProfile",
           href: "/settings/profile",
-          icon: CircleDot,
+          icon: iconSettingsProfile,
         },
         {
           titleKey: "nav.settingsPreferences",
           href: "/settings/preferences",
-          icon: CircleDot,
+          icon: iconSettingsPreferences,
         },
       ],
     },
   },
 ];
+
+/** Liens du dock mobile (max 3 actions + accueil). */
+export const mobileDockPrimaryHrefs: Record<
+  "butcher" | "supplier" | "admin",
+  string[]
+> = {
+  butcher: ["/dashboard", "/stock/reception", "/vente/enregistrer", "/versement/enregistrer"],
+  supplier: ["/dashboard", "/abattage/achats", "/abattage/enregistrer", "/versement/liste"],
+  admin: ["/dashboard", "/admin/users/list", "/admin/butcheries/list", "/reports/sales"],
+};

@@ -25,7 +25,7 @@ export function SimpleConfirmBar({
   return (
     <div
       className={cn(
-        "fixed inset-x-0 bottom-[calc(4.5rem+env(safe-area-inset-bottom,0px))] z-30 border-t border-border bg-card/95 px-4 py-3 backdrop-blur-md md:bottom-0",
+        "fixed inset-x-0 bottom-[calc(6.5rem+env(safe-area-inset-bottom,0px))] z-30 mx-3 mb-1 rounded-2xl border border-border/50 px-4 py-3 glass-bar shadow-card md:inset-x-0 md:mx-0 md:mb-0 md:rounded-none md:border-x-0 md:border-b-0 md:bottom-0",
         className,
       )}
     >

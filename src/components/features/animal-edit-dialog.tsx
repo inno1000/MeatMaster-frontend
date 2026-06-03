@@ -6,7 +6,9 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { useQuery } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
-import { X } from "lucide-react";
+import { iconClose } from "@/lib/icons";
+
+const CloseIcon = iconClose;
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -127,7 +129,7 @@ export function AnimalEditDialog({
             </div>
             <Dialog.Close asChild>
               <Button type="button" variant="ghost" size="icon" aria-label={t("close")}>
-                <X className="size-4" />
+                <CloseIcon className="text-lg" />
               </Button>
             </Dialog.Close>
           </div>

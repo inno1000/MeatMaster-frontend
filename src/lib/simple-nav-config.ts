@@ -1,46 +1,50 @@
 import {
-  Beef,
-  CircleDot,
-  CreditCard,
-  LayoutDashboard,
-  Package,
-  ShoppingCart,
-} from "lucide-react";
+  iconAnimalsList,
+  iconHome,
+  iconMobilePayments,
+  iconMobilePurchase,
+  iconMobileSales,
+  iconMobileStock,
+  iconPaymentList,
+  iconSettingsPreferences,
+  iconSlaughterCreate,
+} from "@/lib/icons";
 import type { UserRole } from "@/lib/schemas/auth";
 import { canAccessPath } from "@/lib/authz";
 import type { NavEntry } from "@/lib/nav-config";
 import type { MobileTabDef } from "@/lib/mobile-tab-bar-config";
+import { getMobileDockTabs } from "@/lib/mobile-tab-bar-config";
 
 const SIMPLE_BUTCHER_NAV: NavEntry[] = [
   {
     type: "link",
     titleKey: "simple.navHome",
     href: "/dashboard",
-    icon: LayoutDashboard,
-  },
-  {
-    type: "link",
-    titleKey: "simple.navSale",
-    href: "/vente/enregistrer",
-    icon: ShoppingCart,
-  },
-  {
-    type: "link",
-    titleKey: "simple.navPayment",
-    href: "/versement/enregistrer",
-    icon: CreditCard,
+    icon: iconHome,
   },
   {
     type: "link",
     titleKey: "simple.navStock",
     href: "/stock/reception",
-    icon: Package,
+    icon: iconMobileStock,
+  },
+  {
+    type: "link",
+    titleKey: "simple.navSale",
+    href: "/vente/enregistrer",
+    icon: iconMobileSales,
+  },
+  {
+    type: "link",
+    titleKey: "simple.navPayment",
+    href: "/versement/enregistrer",
+    icon: iconMobilePayments,
   },
   {
     type: "link",
     titleKey: "simple.navSettings",
     href: "/settings/preferences",
-    icon: CircleDot,
+    icon: iconSettingsPreferences,
   },
 ];
 
@@ -49,65 +53,61 @@ const SIMPLE_SUPPLIER_NAV: NavEntry[] = [
     type: "link",
     titleKey: "simple.navHome",
     href: "/dashboard",
-    icon: LayoutDashboard,
-  },
-  {
-    type: "link",
-    titleKey: "simple.navSlaughter",
-    href: "/abattage/enregistrer",
-    icon: Beef,
-  },
-  {
-    type: "link",
-    titleKey: "simple.navPayments",
-    href: "/versement/liste",
-    icon: CreditCard,
-  },
-  {
-    type: "link",
-    titleKey: "simple.navAnimals",
-    href: "/abattage/animaux",
-    icon: Beef,
+    icon: iconHome,
   },
   {
     type: "link",
     titleKey: "simple.navPurchase",
     href: "/abattage/achats",
-    icon: ShoppingCart,
+    icon: iconMobilePurchase,
+  },
+  {
+    type: "link",
+    titleKey: "simple.navSlaughter",
+    href: "/abattage/enregistrer",
+    icon: iconSlaughterCreate,
+  },
+  {
+    type: "link",
+    titleKey: "simple.navPayments",
+    href: "/versement/liste",
+    icon: iconPaymentList,
+  },
+  {
+    type: "link",
+    titleKey: "simple.navAnimals",
+    href: "/abattage/animaux",
+    icon: iconAnimalsList,
   },
   {
     type: "link",
     titleKey: "simple.navSettings",
     href: "/settings/preferences",
-    icon: CircleDot,
+    icon: iconSettingsPreferences,
   },
 ];
 
+function navForRole(role: UserRole): NavEntry[] {
+  if (role === "supplier") {
+    return SIMPLE_SUPPLIER_NAV;
+  }
+  return SIMPLE_BUTCHER_NAV;
+}
+
 export function getSimpleNavigation(role: UserRole): NavEntry[] {
-  const entries = role === "supplier" ? SIMPLE_SUPPLIER_NAV : SIMPLE_BUTCHER_NAV;
-  return entries.filter((entry) => {
+  return navForRole(role).filter((entry) => {
     if (entry.type !== "link") {
-      return false;
+      return true;
     }
     return canAccessPath(role, entry.href);
   });
 }
 
-const SIMPLE_BUTCHER_TABS: MobileTabDef[] = [
-  { titleKey: "simple.navHome", href: "/dashboard", icon: LayoutDashboard },
-  { titleKey: "simple.navSale", href: "/vente/enregistrer", icon: ShoppingCart },
-  { titleKey: "simple.navPayment", href: "/versement/enregistrer", icon: CreditCard },
-  { titleKey: "simple.navStock", href: "/stock/reception", icon: Package },
-];
-
-const SIMPLE_SUPPLIER_TABS: MobileTabDef[] = [
-  { titleKey: "simple.navHome", href: "/dashboard", icon: LayoutDashboard },
-  { titleKey: "simple.navSlaughter", href: "/abattage/enregistrer", icon: Beef },
-  { titleKey: "simple.navPayments", href: "/versement/liste", icon: CreditCard },
-  { titleKey: "simple.navPurchase", href: "/abattage/achats", icon: ShoppingCart },
-];
-
+/** Dock mobile mode simple — aligné sur `mobileDockPrimaryHrefs` + réglages via Plus. */
 export function getSimpleMobileDockTabs(role: UserRole): MobileTabDef[] {
-  const tabs = role === "supplier" ? SIMPLE_SUPPLIER_TABS : SIMPLE_BUTCHER_TABS;
-  return tabs.filter((tab) => canAccessPath(role, tab.href));
+  if (role === "admin") {
+    return getMobileDockTabs(role);
+  }
+  const primary = getMobileDockTabs(role);
+  return primary.length > 0 ? primary : getMobileDockTabs("butcher");
 }

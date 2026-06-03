@@ -2,7 +2,21 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
-import { Info, Mic, Pause, Play, Square, Trash2 } from "lucide-react";
+import {
+  iconDelete,
+  iconInfo,
+  iconMic,
+  iconPause,
+  iconPlay,
+  iconStop,
+} from "@/lib/icons";
+
+const MicIcon = iconMic;
+const PlayIcon = iconPlay;
+const PauseIcon = iconPause;
+const StopIcon = iconStop;
+const DeleteIcon = iconDelete;
+const InfoIcon = iconInfo;
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -208,14 +222,14 @@ export function AudioRecorder({ className, onBlobsChange }: AudioRecorderProps) 
     .padStart(2, "0")}:${(elapsedSeconds % 60).toString().padStart(2, "0")}`;
 
   const recordDisabled = recordings.length >= MAX_RECORDINGS;
-  const ToggleIcon = !isRecording ? Mic : isPaused ? Play : Pause;
+  const ToggleIcon = !isRecording ? MicIcon : isPaused ? PlayIcon : PauseIcon;
 
   return (
     <Card className={cn("border-border", className)}>
       <CardHeader className="pb-2">
         <div className="flex items-start gap-3">
           <div className="flex size-11 shrink-0 items-center justify-center rounded-lg bg-primary/10">
-            <Mic className="size-6 text-primary" aria-hidden />
+            <MicIcon className="text-2xl text-primary" aria-hidden />
           </div>
           <div className="min-w-0 space-y-1">
             <CardTitle className="text-base sm:text-lg">{t("title")}</CardTitle>
@@ -242,7 +256,7 @@ export function AudioRecorder({ className, onBlobsChange }: AudioRecorderProps) 
             onClick={() => toggleRecording()}
             aria-label={t("ariaRecord")}
           >
-            <ToggleIcon className="size-8" />
+            <ToggleIcon className="text-3xl" />
           </Button>
           <Button
             type="button"
@@ -253,7 +267,7 @@ export function AudioRecorder({ className, onBlobsChange }: AudioRecorderProps) 
             onClick={() => stopRecording()}
             aria-label={t("ariaStop")}
           >
-            <Square className="size-7 fill-current" />
+            <StopIcon className="text-3xl" />
           </Button>
         </div>
 
@@ -293,7 +307,7 @@ export function AudioRecorder({ className, onBlobsChange }: AudioRecorderProps) 
                     onClick={() => deleteRecording(index)}
                     aria-label={t("delete")}
                   >
-                    <Trash2 className="size-5" />
+                    <DeleteIcon className="text-xl" />
                   </Button>
                 </li>
               ))}
@@ -303,7 +317,7 @@ export function AudioRecorder({ className, onBlobsChange }: AudioRecorderProps) 
 
         {recordings.length === 0 && !isRecording ? (
           <Alert className="flex gap-2">
-            <Info className="mt-0.5 size-4 shrink-0" aria-hidden />
+            <InfoIcon className="mt-0.5 shrink-0 text-lg" aria-hidden />
             <AlertDescription>{t("hint")}</AlertDescription>
           </Alert>
         ) : null}

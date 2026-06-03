@@ -6,7 +6,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
-import { Receipt } from "lucide-react";
+import { iconSaleList } from "@/lib/icons";
 import { ParentCard } from "@/components/shared/parent-card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -83,7 +83,7 @@ function VenteListePage() {
           {t("listSubtitle")}
         </p>
       </div>
-      <ParentCard title={t("listTitle")} titleIcon={Receipt}>
+      <ParentCard title={t("listTitle")} titleIcon={iconSaleList}>
         <div className="mb-4 grid gap-4 md:grid-cols-3">
           <div className="space-y-2">
             <Label>{t("dateFrom")}</Label>

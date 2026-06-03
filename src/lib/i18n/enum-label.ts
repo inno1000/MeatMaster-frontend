@@ -2,10 +2,17 @@
 export function enumLabel(
   t: (key: string) => string,
   code: string,
+  apiLibelle?: string,
 ): string {
   const normalized = code.trim().toLowerCase();
   if (!normalized) {
-    return "";
+    return apiLibelle?.trim() ?? "";
   }
-  return t(`enum.${normalized}`);
+  const fallback = apiLibelle?.trim() || normalized;
+  const key = `enum.${normalized}`;
+  try {
+    return t(key);
+  } catch {
+    return fallback;
+  }
 }

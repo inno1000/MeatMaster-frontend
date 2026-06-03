@@ -31,7 +31,7 @@ function LoginPage() {
         <div className="mb-8 flex flex-col items-center gap-3 text-center">
           <AppLogo variant="auth" alt={tCommon("appName")} />
         </div>
-        <Card>
+        <Card className="rounded-3xl border-border/50 shadow-card">
           <CardHeader>
             <CardTitle className="text-2xl">{t("title")}</CardTitle>
             <CardDescription>{t("subtitle")}</CardDescription>

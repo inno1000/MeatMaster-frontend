@@ -5,7 +5,7 @@ import { withLocaleParams } from "@/lib/with-locale-params";
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
-import { AlertTriangle, Package } from "lucide-react";
+import { iconStatAlert, iconStatStock } from "@/lib/icons";
 import { ParentCard } from "@/components/shared/parent-card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -25,6 +25,8 @@ import { useRoleStats, type StatsPeriode } from "@/lib/reports/use-role-stats";
 import { nativeSelectClass } from "@/lib/ui-classes";
 
 function ReportsStocksPage() {
+  const StockIcon = iconStatStock;
+  const AlertIcon = iconStatAlert;
   const t = useTranslations("reports");
   const tCommon = useTranslations("common");
   const [search, setSearch] = useState("");
@@ -97,7 +99,7 @@ function ReportsStocksPage() {
       <div className="grid gap-4 sm:grid-cols-2">
         <div className="flex gap-3 rounded-xl border border-border bg-card p-4">
           <span className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-primary/12 text-primary">
-            <Package className="size-5" aria-hidden />
+            <StockIcon className="text-xl" aria-hidden />
           </span>
           <div>
             <p className="text-sm text-muted-foreground">{t("stockRefs")}</p>
@@ -106,7 +108,7 @@ function ReportsStocksPage() {
         </div>
         <div className="flex gap-3 rounded-xl border border-border bg-card p-4">
           <span className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-amber-500/15 text-amber-700">
-            <AlertTriangle className="size-5" aria-hidden />
+            <AlertIcon className="text-xl" aria-hidden />
           </span>
           <div>
             <p className="text-sm text-muted-foreground">{t("stockAlerts")}</p>
@@ -115,7 +117,7 @@ function ReportsStocksPage() {
         </div>
       </div>
 
-      <ParentCard title={t("stocksTitle")} titleIcon={Package}>
+      <ParentCard title={t("stocksTitle")} titleIcon={iconStatStock}>
         <div className="mb-4 max-w-md space-y-2">
           <Label>{t("searchProduct")}</Label>
           <Input

@@ -5,7 +5,7 @@ import { withLocaleParams } from "@/lib/with-locale-params";
 import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
-import { Users } from "lucide-react";
+import { iconAdminUsers } from "@/lib/icons";
 import { ParentCard } from "@/components/shared/parent-card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -59,7 +59,7 @@ function AdminUsersListPage() {
         <p className="text-sm text-muted-foreground sm:text-base">{t("listUsersSubtitle")}</p>
       </div>
 
-      <ParentCard title={t("listUsersTitle")} titleIcon={Users}>
+      <ParentCard title={t("listUsersTitle")} titleIcon={iconAdminUsers}>
         {!apiOk ? (
           <Alert variant="destructive">
             <AlertDescription>{tCommon("apiNotConfigured")}</AlertDescription>

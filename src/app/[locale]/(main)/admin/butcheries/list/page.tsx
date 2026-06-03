@@ -4,7 +4,7 @@ import { withLocaleParams } from "@/lib/with-locale-params";
 
 import { useQuery } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
-import { Building2 } from "lucide-react";
+import { iconAdminButcheries } from "@/lib/icons";
 import { ParentCard } from "@/components/shared/parent-card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -43,7 +43,7 @@ function AdminButcheriesListPage() {
         <p className="text-sm text-muted-foreground sm:text-base">{t("listButcheriesSubtitle")}</p>
       </div>
 
-      <ParentCard title={t("listButcheriesTitle")} titleIcon={Building2}>
+      <ParentCard title={t("listButcheriesTitle")} titleIcon={iconAdminButcheries}>
         {!apiOk ? (
           <Alert variant="destructive">
             <AlertDescription>{tCommon("apiNotConfigured")}</AlertDescription>

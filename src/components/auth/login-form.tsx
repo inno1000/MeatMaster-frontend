@@ -5,7 +5,10 @@ import { formResolver } from "@/lib/form-resolver";
 import { useTranslations } from "next-intl";
 import { useRouter } from "@/i18n/navigation";
 import { useMemo, useState } from "react";
-import { Eye, EyeOff } from "lucide-react";
+import { iconEye, iconEyeOff } from "@/lib/icons";
+
+const EyeIcon = iconEye;
+const EyeOffIcon = iconEyeOff;
 import { toast } from "sonner";
 import { buildLoginSchema, type LoginInput } from "@/lib/schemas/auth";
 import { useAuthStore } from "@/lib/stores/auth-store";
@@ -107,9 +110,9 @@ export const LoginForm = () => {
             aria-label={showPassword ? t("hidePassword") : t("showPassword")}
           >
             {showPassword ? (
-              <EyeOff className="size-4" />
+              <EyeOffIcon className="text-lg" />
             ) : (
-              <Eye className="size-4" />
+              <EyeIcon className="text-lg" />
             )}
           </button>
         </div>

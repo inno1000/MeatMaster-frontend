@@ -7,27 +7,34 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import { Link } from "@/i18n/navigation";
-import { Beef, Clock, Pencil, Plus, Trash2 } from "lucide-react";
-import { ParentCard } from "@/components/shared/parent-card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import {
-  DesktopDataTable,
-  MobileCardList,
-  MobileDataCard,
-  MobileDataRow,
-} from "@/components/shared/mobile-data-card";
+  iconAdd,
+  iconAnimalsList,
+  iconDelete,
+  iconEdit,
+  iconEmptyAnimals,
+} from "@/lib/icons";
+
+const AddIcon = iconAdd;
+const EditIcon = iconEdit;
+const DeleteIcon = iconDelete;
+import { ParentCard } from "@/components/shared/parent-card";
+import { PageHeader } from "@/components/shared/page-header";
+import { FilterPillGroup } from "@/components/shared/filter-pill";
+import { SearchField } from "@/components/shared/search-field";
+import { AnimalCompactCard } from "@/components/shared/animal-compact-card";
+import { EmptyState } from "@/components/shared/empty-state";
+import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
+import { DesktopDataTable } from "@/components/shared/mobile-data-card";
 import {
   AnimalEditDialog,
   type AnimalEditValues,
   type AnimalListItem,
 } from "@/components/features/animal-edit-dialog";
-import { AttachmentImage } from "@/components/shared/attachment-image";
 import { boucherieV1 } from "@/lib/api";
 import { formatError } from "@/lib/format-error";
 import { unwrapDataArray } from "@/lib/api/unwrap";
-import { cn } from "@/lib/utils";
 import { ListPageSkeleton } from "@/components/shared/loading-skeletons";
 
 type AnimalTab = "en_attente" | "abattu";
@@ -145,112 +152,43 @@ function AnimauxListePage() {
       : date.toLocaleDateString("fr-FR");
   };
 
-  const pendingCount =
-    tab === "en_attente" ? rows.length : undefined;
-
-  const slaughteredCount =
-    tab === "abattu" ? rows.length : undefined;
-
-  const renderPendingActions = (row: AnimalListItem) => (
-    <div className="grid grid-cols-2 gap-2 border-t border-border pt-3">
-      <button
-        type="button"
-        disabled={busyId === row.id}
-        onClick={() => openEdit(row)}
-        className={cn(
-          "flex min-h-12 items-center justify-center gap-2 rounded-xl border-2 border-border bg-card px-3 text-sm font-semibold transition-all",
-          "hover:border-primary/40 hover:bg-primary/5 active:scale-[0.98]",
-          "disabled:pointer-events-none disabled:opacity-50",
-        )}
-      >
-        <Pencil className="size-4 shrink-0 text-primary" aria-hidden />
-        {t("edit")}
-      </button>
-      <button
-        type="button"
-        disabled={busyId === row.id}
-        onClick={() => handleDelete(row)}
-        className={cn(
-          "flex min-h-12 items-center justify-center gap-2 rounded-xl border-2 border-destructive/30 bg-destructive/5 px-3 text-sm font-semibold text-destructive transition-all",
-          "hover:border-destructive/50 hover:bg-destructive/10 active:scale-[0.98]",
-          "disabled:pointer-events-none disabled:opacity-50",
-        )}
-      >
-        <Trash2 className="size-4 shrink-0" aria-hidden />
-        {t("delete")}
-      </button>
-    </div>
+  const tabOptions = useMemo(
+    () => [
+      { value: "en_attente" as const, label: t("tabPending") },
+      { value: "abattu" as const, label: t("tabSlaughtered") },
+    ],
+    [t],
   );
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div className="space-y-1">
-          <h1 className="text-xl font-bold sm:text-2xl">{t("title")}</h1>
-          <p className="text-sm text-muted-foreground sm:text-base">
-            {t("subtitle")}
-          </p>
-        </div>
-        <Button asChild className="min-h-11 w-full rounded-xl sm:w-auto">
-          <Link href="/abattage/achats">
-            <Plus className="size-4 shrink-0" aria-hidden />
-            {t("newPurchase")}
-          </Link>
-        </Button>
-      </div>
+      <PageHeader
+        title={t("title")}
+        subtitle={t("subtitle")}
+        action={
+          <Button asChild className="w-full sm:w-auto">
+            <Link href="/abattage/achats">
+              <AddIcon className="shrink-0 text-lg" aria-hidden />
+              {t("newPurchase")}
+            </Link>
+          </Button>
+        }
+      />
 
-      <ParentCard title={t("title")} titleIcon={Beef}>
+      <ParentCard title={t("title")} titleIcon={iconAnimalsList}>
         <div className="mb-4 space-y-4">
-          <div className="grid grid-cols-2 gap-2.5">
-            {([
-              {
-                value: "en_attente" as const,
-                label: t("tabPending"),
-                icon: Clock,
-                count: tab === "en_attente" ? pendingCount : undefined,
-              },
-              {
-                value: "abattu" as const,
-                label: t("tabSlaughtered"),
-                icon: Beef,
-                count: tab === "abattu" ? slaughteredCount : undefined,
-              },
-            ]).map(({ value, label, icon: Icon, count }) => (
-              <button
-                key={value}
-                type="button"
-                onClick={() => setTab(value)}
-                className={cn(
-                  "flex min-h-[4.5rem] flex-col items-center justify-center gap-1.5 rounded-2xl border-2 px-3 py-3 text-center transition-all active:scale-[0.98]",
-                  tab === value
-                    ? "border-primary bg-primary/10 text-primary shadow-sm"
-                    : "border-border bg-card text-muted-foreground hover:border-primary/30 hover:bg-muted/40",
-                )}
-              >
-                <Icon className="size-5 shrink-0" aria-hidden />
-                <span className="text-sm font-semibold leading-tight">{label}</span>
-                {typeof count === "number" ? (
-                  <span
-                    className={cn(
-                      "rounded-full px-2 py-0.5 text-xs font-bold tabular-nums",
-                      tab === value
-                        ? "bg-primary/15 text-primary"
-                        : "bg-muted text-muted-foreground",
-                    )}
-                  >
-                    {count}
-                  </span>
-                ) : null}
-              </button>
-            ))}
-          </div>
-
+          <FilterPillGroup
+            options={tabOptions}
+            value={tab}
+            onChange={setTab}
+            aria-label={t("title")}
+          />
           <div className="space-y-2">
             <Label htmlFor="animal-search">{tCommon("search")}</Label>
-            <Input
+            <SearchField
               id="animal-search"
               value={search}
-              onChange={(event) => setSearch(event.target.value)}
+              onChange={setSearch}
               placeholder={t("searchPlaceholder")}
             />
           </div>
@@ -259,36 +197,23 @@ function AnimauxListePage() {
         {animauxQuery.isPending ? (
           <ListPageSkeleton />
         ) : rows.length === 0 ? (
-          <p className="text-sm text-muted-foreground">{t("empty")}</p>
+          <EmptyState icon={iconEmptyAnimals} message={t("empty")} />
         ) : (
           <>
-            <MobileCardList className="md:hidden">
+            <div className="grid grid-cols-2 gap-3 md:hidden">
               {rows.map((row) => (
-                <MobileDataCard key={row.id}>
-                  {row.photoUrl ? (
-                    <div className="mb-3 overflow-hidden rounded-xl border">
-                      <AttachmentImage
-                        streamUrl={row.photoUrl}
-                        alt={row.numeroTag}
-                        className="aspect-[16/10] w-full"
-                      />
-                    </div>
-                  ) : null}
-                  <MobileDataRow label={t("espece")} value={row.espece} />
-                  <MobileDataRow label={t("numeroTag")} value={row.numeroTag} />
-                  <MobileDataRow
-                    label={t("poidsVif")}
-                    value={`${row.poidsVifKg.toLocaleString("fr-FR")} kg`}
-                  />
-                  <MobileDataRow
-                    label={t("prixAchat")}
-                    value={formatMoney(row.prixAchat)}
-                  />
-                  <MobileDataRow label={t("date")} value={formatDate(row.createdAt)} />
-                  {tab === "en_attente" ? renderPendingActions(row) : null}
-                </MobileDataCard>
+                <AnimalCompactCard
+                  key={row.id}
+                  row={row}
+                  showActions={tab === "en_attente"}
+                  busy={busyId === row.id}
+                  onEdit={() => openEdit(row)}
+                  onDelete={() => void handleDelete(row)}
+                  editLabel={t("edit")}
+                  deleteLabel={t("delete")}
+                />
               ))}
-            </MobileCardList>
+            </div>
 
             <DesktopDataTable>
               <table className="w-full min-w-[720px] text-left text-sm">
@@ -326,7 +251,7 @@ function AnimauxListePage() {
                                 onClick={() => openEdit(row)}
                                 aria-label={t("edit")}
                               >
-                                <Pencil className="size-4" />
+                                <EditIcon className="text-lg" />
                               </Button>
                               <Button
                                 type="button"
@@ -337,7 +262,7 @@ function AnimauxListePage() {
                                 onClick={() => handleDelete(row)}
                                 aria-label={t("delete")}
                               >
-                                <Trash2 className="size-4" />
+                                <DeleteIcon className="text-lg" />
                               </Button>
                             </div>
                           </td>

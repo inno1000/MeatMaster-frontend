@@ -1,6 +1,8 @@
 "use client";
 
-import { KeyRound } from "lucide-react";
+import { iconKey } from "@/lib/icons";
+
+const KeyIcon = iconKey;
 import { useTranslations } from "next-intl";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { getDefaultNewUserPassword } from "@/lib/default-password";
@@ -14,7 +16,7 @@ export function DefaultPasswordNotice() {
     <Alert className="mb-4 border-primary/25 bg-primary/5">
       <div className="flex gap-3">
         <span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-primary/12 text-primary">
-          <KeyRound className="size-5" aria-hidden />
+          <KeyIcon className="text-xl" aria-hidden />
         </span>
         <div className="min-w-0 space-y-2">
           <p className="font-semibold leading-snug">{t("defaultPasswordTitle")}</p>

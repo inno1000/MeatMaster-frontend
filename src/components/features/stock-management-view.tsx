@@ -3,7 +3,21 @@
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
-import { History, LayoutGrid, SlidersHorizontal, Coins, AlertTriangle, Flame } from "lucide-react";
+import {
+  iconCoins,
+  iconFilter,
+  iconFlame,
+  iconGrid,
+  iconJournal,
+  iconStatAlert,
+} from "@/lib/icons";
+
+const CoinsIcon = iconCoins;
+const AlertIcon = iconStatAlert;
+const FlameIcon = iconFlame;
+const FilterIcon = iconFilter;
+const GridIcon = iconGrid;
+const HistoryIcon = iconJournal;
 import { ParentCard } from "@/components/shared/parent-card";
 import { ScrollRegion } from "@/components/ui/scroll-region";
 import {
@@ -94,7 +108,7 @@ export const StockManagementView = () => {
       <div className="grid gap-4 sm:grid-cols-3">
         <div className="flex gap-3 rounded-xl border border-border bg-card p-4">
           <span className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-primary/12 text-primary">
-            <Coins className="size-5" aria-hidden />
+            <CoinsIcon className="text-xl" aria-hidden />
           </span>
           <div>
           <p className="text-sm text-muted-foreground">{t("totalValue")}</p>
@@ -105,7 +119,7 @@ export const StockManagementView = () => {
         </div>
         <div className="flex gap-3 rounded-xl border border-border bg-card p-4">
           <span className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-amber-500/15 text-amber-700">
-            <AlertTriangle className="size-5" aria-hidden />
+            <AlertIcon className="text-xl" aria-hidden />
           </span>
           <div>
           <p className="text-sm text-muted-foreground">{t("lowStock")}</p>
@@ -114,7 +128,7 @@ export const StockManagementView = () => {
         </div>
         <div className="flex gap-3 rounded-xl border border-border bg-card p-4">
           <span className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-destructive/12 text-destructive">
-            <Flame className="size-5" aria-hidden />
+            <FlameIcon className="text-xl" aria-hidden />
           </span>
           <div>
           <p className="text-sm text-muted-foreground">{t("criticalStock")}</p>
@@ -125,7 +139,7 @@ export const StockManagementView = () => {
         </div>
       </div>
 
-      <ParentCard title={t("filters")} titleIcon={SlidersHorizontal}>
+      <ParentCard title={t("filters")} titleIcon={FilterIcon}>
         <div className="grid gap-4 md:grid-cols-2">
           <div className="space-y-2">
             <Label htmlFor="meat">{t("meatType")}</Label>
@@ -153,7 +167,7 @@ export const StockManagementView = () => {
         </div>
       </ParentCard>
 
-      <ParentCard title={t("title")} titleIcon={LayoutGrid}>
+      <ParentCard title={t("title")} titleIcon={GridIcon}>
         {rows.length === 0 ? (
           <p className="text-center text-sm text-muted-foreground">{tCommon("noData")}</p>
         ) : (
@@ -240,7 +254,7 @@ export const StockManagementView = () => {
         )}
       </ParentCard>
 
-      <ParentCard title={t("history")} titleIcon={History}>
+      <ParentCard title={t("history")} titleIcon={HistoryIcon}>
         {filteredHistory.length === 0 ? (
           <p className="text-center text-sm text-muted-foreground">{tCommon("noData")}</p>
         ) : (

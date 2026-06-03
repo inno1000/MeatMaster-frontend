@@ -17,13 +17,13 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
     return (
       <Comp
         className={cn(
-          "inline-flex items-center justify-center gap-2 rounded-xl font-medium transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 active:scale-[0.98] sm:active:scale-100",
+          "inline-flex items-center justify-center gap-2 rounded-2xl font-semibold transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 active:scale-[0.98] sm:active:scale-100",
           size === "default" &&
-            "min-h-11 px-4 py-2.5 text-sm",
+            "min-h-12 px-5 py-2.5 text-sm sm:min-h-11",
           size === "icon" &&
             "size-11 shrink-0 p-0 [&_svg]:pointer-events-none [&_svg]:size-5",
           variant === "primary" &&
-            "bg-primary text-primary-foreground hover:brightness-110",
+            "bg-primary text-primary-foreground shadow-card hover:brightness-110",
           variant === "secondary" &&
             "border border-primary/12 bg-secondary text-secondary-foreground hover:bg-secondary/85",
           variant === "outline" &&

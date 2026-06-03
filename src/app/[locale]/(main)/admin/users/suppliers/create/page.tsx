@@ -8,7 +8,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import { useRouter } from "@/i18n/navigation";
-import { Users } from "lucide-react";
+import { iconAdminSuppliers } from "@/lib/icons";
 import { ParentCard } from "@/components/shared/parent-card";
 import { DefaultPasswordNotice } from "@/components/admin/default-password-notice";
 import { Button } from "@/components/ui/button";
@@ -81,7 +81,7 @@ function AdminCreateSupplierPage() {
         </p>
       </div>
 
-      <ParentCard title={t("pageCreateSupplierTitle")} titleIcon={Users}>
+      <ParentCard title={t("pageCreateSupplierTitle")} titleIcon={iconAdminSuppliers}>
         <DefaultPasswordNotice />
         <form onSubmit={onSubmit} className="space-y-4">
           <div className="grid gap-3 sm:grid-cols-2">

@@ -3,7 +3,9 @@
 import * as Dialog from "@radix-ui/react-dialog";
 import { useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
-import { X } from "lucide-react";
+import { iconClose } from "@/lib/icons";
+
+const CloseIcon = iconClose;
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { AudioRecorder } from "@/components/shared/audio-recorder";
@@ -86,7 +88,7 @@ export function VersementRejectDialog({
                 className="shrink-0"
                 aria-label={tCommon("cancel")}
               >
-                <X className="size-5" />
+                <CloseIcon className="text-xl" />
               </Button>
             </Dialog.Close>
           </div>

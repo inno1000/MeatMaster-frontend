@@ -1,10 +1,14 @@
 "use client";
 
 import { useTranslations } from "next-intl";
-import { AlertCircle, CheckCircle2, Scale } from "lucide-react";
+import { iconCheck, iconError, iconScale } from "@/lib/icons";
 import { Alert } from "@/components/ui/alert";
 import { cn } from "@/lib/utils";
 import type { SlaughterLiveAnalysis } from "@/lib/abattage/slaughter-live-validation";
+
+const ScaleIcon = iconScale;
+const CheckIcon = iconCheck;
+const ErrorIcon = iconError;
 
 type SlaughterLiveSummaryProps = {
   analysis: SlaughterLiveAnalysis;
@@ -31,17 +35,17 @@ export function SlaughterLiveSummary({
   return (
     <div
       className={cn(
-        "space-y-3 rounded-xl border p-4",
+        "space-y-3 rounded-2xl border p-5 shadow-card max-md:rounded-3xl",
         hasBlockingIssue
           ? "border-destructive/50 bg-destructive/5"
-          : "border-border/70 bg-muted/15",
+          : "border-border/50 bg-card",
         className,
       )}
       role="status"
       aria-live="polite"
     >
       <div className="flex items-start gap-2">
-        <Scale className="mt-0.5 size-4 shrink-0 text-muted-foreground" aria-hidden />
+        <ScaleIcon className="mt-0.5 shrink-0 text-lg text-muted-foreground" aria-hidden />
         <div className="min-w-0 flex-1 space-y-1">
           <p className="text-sm font-semibold">{t("liveSummaryTitle")}</p>
           <p className="text-sm text-muted-foreground">
@@ -71,7 +75,7 @@ export function SlaughterLiveSummary({
             </p>
           ) : analysis.totalDistributedKg >= analysis.totalSlaughterKg ? (
             <p className="flex items-center gap-1 text-sm text-green-700 dark:text-green-400">
-              <CheckCircle2 className="size-4 shrink-0" aria-hidden />
+              <CheckIcon className="shrink-0 text-lg" aria-hidden />
               {t("liveFullyDistributed")}
             </p>
           ) : null}
@@ -81,7 +85,7 @@ export function SlaughterLiveSummary({
       {hasBlockingIssue ? (
         <Alert variant="destructive" className="space-y-1 py-2">
           <div className="flex items-center gap-2">
-            <AlertCircle className="size-4 shrink-0" aria-hidden />
+            <ErrorIcon className="shrink-0 text-lg" aria-hidden />
             <p className="text-sm font-semibold">{t("liveErrorsTitle")}</p>
           </div>
           <ul className="list-inside list-disc text-sm">

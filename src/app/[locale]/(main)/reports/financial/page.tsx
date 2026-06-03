@@ -4,7 +4,7 @@ import { withLocaleParams } from "@/lib/with-locale-params";
 
 import { useMemo, useState } from "react";
 import { useTranslations } from "next-intl";
-import { Banknote, Wallet } from "lucide-react";
+import { iconBanknote, iconPaymentsGroup } from "@/lib/icons";
 import { ParentCard } from "@/components/shared/parent-card";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -122,7 +122,7 @@ function ReportsFinancialPage() {
       ) : null}
 
       {role === "supplier" && abattages ? (
-        <ParentCard title={t("supplierActivity")} titleIcon={Banknote}>
+        <ParentCard title={t("supplierActivity")} titleIcon={iconBanknote}>
           <dl className="grid gap-3 text-sm sm:grid-cols-3">
             <div>
               <dt className="text-muted-foreground">{t("slaughterCount")}</dt>
@@ -146,7 +146,7 @@ function ReportsFinancialPage() {
         </ParentCard>
       ) : null}
 
-      <ParentCard title={t("versementsTitle")} titleIcon={Wallet}>
+      <ParentCard title={t("versementsTitle")} titleIcon={iconPaymentsGroup}>
         {statsQuery.isPending ? (
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {Array.from({ length: 3 }).map((_, i) => (

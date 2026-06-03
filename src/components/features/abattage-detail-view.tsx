@@ -5,7 +5,8 @@ import { ParentCard } from "@/components/shared/parent-card";
 import type { AbattageDetailViewModel } from "@/lib/api/mappers/abattage-detail";
 import { AttachmentAudioPlayer } from "@/components/shared/attachment-audio-player";
 import { enumLabel } from "@/lib/i18n/enum-label";
-import { Beef, Mic, Share2 } from "lucide-react";
+import { iconMic } from "@/lib/icons";
+import { iconActivityDistribution, iconSlaughterDetail } from "@/lib/icons";
 
 type Props = {
   detail: AbattageDetailViewModel;
@@ -48,7 +49,7 @@ export const AbattageDetailView = ({ detail }: Props) => {
           date: detail.date || tCommon("dash"),
           weight: detail.poidsCarcasseKg,
         })}
-        titleIcon={Beef}
+        titleIcon={iconSlaughterDetail}
       >
         <dl className="grid gap-3 text-sm sm:grid-cols-2">
           <div>
@@ -95,7 +96,7 @@ export const AbattageDetailView = ({ detail }: Props) => {
       </ParentCard>
 
       {detail.attachments.length > 0 ? (
-        <ParentCard title={t("audioNotes")} titleIcon={Mic}>
+        <ParentCard title={t("audioNotes")} titleIcon={iconMic}>
           <ul className="space-y-4">
             {detail.attachments.map((att) => (
               <li key={att.id || att.streamUrl}>
@@ -109,7 +110,7 @@ export const AbattageDetailView = ({ detail }: Props) => {
         </ParentCard>
       ) : null}
 
-      <ParentCard title={t("distribution")} titleIcon={Share2}>
+      <ParentCard title={t("distribution")} titleIcon={iconActivityDistribution}>
         <p className="mb-4 text-sm text-muted-foreground">
           {t("detailDistributionsSummary", {
             count: detail.distributions.length,

@@ -7,7 +7,7 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
-import { KeyRound } from "lucide-react";
+import { iconKey } from "@/lib/icons";
 import { ParentCard } from "@/components/shared/parent-card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -88,7 +88,7 @@ function SettingsFirstPasswordPage() {
         <p className="text-sm text-muted-foreground sm:text-base">{t("subtitle")}</p>
       </div>
 
-      <ParentCard title={t("title")} titleIcon={KeyRound}>
+      <ParentCard title={t("title")} titleIcon={iconKey}>
         <form onSubmit={onSubmit} className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="np">{t("newPassword")}</Label>

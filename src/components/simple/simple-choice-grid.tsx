@@ -1,12 +1,14 @@
 "use client";
 
-import type { LucideIcon } from "lucide-react";
+import type { AppIcon } from "@/lib/icon-types";
 import { cn } from "@/lib/utils";
 
 export type SimpleChoiceOption = {
   id: string;
   label: string;
-  icon?: LucideIcon;
+  icon?: AppIcon;
+  /** Illustration (`public/…`) affichée à la place de l’icône si présente. */
+  imageSrc?: string;
   selected?: boolean;
 };
 
@@ -32,13 +34,25 @@ export function SimpleChoiceGrid({ options, onSelect, columns = 2 }: Props) {
             type="button"
             onClick={() => onSelect(opt.id)}
             className={cn(
-              "flex min-h-[5.5rem] flex-col items-center justify-center gap-2 rounded-2xl border-2 px-3 py-4 text-center transition-colors",
+              "flex min-h-[6.5rem] flex-col items-center justify-center gap-2 rounded-2xl border-2 px-3 py-4 text-center shadow-card transition-all duration-200 max-md:rounded-3xl",
               opt.selected
-                ? "border-primary bg-primary/12 text-primary"
-                : "border-border bg-card hover:border-primary/40 hover:bg-muted/50",
+                ? "border-primary bg-primary text-primary-foreground shadow-card-hover"
+                : "border-border/60 bg-card hover:border-primary/35 hover:shadow-card-hover",
             )}
           >
-            {Icon ? <Icon className="size-10 shrink-0" aria-hidden /> : null}
+            {opt.imageSrc ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={opt.imageSrc}
+                alt=""
+                className={cn(
+                  "size-16 shrink-0 object-contain",
+                  opt.selected && "brightness-110 contrast-105",
+                )}
+              />
+            ) : Icon ? (
+              <Icon className="shrink-0 text-4xl" aria-hidden />
+            ) : null}
             <span className="text-lg font-semibold leading-tight">{opt.label}</span>
           </button>
         );

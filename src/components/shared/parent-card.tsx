@@ -1,4 +1,4 @@
-import type { LucideIcon } from "lucide-react";
+import type { AppIcon } from "@/lib/icon-types";
 import type { ReactNode } from "react";
 import {
   Card,
@@ -13,7 +13,7 @@ type ParentCardProps = {
   title: string;
   subtitle?: string;
   /** Icône à gauche du titre (pictogramme dans un médaillon). */
-  titleIcon?: LucideIcon;
+  titleIcon?: AppIcon;
   children: ReactNode;
 };
 
@@ -24,7 +24,7 @@ export const ParentCard = ({
   children,
 }: ParentCardProps) => {
   return (
-    <Card className="border-border/70">
+    <Card className="border-border/50 shadow-card">
       <CardHeader>
         <CardTitle
           className={cn(
@@ -37,7 +37,7 @@ export const ParentCard = ({
               className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-zone-wine/22 via-zone-amber/16 to-zone-ocean/14 text-zone-wine ring-1 ring-black/[0.04] sm:size-10"
               aria-hidden
             >
-              <TitleIcon className="size-[1.125rem] sm:size-5" />
+              <TitleIcon className="text-xl sm:text-2xl" />
             </span>
           ) : null}
           <span className="min-w-0 flex-1 leading-snug">{title}</span>
