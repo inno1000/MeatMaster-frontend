@@ -12,7 +12,7 @@ import { ParentCard } from "@/components/shared/parent-card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { boucherieV1 } from "@/lib/api";
+import { apiChangePassword } from "@/lib/api";
 import { useAuthStore } from "@/lib/stores/auth-store";
 import { formatError } from "@/lib/format-error";
 import { formResolver } from "@/lib/form-resolver";
@@ -64,16 +64,13 @@ function SettingsFirstPasswordPage() {
   });
 
   const onSubmit = handleSubmit(async (values) => {
-    const id = user?.id?.trim();
-    if (!id) {
+    const token = user?.token?.trim();
+    if (!token) {
       toast.error(t("missingUserId"));
       return;
     }
     try {
-      await boucherieV1.users.update(id, {
-        password: values.password,
-        password_confirmation: values.confirm,
-      });
+      await apiChangePassword(token, values.password, values.confirm);
       markPasswordChanged();
       toast.success(t("success"));
       router.replace(

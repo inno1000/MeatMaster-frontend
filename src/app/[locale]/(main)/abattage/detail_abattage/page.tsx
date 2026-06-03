@@ -30,10 +30,7 @@ function AbattageDetailPage() {
   if (!id) {
     return (
       <div className="space-y-4">
-        <p className="text-muted-foreground">
-          Identifiant d&apos;abattage manquant. Ouvrez le détail depuis la liste
-          des distributions.
-        </p>
+        <p className="text-muted-foreground">{t("missingIdInUrl")}</p>
         <Button type="button" variant="outline" asChild>
           <Link href="/abattage/liste">{t("listTitle")}</Link>
         </Button>
@@ -55,7 +52,7 @@ function AbattageDetailPage() {
     return (
       <div className="space-y-4">
         <p className="text-destructive">
-          {formatError(detailQuery.error ?? new Error("Abattage introuvable"))}
+          {formatError(detailQuery.error ?? new Error(t("slaughterNotFound")))}
         </p>
         <Button type="button" variant="outline" asChild>
           <Link href="/abattage/liste">{t("listTitle")}</Link>

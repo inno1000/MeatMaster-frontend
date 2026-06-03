@@ -14,15 +14,6 @@ type ProvidersProps = {
   messages: AbstractIntlMessages;
 };
 
-const LocaleHtmlLang = ({ locale }: { locale: string }) => {
-  useEffect(() => {
-    const root = document.documentElement;
-    root.lang = locale;
-    root.dir = locale === "ar" ? "rtl" : "ltr";
-  }, [locale]);
-  return null;
-};
-
 export const Providers = ({ children, locale, messages }: ProvidersProps) => {
   const [queryClient] = useState(
     () =>
@@ -42,7 +33,6 @@ export const Providers = ({ children, locale, messages }: ProvidersProps) => {
 
   return (
     <NextIntlClientProvider locale={locale} messages={messages}>
-      <LocaleHtmlLang locale={locale} />
       <QueryClientProvider client={queryClient}>
         <NuqsAdapter>
           {children}

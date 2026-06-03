@@ -18,16 +18,22 @@ import { formatError } from "@/lib/format-error";
 import { formResolver } from "@/lib/form-resolver";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
-const ProfileSchema = z.object({
-  name: z.string().min(1, "Requis"),
-  email: z.string().email("E-mail invalide"),
-});
+function buildProfileSchema(v: (key: string) => string) {
+  return z.object({
+    name: z.string().min(1, v("required")),
+    email: z.string().email(v("emailInvalid")),
+  });
+}
 
-type ProfileInput = z.infer<typeof ProfileSchema>;
+type ProfileInput = z.infer<ReturnType<typeof buildProfileSchema>>;
 
 function SettingsProfilePage() {
   const t = useTranslations("settings.profile");
   const tCommon = useTranslations("common");
+  const schema = useMemo(
+    () => buildProfileSchema((k) => tCommon(`validation.${k}`)),
+    [tCommon],
+  );
   const user = useAuthStore((s) => s.user);
   const patchProfile = useAuthStore((s) => s.patchProfile);
   const refreshProfile = useAuthStore((s) => s.refreshProfile);
@@ -47,7 +53,7 @@ function SettingsProfilePage() {
     reset,
     formState: { errors, isSubmitting },
   } = useForm<ProfileInput>({
-    resolver: formResolver(ProfileSchema),
+    resolver: formResolver(schema),
     defaultValues,
   });
 
@@ -70,7 +76,7 @@ function SettingsProfilePage() {
       return;
     }
     try {
-      await boucherieV1.users.update(id, {
+      await boucherieV1.auth.updateProfile({
         name: values.name.trim(),
         email: values.email.trim(),
       });

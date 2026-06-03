@@ -10,6 +10,12 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { formatError } from "@/lib/format-error";
 import { ScrollRegion } from "@/components/ui/scroll-region";
+import {
+  DesktopDataTable,
+  MobileCardList,
+  MobileDataCard,
+  MobileDataRow,
+} from "@/components/shared/mobile-data-card";
 import { useAuthStore } from "@/lib/stores/auth-store";
 import { isApiEnabled } from "@/lib/api/config";
 
@@ -67,32 +73,55 @@ function BoucherieListePage() {
           <p className="text-center text-muted-foreground">{tCommon("noData")}</p>
         ) : null}
         {apiOk && !isLoading && !error && visibleData && visibleData.length > 0 ? (
-          <ScrollRegion>
-            <table className="w-full min-w-[480px] text-left text-sm">
-              <thead className="border-b border-border bg-muted/50">
-                <tr>
-                  <th className="p-3">{t("tableName")}</th>
-                  <th className="p-3">{t("tableCity")}</th>
-                  <th className="p-3">{t("tablePhone")}</th>
-                </tr>
-              </thead>
-              <tbody>
-                {visibleData.map((row, idx) => (
-                  <tr key={idx} className="border-b border-border">
-                    <td className="p-3">
-                      {String(row.name ?? row["name"] ?? "—")}
-                    </td>
-                    <td className="p-3">
-                      {String(row.city ?? row["city"] ?? "—")}
-                    </td>
-                    <td className="p-3">
-                      {String(row.phone ?? row["phone"] ?? "—")}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </ScrollRegion>
+          <>
+            <MobileCardList>
+              {visibleData.map((row, idx) => (
+                <MobileDataCard key={idx}>
+                  <MobileDataRow
+                    label={t("tableName")}
+                    value={String(row.name ?? row["name"] ?? "—")}
+                    emphasize
+                  />
+                  <MobileDataRow
+                    label={t("tableCity")}
+                    value={String(row.city ?? row["city"] ?? "—")}
+                  />
+                  <MobileDataRow
+                    label={t("tablePhone")}
+                    value={String(row.phone ?? row["phone"] ?? "—")}
+                  />
+                </MobileDataCard>
+              ))}
+            </MobileCardList>
+            <DesktopDataTable>
+              <ScrollRegion>
+                <table className="w-full min-w-[480px] text-left text-sm">
+                  <thead className="border-b border-border bg-muted/50">
+                    <tr>
+                      <th className="p-3">{t("tableName")}</th>
+                      <th className="p-3">{t("tableCity")}</th>
+                      <th className="p-3">{t("tablePhone")}</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {visibleData.map((row, idx) => (
+                      <tr key={idx} className="border-b border-border">
+                        <td className="p-3">
+                          {String(row.name ?? row["name"] ?? "—")}
+                        </td>
+                        <td className="p-3">
+                          {String(row.city ?? row["city"] ?? "—")}
+                        </td>
+                        <td className="p-3">
+                          {String(row.phone ?? row["phone"] ?? "—")}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </ScrollRegion>
+            </DesktopDataTable>
+          </>
         ) : null}
       </ParentCard>
     </div>

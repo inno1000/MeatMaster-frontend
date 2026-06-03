@@ -2,13 +2,14 @@
 
 import { withLocaleParams } from "@/lib/with-locale-params";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import { useQuery } from "@tanstack/react-query";
 import { z } from "zod";
 import { formResolver } from "@/lib/form-resolver";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
+import { useRouter } from "@/i18n/navigation";
 import { Wallet } from "lucide-react";
 import { ParentCard } from "@/components/shared/parent-card";
 import { nativeSelectClass } from "@/lib/ui-classes";
@@ -16,38 +17,50 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { AudioRecorder } from "@/components/shared/audio-recorder";
-import { boucherieV1, uploadAudioBlobs } from "@/lib/api";
+import { boucherieV1 } from "@/lib/api";
 import { formatError } from "@/lib/format-error";
 import { unwrapDataArray } from "@/lib/api/unwrap";
-import { coerceApiScalarId } from "@/lib/api/coerce-id";
 import { useAuthStore } from "@/lib/stores/auth-store";
+import { useSimpleMode } from "@/lib/hooks/use-simple-mode";
+import { VersementSimpleFlow } from "@/components/simple/versement-simple-flow";
+import { FormNumberInput } from "@/components/shared/form-number-input";
+import { submitVersement } from "@/lib/versement/use-versement-submit";
 
-const Schema = z.object({
-  fournisseurUserId: z.string().min(1, "Choisissez un fournisseur"),
-  amount: z.coerce.number().positive("Requis"),
-  method: z.string().min(1, "Requis"),
-  dateVersement: z.string().min(1, "Requis"),
-  reference: z.string().trim().min(1, "Référence requise"),
-  notes: z.string().optional(),
-});
+function buildSchema(v: (key: string) => string) {
+  return z.object({
+    fournisseurUserId: z.string().min(1, v("supplierRequired")),
+    amount: z.coerce.number().positive(v("positiveAmount")),
+    method: z.string().min(1, v("required")),
+    dateVersement: z.string().min(1, v("dateRequired")),
+    reference: z.string().trim().min(1, v("referenceRequired")),
+    notes: z.string().optional(),
+  });
+}
 
-type FormValues = z.infer<typeof Schema>;
+type FormValues = z.infer<ReturnType<typeof buildSchema>>;
 
 function VersementEnregistrerPage() {
+  const simpleMode = useSimpleMode();
+  const router = useRouter();
   const t = useTranslations("versement");
   const [audioBlobs, setAudioBlobs] = useState<Blob[]>([]);
   const tCommon = useTranslations("common");
+  const schema = useMemo(
+    () => buildSchema((k) => tCommon(`validation.${k}`)),
+    [tCommon],
+  );
   const authUser = useAuthStore((s) => s.user);
   const assignedSupplierId = authUser?.supplierUserId ?? "";
   const hasAssignedSupplier = assignedSupplierId.length > 0;
   const {
     register,
+    control,
     handleSubmit,
     reset,
     setValue,
     formState: { errors, isSubmitting },
   } = useForm<FormValues>({
-    resolver: formResolver(Schema),
+    resolver: formResolver(schema),
     defaultValues: {
       fournisseurUserId: "",
       amount: 0,
@@ -80,22 +93,25 @@ function VersementEnregistrerPage() {
 
   const onSubmit = handleSubmit(async (values) => {
     try {
-      const attachmentIds = await uploadAudioBlobs(audioBlobs);
-      await boucherieV1.versements.create({
-        fournisseur_user_id: coerceApiScalarId(values.fournisseurUserId),
-        montant: values.amount,
-        mode_paiement: values.method,
-        date_versement: values.dateVersement,
+      await submitVersement({
+        fournisseurUserId: values.fournisseurUserId,
+        amount: values.amount,
+        method: values.method,
+        dateVersement: values.dateVersement,
         reference: values.reference,
-        notes: values.notes || undefined,
-        ...(attachmentIds.length > 0 ? { attachment_ids: attachmentIds } : {}),
+        notes: values.notes,
+        audioBlobs,
       });
       toast.success(t("toastOk"));
-      reset();
+      router.push("/versement/liste");
     } catch (error) {
       toast.error(formatError(error));
     }
   });
+
+  if (simpleMode) {
+    return <VersementSimpleFlow />;
+  }
 
   return (
     <div className="mx-auto max-w-xl space-y-6">
@@ -116,9 +132,7 @@ function VersementEnregistrerPage() {
                 >
                   {assignedSupplierLabel || assignedSupplierId}
                 </p>
-                <p className="text-xs text-muted-foreground">
-                  Fournisseur assigné à votre boucherie (un seul par établissement).
-                </p>
+                <p className="text-xs text-muted-foreground">{t("assignedSupplierHint")}</p>
               </>
             ) : (
               <select
@@ -165,7 +179,12 @@ function VersementEnregistrerPage() {
           </div>
           <div className="space-y-2">
             <Label htmlFor="amount">{t("amount")}</Label>
-            <Input id="amount" type="number" {...register("amount")} />
+            <FormNumberInput
+              control={control}
+              name="amount"
+              id="amount"
+              allowDecimals={false}
+            />
             {errors.amount ? (
               <p className="text-sm text-destructive">{errors.amount.message}</p>
             ) : null}
@@ -193,7 +212,7 @@ function VersementEnregistrerPage() {
             ) : null}
           </div>
           <div className="space-y-2">
-            <Label htmlFor="dateVersement">Date</Label>
+            <Label htmlFor="dateVersement">{t("dateVersement")}</Label>
             <Input id="dateVersement" type="date" {...register("dateVersement")} />
             {errors.dateVersement ? (
               <p className="text-sm text-destructive">{errors.dateVersement.message}</p>
@@ -209,7 +228,7 @@ function VersementEnregistrerPage() {
             ) : null}
           </div>
           <div className="space-y-2">
-            <Label htmlFor="notes">Notes</Label>
+            <Label htmlFor="notes">{tCommon("notes")}</Label>
             <Input id="notes" {...register("notes")} />
           </div>
           <AudioRecorder onBlobsChange={setAudioBlobs} />

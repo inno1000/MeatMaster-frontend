@@ -2,12 +2,13 @@
 
 import { withLocaleParams } from "@/lib/with-locale-params";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import { z } from "zod";
 import { formResolver } from "@/lib/form-resolver";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
+import { useRouter } from "@/i18n/navigation";
 import { useQuery } from "@tanstack/react-query";
 import { ShoppingCart } from "lucide-react";
 import { ParentCard } from "@/components/shared/parent-card";
@@ -17,45 +18,58 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AudioRecorder } from "@/components/shared/audio-recorder";
-import { boucherieV1, isApiEnabled, uploadAudioBlobs } from "@/lib/api";
+import { boucherieV1, isApiEnabled } from "@/lib/api";
 import { formatError } from "@/lib/format-error";
-import { unwrapDataArray, unwrapDataObject } from "@/lib/api/unwrap";
+import { unwrapDataArray } from "@/lib/api/unwrap";
+import { enumLabel } from "@/lib/i18n/enum-label";
+import { useSimpleMode } from "@/lib/hooks/use-simple-mode";
+import { VenteSimpleFlow } from "@/components/simple/vente-simple-flow";
+import { FormNumberInput } from "@/components/shared/form-number-input";
+import { submitVente } from "@/lib/vente/use-vente-submit";
 
-const Schema = z
-  .object({
-    date: z.string().min(1, "Date requise"),
-    typeVente: z.string().min(1, "Type de vente requis"),
-    clientId: z.string().optional(),
-    productId: z.string().min(1, "Produit requis"),
-    soldQty: z.coerce.number().positive("Requis"),
-    unitPrice: z.coerce.number().positive("Prix unitaire requis"),
-    notes: z.string().optional(),
-    deliveryAddress: z.string().optional(),
-    deliveryDate: z.string().optional(),
-  })
-  .superRefine((data, ctx) => {
-    if (data.typeVente === "livraison" && !data.deliveryAddress?.trim()) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        path: ["deliveryAddress"],
-        message: "Adresse de livraison requise",
-      });
-    }
-    if (data.typeVente === "livraison" && !data.deliveryDate) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        path: ["deliveryDate"],
-        message: "Date prévue requise",
-      });
-    }
-  });
+function buildSchema(v: (key: string) => string) {
+  return z
+    .object({
+      date: z.string().min(1, v("dateRequired")),
+      typeVente: z.string().min(1, v("saleTypeRequired")),
+      clientId: z.string().optional(),
+      productId: z.string().min(1, v("productRequired")),
+      soldQty: z.coerce.number().positive(v("qtyRequired")),
+      unitPrice: z.coerce.number().positive(v("unitPriceRequired")),
+      notes: z.string().optional(),
+      deliveryAddress: z.string().optional(),
+      deliveryDate: z.string().optional(),
+    })
+    .superRefine((data, ctx) => {
+      if (data.typeVente === "livraison" && !data.deliveryAddress?.trim()) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ["deliveryAddress"],
+          message: v("deliveryAddressRequired"),
+        });
+      }
+      if (data.typeVente === "livraison" && !data.deliveryDate) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ["deliveryDate"],
+          message: v("deliveryDateRequired"),
+        });
+      }
+    });
+}
 
-type FormValues = z.infer<typeof Schema>;
+type FormValues = z.infer<ReturnType<typeof buildSchema>>;
 
 function VenteEnregistrerPage() {
+  const simpleMode = useSimpleMode();
+  const router = useRouter();
   const t = useTranslations("vente");
   const [audioBlobs, setAudioBlobs] = useState<Blob[]>([]);
   const tCommon = useTranslations("common");
+  const schema = useMemo(
+    () => buildSchema((k) => tCommon(`validation.${k}`)),
+    [tCommon],
+  );
   const {
     register,
     control,
@@ -63,7 +77,7 @@ function VenteEnregistrerPage() {
     setValue,
     formState: { errors, isSubmitting },
   } = useForm<FormValues>({
-    resolver: formResolver(Schema),
+    resolver: formResolver(schema),
     defaultValues: {
       date: new Date().toISOString().slice(0, 10),
       typeVente: "comptoir",
@@ -116,35 +130,28 @@ function VenteEnregistrerPage() {
 
   const onSubmit = handleSubmit(async (values) => {
     try {
-      const attachmentIds = await uploadAudioBlobs(audioBlobs);
-      const createdRaw = await boucherieV1.ventes.create({
-        type_vente: values.typeVente,
-        client_id: values.clientId || undefined,
-        notes: values.notes || undefined,
-        date_vente: values.date,
-        ...(attachmentIds.length > 0 ? { attachment_ids: attachmentIds } : {}),
-        lignes: [
-          {
-            produit_id: values.productId,
-            quantite: values.soldQty,
-            prix_unitaire: values.unitPrice,
-          },
-        ],
+      await submitVente({
+        date: values.date,
+        typeVente: values.typeVente,
+        clientId: values.clientId,
+        productId: values.productId,
+        soldQty: values.soldQty,
+        unitPrice: values.unitPrice,
+        notes: values.notes,
+        deliveryAddress: values.deliveryAddress,
+        deliveryDate: values.deliveryDate,
+        audioBlobs,
       });
-      const created = unwrapDataObject(createdRaw);
-      const saleId = String(created.id ?? "");
-      if (values.typeVente === "livraison" && saleId) {
-        await boucherieV1.ventes.createLivraison(saleId, {
-          adresse_livraison: values.deliveryAddress,
-          statut: "en_attente",
-          date_prevue: values.deliveryDate,
-        });
-      }
       toast.success(t("toastOk"));
+      router.push("/vente/liste");
     } catch (error) {
       toast.error(formatError(error));
     }
   });
+
+  if (simpleMode) {
+    return <VenteSimpleFlow />;
+  }
 
   return (
     <div className="mx-auto w-full max-w-xl space-y-6">
@@ -169,19 +176,20 @@ function VenteEnregistrerPage() {
             ) : null}
           </div>
           <div className="space-y-2">
-            <Label htmlFor="typeVente">Type de vente</Label>
+            <Label htmlFor="typeVente">{t("saleType")}</Label>
             <select
               id="typeVente"
               className={nativeSelectClass}
               {...register("typeVente")}
             >
-              <option value="">—</option>
+              <option value="">{tCommon("selectPlaceholder")}</option>
               {(typeVenteQuery.data ?? []).map((item) => {
                 const ref = item as { valeur?: unknown; libelle?: unknown };
                 const value = String(ref.valeur ?? "");
+                const label = String(ref.libelle ?? "").trim();
                 return (
                   <option key={value} value={value}>
-                    {String(ref.libelle ?? value)}
+                    {label || enumLabel(tCommon, value)}
                   </option>
                 );
               })}
@@ -193,13 +201,13 @@ function VenteEnregistrerPage() {
             ) : null}
           </div>
           <div className="space-y-2">
-            <Label htmlFor="clientId">{t("tableCustomer")}</Label>
+            <Label htmlFor="clientId">{t("client")}</Label>
             <select
               id="clientId"
               className={nativeSelectClass}
               {...register("clientId")}
             >
-              <option value="">—</option>
+              <option value="">{tCommon("selectPlaceholder")}</option>
               {(clientsQuery.data ?? []).map((item) => {
                 const obj = item as { id?: unknown; nom?: unknown; name?: unknown };
                 return (
@@ -211,13 +219,13 @@ function VenteEnregistrerPage() {
             </select>
           </div>
           <div className="space-y-2">
-            <Label htmlFor="productId">{t("meatType")}</Label>
+            <Label htmlFor="productId">{t("product")}</Label>
             <select
               id="productId"
               className={nativeSelectClass}
               {...register("productId")}
             >
-              <option value="">—</option>
+              <option value="">{tCommon("selectPlaceholder")}</option>
               {(productsQuery.data ?? []).map((item) => {
                 const obj = item as {
                   id?: unknown;
@@ -242,13 +250,7 @@ function VenteEnregistrerPage() {
           </div>
           <div className="space-y-2">
             <Label htmlFor="soldQty">{t("soldQty")}</Label>
-            <Input
-              id="soldQty"
-              type="number"
-              step="0.01"
-                min="0.01"
-              {...register("soldQty")}
-            />
+            <FormNumberInput control={control} name="soldQty" id="soldQty" />
             {errors.soldQty ? (
               <p className="text-sm text-destructive">
                 {errors.soldQty.message}
@@ -257,12 +259,11 @@ function VenteEnregistrerPage() {
           </div>
           <div className="space-y-2">
             <Label htmlFor="unitPrice">{t("unitPrice")}</Label>
-            <Input
+            <FormNumberInput
+              control={control}
+              name="unitPrice"
               id="unitPrice"
-              type="number"
-              step="1"
-                min="1"
-              {...register("unitPrice")}
+              allowDecimals={false}
             />
               {errors.unitPrice ? (
                 <p className="text-sm text-destructive">{errors.unitPrice.message}</p>
@@ -275,14 +276,14 @@ function VenteEnregistrerPage() {
           {typeVente === "livraison" ? (
             <>
               <div className="space-y-2">
-                <Label htmlFor="deliveryAddress">Adresse livraison</Label>
+                <Label htmlFor="deliveryAddress">{t("deliveryAddress")}</Label>
                 <Input id="deliveryAddress" {...register("deliveryAddress")} />
                 {errors.deliveryAddress ? (
                   <p className="text-sm text-destructive">{errors.deliveryAddress.message}</p>
                 ) : null}
               </div>
               <div className="space-y-2">
-                <Label htmlFor="deliveryDate">Date prévue</Label>
+                <Label htmlFor="deliveryDate">{t("deliveryDate")}</Label>
                 <Input id="deliveryDate" type="date" {...register("deliveryDate")} />
                 {errors.deliveryDate ? (
                   <p className="text-sm text-destructive">{errors.deliveryDate.message}</p>

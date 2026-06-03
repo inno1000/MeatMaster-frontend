@@ -61,7 +61,7 @@ function AdminSupplierButcheriesPage() {
         boucherie_ids: ids,
       });
       await queryClient.invalidateQueries({ queryKey: ["admin", "users"] });
-      toast.success("Affectation mise à jour.");
+      toast.success(t("assignmentsUpdated"));
     } catch (error) {
       toast.error(formatError(error));
     }
@@ -110,10 +110,10 @@ function AdminSupplierButcheriesPage() {
                     {t("roleLabel")}: {String(u.role ?? "—")}
                   </p>
                   <p className="text-muted-foreground">
-                    Boucheries desservies : {currentLabels}
+                    {t("servedButcheries")} : {currentLabels}
                   </p>
                   <div className="mt-3 space-y-2">
-                    <Label htmlFor={`assign-${userId}`}>Modifier les boucheries</Label>
+                    <Label htmlFor={`assign-${userId}`}>{t("editButcheries")}</Label>
                     <div
                       id={`assign-${userId}`}
                       className="flex max-h-40 flex-col gap-2 overflow-y-auto rounded-md border border-border p-3"
@@ -125,7 +125,7 @@ function AdminSupplierButcheriesPage() {
                           name?: unknown;
                         };
                         const bid = String(b.id ?? "");
-                        const blabel = String(b.nom ?? b.name ?? "Boucherie");
+                        const blabel = String(b.nom ?? b.name ?? tCommon("butchery"));
                         return (
                           <label
                             key={bid || blabel}

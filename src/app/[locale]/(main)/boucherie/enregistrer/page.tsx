@@ -20,9 +20,11 @@ import { AudioRecorder } from "@/components/shared/audio-recorder";
 import { uploadAudioBlobs } from "@/lib/api";
 import { formatError } from "@/lib/format-error";
 import { toast } from "sonner";
+import { useRouter } from "@/i18n/navigation";
 
 function BoucherieEnregistrerPage() {
   const t = useTranslations("boucherie");
+  const router = useRouter();
   const createButcher = useCreateButcher();
   const [audioBlobs, setAudioBlobs] = useState<Blob[]>([]);
 
@@ -48,8 +50,7 @@ function BoucherieEnregistrerPage() {
         ...data,
         attachmentIds,
       });
-      reset();
-      setAudioBlobs([]);
+      router.push("/boucherie/liste");
     } catch (e) {
       toast.error(formatError(e));
     }

@@ -5,6 +5,8 @@ import { Link, usePathname } from "@/i18n/navigation";
 import { cn } from "@/lib/utils";
 import type { UserRole } from "@/lib/schemas/auth";
 import { getMobileDockTabs } from "@/lib/mobile-tab-bar-config";
+import { getSimpleMobileDockTabs } from "@/lib/simple-nav-config";
+import { useSimpleMode } from "@/lib/hooks/use-simple-mode";
 
 type MobileTabBarProps = {
   role: UserRole;
@@ -12,8 +14,10 @@ type MobileTabBarProps = {
 
 export function MobileTabBar({ role }: MobileTabBarProps) {
   const pathname = usePathname();
-  const t = useTranslations("nav");
-  const tabs = getMobileDockTabs(role);
+  const simpleMode = useSimpleMode();
+  const tNav = useTranslations("nav");
+  const tRoot = useTranslations();
+  const tabs = simpleMode ? getSimpleMobileDockTabs(role) : getMobileDockTabs(role);
 
   return (
     <nav
@@ -23,7 +27,7 @@ export function MobileTabBar({ role }: MobileTabBarProps) {
         "tap-highlight-transparent",
         "pb-[env(safe-area-inset-bottom,0px)]",
       )}
-      aria-label={t("mobileDockLabel")}
+      aria-label={tNav("mobileDockLabel")}
     >
       <div className="mx-auto flex w-full max-w-2xl items-center justify-evenly gap-1 px-3 py-2.5">
         {tabs.map((tab) => {
@@ -55,7 +59,7 @@ export function MobileTabBar({ role }: MobileTabBarProps) {
                   active ? "text-primary" : "text-muted-foreground",
                 )}
               >
-                {t(tab.titleKey)}
+                {simpleMode ? tRoot(tab.titleKey) : tNav(tab.titleKey)}
               </span>
             </Link>
           );

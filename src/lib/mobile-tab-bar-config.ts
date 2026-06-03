@@ -32,7 +32,7 @@ const BUTCHER_TABS: MobileTabDef[] = [
 /** Abattage → achats → versements → rapports financiers. */
 const SUPPLIER_TABS: MobileTabDef[] = [
   { titleKey: "mobileHome", href: "/dashboard", icon: LayoutDashboard },
-  { titleKey: "mobileSlaughter", href: "/abattage/liste", icon: Beef },
+  { titleKey: "mobileSlaughter", href: "/abattage/animaux", icon: Beef },
   { titleKey: "mobilePurchase", href: "/abattage/achats", icon: ShoppingCart },
   { titleKey: "mobilePayments", href: "/versement/liste", icon: CreditCard },
   { titleKey: "mobileReports", href: "/reports/financial", icon: FileText },

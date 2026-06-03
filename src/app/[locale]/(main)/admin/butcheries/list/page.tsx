@@ -9,6 +9,12 @@ import { ParentCard } from "@/components/shared/parent-card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { ScrollRegion } from "@/components/ui/scroll-region";
+import {
+  DesktopDataTable,
+  MobileCardList,
+  MobileDataCard,
+  MobileDataRow,
+} from "@/components/shared/mobile-data-card";
 import { boucherieV1 } from "@/lib/api";
 import { unwrapDataArray } from "@/lib/api/unwrap";
 import { mapApiBoucherieRow } from "@/lib/api/mappers/boucherie-record";
@@ -59,31 +65,54 @@ function AdminButcheriesListPage() {
           <p className="text-center text-muted-foreground">{tCommon("noData")}</p>
         ) : null}
         {apiOk && !query.isPending && !query.isError && rows.length > 0 ? (
-          <ScrollRegion>
-            <table className="w-full min-w-[520px] text-left text-sm">
-              <thead className="border-b border-border bg-muted/50">
-                <tr>
-                  <th className="p-3">{tBoucherie("tableName")}</th>
-                  <th className="p-3">{tBoucherie("tableCity")}</th>
-                  <th className="p-3">{tBoucherie("tablePhone")}</th>
-                </tr>
-              </thead>
-              <tbody>
-                {rows.map((row, idx) => (
-                  <tr
-                    key={String(row.id ?? idx)}
-                    className="border-b border-border"
-                  >
-                    <td className="p-3 font-medium">
-                      {String(row.name ?? "—")}
-                    </td>
-                    <td className="p-3">{String(row.city ?? "—")}</td>
-                    <td className="p-3">{String(row.phone ?? "—")}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </ScrollRegion>
+          <>
+            <MobileCardList>
+              {rows.map((row, idx) => (
+                <MobileDataCard key={String(row.id ?? idx)}>
+                  <MobileDataRow
+                    label={tBoucherie("tableName")}
+                    value={String(row.name ?? "—")}
+                    emphasize
+                  />
+                  <MobileDataRow
+                    label={tBoucherie("tableCity")}
+                    value={String(row.city ?? "—")}
+                  />
+                  <MobileDataRow
+                    label={tBoucherie("tablePhone")}
+                    value={String(row.phone ?? "—")}
+                  />
+                </MobileDataCard>
+              ))}
+            </MobileCardList>
+            <DesktopDataTable>
+              <ScrollRegion>
+                <table className="w-full min-w-[520px] text-left text-sm">
+                  <thead className="border-b border-border bg-muted/50">
+                    <tr>
+                      <th className="p-3">{tBoucherie("tableName")}</th>
+                      <th className="p-3">{tBoucherie("tableCity")}</th>
+                      <th className="p-3">{tBoucherie("tablePhone")}</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {rows.map((row, idx) => (
+                      <tr
+                        key={String(row.id ?? idx)}
+                        className="border-b border-border"
+                      >
+                        <td className="p-3 font-medium">
+                          {String(row.name ?? "—")}
+                        </td>
+                        <td className="p-3">{String(row.city ?? "—")}</td>
+                        <td className="p-3">{String(row.phone ?? "—")}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </ScrollRegion>
+            </DesktopDataTable>
+          </>
         ) : null}
       </ParentCard>
     </div>

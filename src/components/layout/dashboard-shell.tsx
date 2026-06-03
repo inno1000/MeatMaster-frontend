@@ -7,7 +7,9 @@ import { useTranslations } from "next-intl";
 import { Link, usePathname } from "@/i18n/navigation";
 import { cn } from "@/lib/utils";
 import { mainNavigation, type NavEntry } from "@/lib/nav-config";
+import { getSimpleNavigation } from "@/lib/simple-nav-config";
 import { filterNavigationByRole, normalizeAppRole } from "@/lib/authz";
+import { useSimpleMode } from "@/lib/hooks/use-simple-mode";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -176,15 +178,20 @@ export const DashboardShell = ({ children }: { children: ReactNode }) => {
   );
 
   const appRole = normalizeAppRole(user?.role);
+  const simpleMode = useSimpleMode();
 
-  const navEntries = filterNavigationByRole(mainNavigation, appRole);
+  const navEntries = simpleMode
+    ? getSimpleNavigation(appRole)
+    : filterNavigationByRole(mainNavigation, appRole);
 
   /** À chaque changement de route ou de rôle : un seul bloc ouvert, celui de la page courante. */
   useLayoutEffect(() => {
-    const entries = filterNavigationByRole(mainNavigation, appRole);
+    const entries = simpleMode
+      ? getSimpleNavigation(appRole)
+      : filterNavigationByRole(mainNavigation, appRole);
     const key = getActiveGroupTitleKey(entries, pathname);
     setExpandedGroupKeys(key ? new Set([key]) : new Set());
-  }, [pathname, appRole]);
+  }, [pathname, appRole, simpleMode]);
 
   const toggleGroup = useCallback((groupTitleKey: string) => {
     setExpandedGroupKeys((prev) => {

@@ -6,9 +6,16 @@ import { useMemo, useState } from "react";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { MessageSquare, Wallet } from "lucide-react";
+import { Wallet } from "lucide-react";
 import { ParentCard } from "@/components/shared/parent-card";
 import { ScrollRegion } from "@/components/ui/scroll-region";
+import {
+  DesktopDataTable,
+  MobileCardList,
+  MobileDataActions,
+  MobileDataCard,
+  MobileDataRow,
+} from "@/components/shared/mobile-data-card";
 import { Button } from "@/components/ui/button";
 import { useAuthStore } from "@/lib/stores/auth-store";
 import { boucherieV1 } from "@/lib/api";
@@ -16,12 +23,26 @@ import { formatError } from "@/lib/format-error";
 import { unwrapDataArray } from "@/lib/api/unwrap";
 import { mapApiBoucherieRow } from "@/lib/api/mappers/boucherie-record";
 import { pickDisplayLabel } from "@/lib/display/reference-label";
+import { useSimpleMode } from "@/lib/hooks/use-simple-mode";
+import { VersementListeSimple } from "@/components/simple/versement-liste-simple";
+import { normalizeAppRole } from "@/lib/authz";
+import {
+  VersementRejectDialog,
+  type VersementRejectSummary,
+} from "@/components/features/versement-reject-dialog";
+import { rejectVersement } from "@/lib/versement/reject-versement";
 
 function VersementListePage() {
+  const simpleMode = useSimpleMode();
   const t = useTranslations("versement");
   const tCommon = useTranslations("common");
   const user = useAuthStore((s) => s.user);
-  const [rejectionReason, setRejectionReason] = useState<string>("");
+  const appRole = normalizeAppRole(user?.role);
+  const isSupplier = appRole === "supplier";
+  const [rejectTarget, setRejectTarget] = useState<VersementRejectSummary | null>(
+    null,
+  );
+  const [rejectLoading, setRejectLoading] = useState(false);
   const queryClient = useQueryClient();
 
   const rowsQuery = useQuery({
@@ -73,31 +94,49 @@ function VersementListePage() {
     if (user.role === "admin") {
       return rows;
     }
-    if (user.role === "supplier") {
+    if (isSupplier) {
       const uid = user.id ?? "";
       return rows.filter((row) => (uid ? row.supplierId === uid : false));
     }
     return rows;
-  }, [rowsQuery.data, user, boucheriesQuery.data, tCommon]);
+  }, [rowsQuery.data, user, boucheriesQuery.data, tCommon, isSupplier]);
 
-  const onValidate = async (
-    id: string,
-    status: "valide" | "rejete",
-  ) => {
+  const onAccept = async (id: string) => {
     try {
-      if (status === "valide") {
-        await boucherieV1.versements.valider(id);
-      } else {
-        await boucherieV1.versements.rejeter(id, {
-          motif_rejet: rejectionReason || t("defaultRejectReason"),
-        });
-      }
+      await boucherieV1.versements.valider(id);
       await queryClient.invalidateQueries({ queryKey: ["versements"] });
-      toast.success(status === "valide" ? t("validatedOk") : t("rejectedOk"));
+      toast.success(t("validatedOk"));
     } catch (error) {
       toast.error(formatError(error));
     }
   };
+
+  const onConfirmReject = async (motif: string, audioBlobs: Blob[]) => {
+    if (!rejectTarget) {
+      return;
+    }
+    setRejectLoading(true);
+    try {
+      await rejectVersement(rejectTarget.id, {
+        motif,
+        audioBlobs,
+        defaultMotifIfVoiceOnly: t("defaultRejectReason"),
+        fallbackMotif: t("defaultRejectReason"),
+      });
+      await queryClient.invalidateQueries({ queryKey: ["versements"] });
+      toast.success(t("rejectedOk"));
+      setRejectTarget(null);
+    } catch (error) {
+      toast.error(formatError(error));
+      throw error;
+    } finally {
+      setRejectLoading(false);
+    }
+  };
+
+  if (simpleMode && isSupplier) {
+    return <VersementListeSimple />;
+  }
 
   const renderStatus = (status: string) => {
     const classes =
@@ -128,81 +167,153 @@ function VersementListePage() {
         </p>
       </div>
       <ParentCard title={t("listTitle")} titleIcon={Wallet}>
-        <ScrollRegion>
-          <table className="w-full min-w-[760px] text-left text-sm">
-            <thead className="border-b border-border bg-muted/50">
-              <tr>
-                <th className="p-3">{t("tableDate")}</th>
-                <th className="p-3">{t("tableButcher")}</th>
-                <th className="p-3">{t("tableAmount")}</th>
-                <th className="p-3">{t("tableMethod")}</th>
-                <th className="p-3">{t("tableRef")}</th>
-                <th className="p-3">{t("tableStatus")}</th>
-                {user?.role === "supplier" ? (
-                  <th className="p-3">{t("tableValidation")}</th>
-                ) : null}
-              </tr>
-            </thead>
-            <tbody>
+        {visibleRows.length === 0 ? (
+          <p className="text-center text-sm text-muted-foreground">{tCommon("noData")}</p>
+        ) : (
+          <>
+            <MobileCardList>
               {visibleRows.map((r) => (
-                <tr key={r.id} className="border-b border-border">
-                  <td className="p-3">{r.date}</td>
-                  <td className="p-3">{r.butcher}</td>
-                  <td className="p-3">{r.amount.toLocaleString()} FCFA</td>
-                  <td className="p-3">{r.method}</td>
-                  <td className="p-3">{r.reference}</td>
-                  <td className="space-y-1 p-3">
-                    {renderStatus(r.status)}
-                    {r.supplierComment ? (
-                      <p className="text-xs text-muted-foreground">
-                        {r.supplierComment}
-                      </p>
-                    ) : null}
-                  </td>
-                  {user?.role === "supplier" ? (
-                    <td className="p-3">
-                      {r.status === "en_attente" ? (
-                        <div className="flex flex-wrap gap-2">
-                          <Button
-                            type="button"
-                            variant="outline"
-                            className="h-8 min-h-8 px-2 text-xs"
-                            onClick={() => void onValidate(r.id, "valide")}
-                          >
-                            {t("accept")}
-                          </Button>
-                          <Button
-                            type="button"
-                            variant="destructive"
-                            className="h-8 min-h-8 px-2 text-xs"
-                            onClick={() => void onValidate(r.id, "rejete")}
-                          >
-                            {t("reject")}
-                          </Button>
-                        </div>
-                      ) : (
-                        <span className="text-xs text-muted-foreground">
-                          {t("alreadyProcessed")}
-                        </span>
-                      )}
-                    </td>
+                <MobileDataCard key={r.id}>
+                  <MobileDataRow
+                    label={t("tableAmount")}
+                    value={`${r.amount.toLocaleString()} FCFA`}
+                    emphasize
+                  />
+                  <MobileDataRow label={t("tableButcher")} value={r.butcher} />
+                  <MobileDataRow label={t("tableDate")} value={r.date} />
+                  <MobileDataRow label={t("tableMethod")} value={r.method || "—"} />
+                  <MobileDataRow label={t("tableRef")} value={r.reference || "—"} />
+                  <div className="flex items-center justify-between gap-3 text-sm">
+                    <span className="text-muted-foreground">{t("tableStatus")}</span>
+                    <div className="text-end">
+                      {renderStatus(r.status)}
+                      {r.supplierComment ? (
+                        <p className="mt-1 text-xs text-muted-foreground">
+                          {r.supplierComment}
+                        </p>
+                      ) : null}
+                    </div>
+                  </div>
+                  {isSupplier && r.status === "en_attente" ? (
+                    <MobileDataActions>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        className="min-h-11 w-full"
+                        onClick={() => void onAccept(r.id)}
+                      >
+                        {t("accept")}
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="destructive"
+                        className="min-h-11 w-full"
+                        onClick={() =>
+                          setRejectTarget({
+                            id: r.id,
+                            butcher: r.butcher,
+                            amount: r.amount,
+                            reference: r.reference,
+                          })
+                        }
+                      >
+                        {t("reject")}
+                      </Button>
+                    </MobileDataActions>
+                  ) : isSupplier ? (
+                    <p className="text-xs text-muted-foreground">{t("alreadyProcessed")}</p>
                   ) : null}
-                </tr>
+                </MobileDataCard>
               ))}
-            </tbody>
-          </table>
-        </ScrollRegion>
+            </MobileCardList>
+            <DesktopDataTable>
+              <ScrollRegion>
+                <table className="w-full min-w-[760px] text-left text-sm">
+                  <thead className="border-b border-border bg-muted/50">
+                    <tr>
+                      <th className="p-3">{t("tableDate")}</th>
+                      <th className="p-3">{t("tableButcher")}</th>
+                      <th className="p-3">{t("tableAmount")}</th>
+                      <th className="p-3">{t("tableMethod")}</th>
+                      <th className="p-3">{t("tableRef")}</th>
+                      <th className="p-3">{t("tableStatus")}</th>
+                      {isSupplier ? (
+                        <th className="p-3">{t("tableValidation")}</th>
+                      ) : null}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {visibleRows.map((r) => (
+                      <tr key={r.id} className="border-b border-border">
+                        <td className="p-3">{r.date}</td>
+                        <td className="p-3">{r.butcher}</td>
+                        <td className="p-3">{r.amount.toLocaleString()} FCFA</td>
+                        <td className="p-3">{r.method}</td>
+                        <td className="p-3">{r.reference}</td>
+                        <td className="space-y-1 p-3">
+                          {renderStatus(r.status)}
+                          {r.supplierComment ? (
+                            <p className="text-xs text-muted-foreground">
+                              {r.supplierComment}
+                            </p>
+                          ) : null}
+                        </td>
+                        {isSupplier ? (
+                          <td className="p-3">
+                            {r.status === "en_attente" ? (
+                              <div className="flex flex-wrap gap-2">
+                                <Button
+                                  type="button"
+                                  variant="outline"
+                                  className="h-8 min-h-8 px-2 text-xs"
+                                  onClick={() => void onAccept(r.id)}
+                                >
+                                  {t("accept")}
+                                </Button>
+                                <Button
+                                  type="button"
+                                  variant="destructive"
+                                  className="h-8 min-h-8 px-2 text-xs"
+                                  onClick={() =>
+                                    setRejectTarget({
+                                      id: r.id,
+                                      butcher: r.butcher,
+                                      amount: r.amount,
+                                      reference: r.reference,
+                                    })
+                                  }
+                                >
+                                  {t("reject")}
+                                </Button>
+                              </div>
+                            ) : (
+                              <span className="text-xs text-muted-foreground">
+                                {t("alreadyProcessed")}
+                              </span>
+                            )}
+                          </td>
+                        ) : null}
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </ScrollRegion>
+            </DesktopDataTable>
+          </>
+        )}
       </ParentCard>
-      {user?.role === "supplier" ? (
-        <ParentCard title="Motif de rejet (optionnel)" titleIcon={MessageSquare}>
-          <input
-            className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-            value={rejectionReason}
-            onChange={(e) => setRejectionReason(e.target.value)}
-            placeholder={t("defaultRejectReason")}
-          />
-        </ParentCard>
-      ) : null}
+
+      <VersementRejectDialog
+        open={rejectTarget !== null}
+        onOpenChange={(open) => {
+          if (!open) {
+            setRejectTarget(null);
+          }
+        }}
+        summary={rejectTarget}
+        onConfirm={onConfirmReject}
+        loading={rejectLoading}
+      />
     </div>
   );
 }

@@ -2,11 +2,13 @@
 
 import { withLocaleParams } from "@/lib/with-locale-params";
 
+import { useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
+import { useRouter } from "@/i18n/navigation";
 import { ShoppingBag } from "lucide-react";
 import { ParentCard } from "@/components/shared/parent-card";
 import { Button } from "@/components/ui/button";
@@ -14,35 +16,46 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { nativeSelectClass } from "@/lib/ui-classes";
 import { formResolver } from "@/lib/form-resolver";
-import { boucherieV1 } from "@/lib/api";
+import { FormNumberInput } from "@/components/shared/form-number-input";
+import { ImagePicker } from "@/components/shared/image-picker";
+import { boucherieV1, uploadImageFiles } from "@/lib/api";
 import { formatError } from "@/lib/format-error";
 import { unwrapDataArray } from "@/lib/api/unwrap";
+import { SelectFieldSkeleton } from "@/components/shared/loading-skeletons";
 
-const Schema = z.object({
-  dateAchat: z.string().min(1, "Requis"),
-  montantTotal: z.coerce.number().positive("Requis"),
-  notes: z.string().optional(),
-  especeValeur: z.string().min(1, "Requis"),
-  poidsVifKg: z.coerce.number().positive("Requis"),
-  prixAchat: z.coerce.number().positive("Requis"),
-  numeroTag: z.string().trim().min(1, "Requis"),
-});
+function buildSchema(v: (key: string) => string) {
+  return z.object({
+    dateAchat: z.string().min(1, v("dateRequired")),
+    notes: z.string().optional(),
+    especeValeur: z.string().min(1, v("required")),
+    poidsVifKg: z.coerce.number().positive(v("required")),
+    prixAchat: z.coerce.number().positive(v("required")),
+    numeroTag: z.string().trim().min(1, v("required")),
+  });
+}
 
-type FormValues = z.infer<typeof Schema>;
+type FormValues = z.infer<ReturnType<typeof buildSchema>>;
 
 function AbattageAchatsPage() {
   const t = useTranslations("achatsFournisseur");
+  const router = useRouter();
+  const tCommon = useTranslations("common");
+  const schema = useMemo(
+    () => buildSchema((k) => tCommon(`validation.${k}`)),
+    [tCommon],
+  );
   const queryClient = useQueryClient();
+  const [photoFiles, setPhotoFiles] = useState<File[]>([]);
   const {
     register,
+    control,
     handleSubmit,
     reset,
     formState: { errors, isSubmitting },
   } = useForm<FormValues>({
-    resolver: formResolver(Schema),
+    resolver: formResolver(schema),
     defaultValues: {
       dateAchat: new Date().toISOString().slice(0, 10),
-      montantTotal: 0,
       notes: "",
       especeValeur: "",
       poidsVifKg: 0,
@@ -59,9 +72,9 @@ function AbattageAchatsPage() {
 
   const onSubmit = handleSubmit(async (values) => {
     try {
+      const attachmentIds = await uploadImageFiles(photoFiles);
       await boucherieV1.achatsFournisseurs.create({
         date_achat: values.dateAchat,
-        montant_total: values.montantTotal,
         notes: values.notes || undefined,
         animaux: [
           {
@@ -69,21 +82,14 @@ function AbattageAchatsPage() {
             poids_vif_kg: values.poidsVifKg,
             prix_achat: values.prixAchat,
             numero_tag: values.numeroTag,
+            ...(attachmentIds.length > 0 ? { attachment_ids: attachmentIds } : {}),
           },
         ],
       });
       toast.success(t("toastOk"));
-      reset({
-        dateAchat: new Date().toISOString().slice(0, 10),
-        montantTotal: 0,
-        notes: "",
-        especeValeur: "",
-        poidsVifKg: 0,
-        prixAchat: 0,
-        numeroTag: "",
-      });
       await queryClient.invalidateQueries({ queryKey: ["animaux"] });
       await queryClient.invalidateQueries({ queryKey: ["achats-fournisseurs"] });
+      router.push("/abattage/animaux");
     } catch (error) {
       toast.error(formatError(error));
     }
@@ -97,40 +103,35 @@ function AbattageAchatsPage() {
       </div>
       <ParentCard title={t("title")} titleIcon={ShoppingBag}>
         <form onSubmit={onSubmit} className="space-y-4">
-          <div className="grid gap-3 sm:grid-cols-2">
-            <div className="space-y-2">
-              <Label htmlFor="dateAchat">{t("dateAchat")}</Label>
-              <Input id="dateAchat" type="date" {...register("dateAchat")} />
-              {errors.dateAchat ? (
-                <p className="text-sm text-destructive">{errors.dateAchat.message}</p>
-              ) : null}
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="montantTotal">{t("montantTotal")}</Label>
-              <Input id="montantTotal" type="number" step="0.01" {...register("montantTotal")} />
-              {errors.montantTotal ? (
-                <p className="text-sm text-destructive">{errors.montantTotal.message}</p>
-              ) : null}
-            </div>
+          <div className="space-y-2">
+            <Label htmlFor="dateAchat">{t("dateAchat")}</Label>
+            <Input id="dateAchat" type="date" {...register("dateAchat")} />
+            {errors.dateAchat ? (
+              <p className="text-sm text-destructive">{errors.dateAchat.message}</p>
+            ) : null}
           </div>
           <div className="space-y-2">
             <Label htmlFor="especeValeur">{t("espece")}</Label>
-            <select
-              id="especeValeur"
-              className={nativeSelectClass}
-              {...register("especeValeur")}
-            >
-              <option value="">—</option>
-              {(especesQuery.data ?? []).map((item) => {
-                const ref = item as { valeur?: unknown; libelle?: unknown };
-                const val = String(ref.valeur ?? "");
-                return (
-                  <option key={val} value={val}>
-                    {String(ref.libelle ?? val)}
-                  </option>
-                );
-              })}
-            </select>
+            {especesQuery.isPending ? (
+              <SelectFieldSkeleton />
+            ) : (
+              <select
+                id="especeValeur"
+                className={nativeSelectClass}
+                {...register("especeValeur")}
+              >
+                <option value="">{tCommon("selectPlaceholder")}</option>
+                {(especesQuery.data ?? []).map((item) => {
+                  const ref = item as { valeur?: unknown; libelle?: unknown };
+                  const val = String(ref.valeur ?? "");
+                  return (
+                    <option key={val} value={val}>
+                      {String(ref.libelle ?? val)}
+                    </option>
+                  );
+                })}
+              </select>
+            )}
             {errors.especeValeur ? (
               <p className="text-sm text-destructive">{errors.especeValeur.message}</p>
             ) : null}
@@ -138,14 +139,22 @@ function AbattageAchatsPage() {
           <div className="grid gap-3 sm:grid-cols-2">
             <div className="space-y-2">
               <Label htmlFor="poidsVifKg">{t("poidsVif")}</Label>
-              <Input id="poidsVifKg" type="number" step="0.01" {...register("poidsVifKg")} />
+              <FormNumberInput
+                control={control}
+                name="poidsVifKg"
+                id="poidsVifKg"
+              />
               {errors.poidsVifKg ? (
                 <p className="text-sm text-destructive">{errors.poidsVifKg.message}</p>
               ) : null}
             </div>
             <div className="space-y-2">
               <Label htmlFor="prixAchat">{t("prixAchat")}</Label>
-              <Input id="prixAchat" type="number" step="0.01" {...register("prixAchat")} />
+              <FormNumberInput
+                control={control}
+                name="prixAchat"
+                id="prixAchat"
+              />
               {errors.prixAchat ? (
                 <p className="text-sm text-destructive">{errors.prixAchat.message}</p>
               ) : null}
@@ -162,6 +171,10 @@ function AbattageAchatsPage() {
             <Label htmlFor="notes">{t("notes")}</Label>
             <Input id="notes" {...register("notes")} />
           </div>
+          <ImagePicker
+            label={t("animalPhotos")}
+            onFilesChange={setPhotoFiles}
+          />
           <Button type="submit" disabled={isSubmitting}>
             {t("submit")}
           </Button>

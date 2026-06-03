@@ -10,6 +10,12 @@ import { ParentCard } from "@/components/shared/parent-card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ScrollRegion } from "@/components/ui/scroll-region";
+import {
+  DesktopDataTable,
+  MobileCardList,
+  MobileDataCard,
+  MobileDataRow,
+} from "@/components/shared/mobile-data-card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Skeleton } from "@/components/ui/skeleton";
 import { boucherieV1 } from "@/lib/api";
@@ -128,32 +134,56 @@ function ReportsStocksPage() {
         ) : rows.length === 0 ? (
           <p className="text-center text-muted-foreground">{tCommon("noData")}</p>
         ) : (
-          <ScrollRegion>
-            <table className="w-full min-w-[640px] text-left text-sm">
-              <thead className="border-b border-border bg-muted/50">
-                <tr>
-                  <th className="p-3">{t("tableProduct")}</th>
-                  <th className="p-3">{t("tableQty")}</th>
-                  <th className="p-3">{t("tableThreshold")}</th>
-                  <th className="p-3">{t("status")}</th>
-                </tr>
-              </thead>
-              <tbody>
-                {rows.map((r) => (
-                  <tr key={r.id} className="border-b border-border">
-                    <td className="p-3">{r.name}</td>
-                    <td className="p-3">
-                      {r.qty} {r.unit}
-                    </td>
-                    <td className="p-3">{r.seuil > 0 ? r.seuil : "—"}</td>
-                    <td className="p-3">
-                      {r.enAlerte ? t("statusAlert") : t("statusOk")}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </ScrollRegion>
+          <>
+            <MobileCardList>
+              {rows.map((r) => (
+                <MobileDataCard key={r.id}>
+                  <MobileDataRow label={t("tableProduct")} value={r.name} emphasize />
+                  <MobileDataRow
+                    label={t("tableQty")}
+                    value={`${r.qty} ${r.unit}`}
+                    emphasize
+                  />
+                  <MobileDataRow
+                    label={t("tableThreshold")}
+                    value={r.seuil > 0 ? String(r.seuil) : "—"}
+                  />
+                  <MobileDataRow
+                    label={t("status")}
+                    value={r.enAlerte ? t("statusAlert") : t("statusOk")}
+                  />
+                </MobileDataCard>
+              ))}
+            </MobileCardList>
+            <DesktopDataTable>
+              <ScrollRegion>
+                <table className="w-full min-w-[640px] text-left text-sm">
+                  <thead className="border-b border-border bg-muted/50">
+                    <tr>
+                      <th className="p-3">{t("tableProduct")}</th>
+                      <th className="p-3">{t("tableQty")}</th>
+                      <th className="p-3">{t("tableThreshold")}</th>
+                      <th className="p-3">{t("status")}</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {rows.map((r) => (
+                      <tr key={r.id} className="border-b border-border">
+                        <td className="p-3">{r.name}</td>
+                        <td className="p-3">
+                          {r.qty} {r.unit}
+                        </td>
+                        <td className="p-3">{r.seuil > 0 ? r.seuil : "—"}</td>
+                        <td className="p-3">
+                          {r.enAlerte ? t("statusAlert") : t("statusOk")}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </ScrollRegion>
+            </DesktopDataTable>
+          </>
         )}
       </ParentCard>
     </div>

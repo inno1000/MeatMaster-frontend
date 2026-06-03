@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { notFound } from "next/navigation";
 import { getMessages, setRequestLocale } from "next-intl/server";
+import { LocaleDocumentAttributes } from "@/components/locale-document-attributes";
 import { routing } from "@/i18n/routing";
 import { Providers } from "@/lib/providers";
 
@@ -26,6 +27,7 @@ export default async function LocaleLayout({
 
   return (
     <Providers locale={locale} messages={messages}>
+      <LocaleDocumentAttributes locale={locale} />
       {children}
     </Providers>
   );

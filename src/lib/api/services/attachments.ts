@@ -61,6 +61,41 @@ export async function uploadAudioBlobs(blobs: Blob[]): Promise<string[]> {
   return ids;
 }
 
+export async function uploadImageFile(file: File, index: number): Promise<string> {
+  if (!isApiEnabled()) {
+    throw new ApiError("API non configurée", 0);
+  }
+
+  const form = new FormData();
+  form.append("file", file, file.name || `photo-${index + 1}.jpg`);
+
+  const response = await fetch(v1Url("/attachments"), {
+    method: "POST",
+    headers: buildAuthHeaders(),
+    body: form,
+  });
+
+  const json = await parseJson<unknown>(response);
+  const data = unwrapDataObject(json);
+
+  return String(data.id ?? "");
+}
+
+export async function uploadImageFiles(files: File[]): Promise<string[]> {
+  if (!isApiEnabled() || files.length === 0) {
+    return [];
+  }
+
+  const ids: string[] = [];
+  for (let i = 0; i < files.length; i++) {
+    const id = await uploadImageFile(files[i], i);
+    if (id) {
+      ids.push(id);
+    }
+  }
+  return ids;
+}
+
 export async function fetchAttachmentBlob(streamUrl: string): Promise<Blob> {
   const response = await fetch(streamUrl, {
     headers: buildAuthHeaders(),

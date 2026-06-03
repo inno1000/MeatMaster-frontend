@@ -246,6 +246,28 @@ export async function apiLogin(email: string, password: string): Promise<User> {
   }
 }
 
+/** Changement de mot de passe du compte connecté (sans rôle admin). */
+export async function apiChangePassword(
+  token: string,
+  password: string,
+  passwordConfirmation: string,
+): Promise<void> {
+  await parseAuthJson(
+    await fetch(v1Url("/auth/password"), {
+      method: "PATCH",
+      headers: {
+        Accept: "application/json",
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({
+        password,
+        password_confirmation: passwordConfirmation,
+      }),
+    }),
+  );
+}
+
 export async function apiLogout(token: string): Promise<void> {
   try {
     await fetch(v1Url("/auth/logout"), {

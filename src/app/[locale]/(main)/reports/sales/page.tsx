@@ -11,6 +11,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { nativeSelectClass } from "@/lib/ui-classes";
 import { ScrollRegion } from "@/components/ui/scroll-region";
+import {
+  DesktopDataTable,
+  MobileCardList,
+  MobileDataCard,
+  MobileDataRow,
+} from "@/components/shared/mobile-data-card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Skeleton } from "@/components/ui/skeleton";
 import { boucherieV1 } from "@/lib/api";
@@ -22,6 +28,9 @@ import {
   mapVentesToReportRows,
 } from "@/lib/reports/ventes-report";
 import { useRoleStats, type StatsPeriode } from "@/lib/reports/use-role-stats";
+import { enumLabel } from "@/lib/i18n/enum-label";
+import { clampReportDateRange } from "@/lib/date-utils";
+import { ReportDateRangeFields } from "@/components/reports/report-date-range-fields";
 
 function ReportsSalesPage() {
   const t = useTranslations("reports");
@@ -32,15 +41,20 @@ function ReportsSalesPage() {
   const [statut, setStatut] = useState("");
   const [periode, setPeriode] = useState<StatsPeriode>("mois");
 
+  const dateRange = useMemo(
+    () => clampReportDateRange(from, to),
+    [from, to],
+  );
+
   const statsQuery = useRoleStats(periode);
 
   const ventesQuery = useQuery({
-    queryKey: ["reports", "ventes", from, to, statut],
+    queryKey: ["reports", "ventes", dateRange.from, dateRange.to, statut],
     enabled: role === "butcher" || role === "admin",
     queryFn: async () => {
       const raw = await boucherieV1.ventes.list({
-        date_debut: from || undefined,
-        date_fin: to || undefined,
+        date_debut: dateRange.from || undefined,
+        date_fin: dateRange.to || undefined,
         statut: statut || undefined,
       });
       return mapVentesToReportRows(raw);
@@ -48,19 +62,28 @@ function ReportsSalesPage() {
   });
 
   const filtered = useMemo(
-    () => filterVenteRows(ventesQuery.data ?? [], { from, to, statut }),
-    [ventesQuery.data, from, to, statut],
+    () =>
+      filterVenteRows(ventesQuery.data ?? [], {
+        from: dateRange.from,
+        to: dateRange.to,
+        statut,
+      }),
+    [ventesQuery.data, dateRange.from, dateRange.to, statut],
   );
 
   const statsVentes = (statsQuery.data?.ventes ?? {}) as Record<string, unknown>;
   const totalSales = filtered.reduce((acc, s) => acc + s.totalAmount, 0);
   const totalFromStats = Number(statsVentes.montant_total ?? 0);
   const displayTotal =
-    from || to ? totalSales : totalFromStats > 0 ? totalFromStats : totalSales;
+    dateRange.from || dateRange.to
+      ? totalSales
+      : totalFromStats > 0
+        ? totalFromStats
+        : totalSales;
   const salesCount = filtered.length;
   const avgFromStats = Number(statsVentes.montant_moyen ?? 0);
   const avg =
-    avgFromStats > 0 && !from && !to
+    avgFromStats > 0 && !dateRange.from && !dateRange.to
       ? Math.round(avgFromStats)
       : salesCount > 0
         ? Math.round(displayTotal / salesCount)
@@ -138,22 +161,16 @@ function ReportsSalesPage() {
       {showTable ? (
         <ParentCard title={t("salesTitle")} titleIcon={Receipt}>
           <div className="mb-4 grid gap-4 sm:grid-cols-2 md:grid-cols-3">
-            <div className="space-y-2">
-              <Label>{t("dateFrom")}</Label>
-              <Input
-                type="date"
-                value={from}
-                onChange={(e) => setFrom(e.target.value)}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>{t("dateTo")}</Label>
-              <Input
-                type="date"
-                value={to}
-                onChange={(e) => setTo(e.target.value)}
-              />
-            </div>
+            <ReportDateRangeFields
+              className="sm:col-span-2"
+              from={from}
+              to={to}
+              onFromChange={(nextFrom, nextTo) => {
+                setFrom(nextFrom);
+                setTo(nextTo);
+              }}
+              onToChange={setTo}
+            />
             <div className="space-y-2">
               <Label>{t("status")}</Label>
               <select
@@ -161,10 +178,12 @@ function ReportsSalesPage() {
                 value={statut}
                 onChange={(e) => setStatut(e.target.value)}
               >
-                <option value="">—</option>
-                <option value="en_cours">En cours</option>
-                <option value="payee">Payée</option>
-                <option value="annulee">Annulée</option>
+                <option value="">{tCommon("selectPlaceholder")}</option>
+                {(["en_cours", "payee", "annulee"] as const).map((code) => (
+                  <option key={code} value={code}>
+                    {enumLabel(tCommon, code)}
+                  </option>
+                ))}
               </select>
             </div>
           </div>
@@ -178,30 +197,55 @@ function ReportsSalesPage() {
           ) : filtered.length === 0 ? (
             <p className="text-center text-muted-foreground">{tCommon("noData")}</p>
           ) : (
-            <ScrollRegion>
-              <table className="w-full min-w-[720px] text-left text-sm">
-                <thead className="border-b border-border bg-muted/50">
-                  <tr>
-                    <th className="p-3">{t("tableDate")}</th>
-                    <th className="p-3">{t("tableCustomer")}</th>
-                    <th className="p-3">{t("tableType")}</th>
-                    <th className="p-3">{t("status")}</th>
-                    <th className="p-3">{t("tableTotal")}</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filtered.map((s) => (
-                    <tr key={s.id} className="border-b border-border">
-                      <td className="p-3">{s.date}</td>
-                      <td className="p-3">{s.customer}</td>
-                      <td className="p-3">{s.typeVente || "—"}</td>
-                      <td className="p-3">{s.statut || "—"}</td>
-                      <td className="p-3">{s.totalAmount.toLocaleString()}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </ScrollRegion>
+            <>
+              <MobileCardList>
+                {filtered.map((s) => (
+                  <MobileDataCard key={s.id}>
+                    <MobileDataRow
+                      label={t("tableTotal")}
+                      value={`${s.totalAmount.toLocaleString()} FCFA`}
+                      emphasize
+                    />
+                    <MobileDataRow label={t("tableDate")} value={s.date} />
+                    <MobileDataRow label={t("tableCustomer")} value={s.customer} />
+                    <MobileDataRow
+                      label={t("tableType")}
+                      value={s.typeVente ? enumLabel(tCommon, s.typeVente) : "—"}
+                    />
+                    <MobileDataRow
+                      label={t("status")}
+                      value={s.statut ? enumLabel(tCommon, s.statut) : "—"}
+                    />
+                  </MobileDataCard>
+                ))}
+              </MobileCardList>
+              <DesktopDataTable>
+                <ScrollRegion>
+                  <table className="w-full min-w-[720px] text-left text-sm">
+                    <thead className="border-b border-border bg-muted/50">
+                      <tr>
+                        <th className="p-3">{t("tableDate")}</th>
+                        <th className="p-3">{t("tableCustomer")}</th>
+                        <th className="p-3">{t("tableType")}</th>
+                        <th className="p-3">{t("status")}</th>
+                        <th className="p-3">{t("tableTotal")}</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {filtered.map((s) => (
+                        <tr key={s.id} className="border-b border-border">
+                          <td className="p-3">{s.date}</td>
+                          <td className="p-3">{s.customer}</td>
+                          <td className="p-3">{s.typeVente || "—"}</td>
+                          <td className="p-3">{s.statut || "—"}</td>
+                          <td className="p-3">{s.totalAmount.toLocaleString()}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </ScrollRegion>
+              </DesktopDataTable>
+            </>
           )}
         </ParentCard>
       ) : null}

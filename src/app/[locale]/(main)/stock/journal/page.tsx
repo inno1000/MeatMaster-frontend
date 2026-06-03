@@ -11,6 +11,12 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ScrollRegion } from "@/components/ui/scroll-region";
+import {
+  DesktopDataTable,
+  MobileCardList,
+  MobileDataCard,
+  MobileDataRow,
+} from "@/components/shared/mobile-data-card";
 import { nativeSelectClass } from "@/lib/ui-classes";
 import { boucherieV1 } from "@/lib/api";
 import { unwrapDataArray } from "@/lib/api/unwrap";
@@ -65,7 +71,7 @@ function StockJournalPage() {
       <ParentCard title={t("filters")} titleIcon={SlidersHorizontal}>
         <div className="flex flex-wrap gap-4">
           <div className="space-y-2">
-            <Label htmlFor="stock">Stock</Label>
+            <Label htmlFor="stock">{tCommon("stock")}</Label>
             <select
               id="stock"
               className={nativeSelectClass}
@@ -101,30 +107,49 @@ function StockJournalPage() {
         </div>
       </ParentCard>
       <ParentCard title={t("title")} titleIcon={ScrollText}>
-        <ScrollRegion>
-          <table className="w-full min-w-[560px] text-left text-sm">
-            <thead className="border-b border-border bg-muted/50">
-              <tr>
-                <th className="p-3">{t("tableDate")}</th>
-                <th className="p-3">{t("tableType")}</th>
-                <th className="p-3">{t("tableMeat")}</th>
-                <th className="p-3">{t("tableQty")}</th>
-                <th className="p-3">{t("tableUser")}</th>
-              </tr>
-            </thead>
-            <tbody>
+        {rows.length === 0 ? (
+          <p className="text-center text-sm text-muted-foreground">{tCommon("noData")}</p>
+        ) : (
+          <>
+            <MobileCardList>
               {rows.map((row) => (
-                <tr key={row.id} className="border-b border-border">
-                  <td className="p-3">{row.date}</td>
-                  <td className="p-3">{row.type}</td>
-                  <td className="p-3">{row.motif}</td>
-                  <td className="p-3">{row.qty}</td>
-                  <td className="p-3">{row.user}</td>
-                </tr>
+                <MobileDataCard key={row.id}>
+                  <MobileDataRow label={t("tableMeat")} value={row.motif} emphasize />
+                  <MobileDataRow label={t("tableQty")} value={row.qty} emphasize />
+                  <MobileDataRow label={t("tableDate")} value={row.date} />
+                  <MobileDataRow label={t("tableType")} value={row.type} />
+                  <MobileDataRow label={t("tableUser")} value={row.user} />
+                </MobileDataCard>
               ))}
-            </tbody>
-          </table>
-        </ScrollRegion>
+            </MobileCardList>
+            <DesktopDataTable>
+              <ScrollRegion>
+                <table className="w-full min-w-[560px] text-left text-sm">
+                  <thead className="border-b border-border bg-muted/50">
+                    <tr>
+                      <th className="p-3">{t("tableDate")}</th>
+                      <th className="p-3">{t("tableType")}</th>
+                      <th className="p-3">{t("tableMeat")}</th>
+                      <th className="p-3">{t("tableQty")}</th>
+                      <th className="p-3">{t("tableUser")}</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {rows.map((row) => (
+                      <tr key={row.id} className="border-b border-border">
+                        <td className="p-3">{row.date}</td>
+                        <td className="p-3">{row.type}</td>
+                        <td className="p-3">{row.motif}</td>
+                        <td className="p-3">{row.qty}</td>
+                        <td className="p-3">{row.user}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </ScrollRegion>
+            </DesktopDataTable>
+          </>
+        )}
       </ParentCard>
     </div>
   );

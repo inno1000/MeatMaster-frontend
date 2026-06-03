@@ -2,17 +2,19 @@
 
 import { withLocaleParams } from "@/lib/with-locale-params";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useFieldArray, useForm, useWatch } from "react-hook-form";
 import { z } from "zod";
 import { formResolver } from "@/lib/form-resolver";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
+import { useRouter } from "@/i18n/navigation";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Beef, Plus, Trash2 } from "lucide-react";
 import { ParentCard } from "@/components/shared/parent-card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { FormNumberInput } from "@/components/shared/form-number-input";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { nativeSelectClass } from "@/lib/ui-classes";
@@ -27,9 +29,21 @@ import { filterBoucheriesForSupplier } from "@/lib/boucheries/filter-for-supplie
 import {
   buildLignesFromCategoryWeights,
   parseCategoriesFromReferentiel,
-  sumDistributedByCategory,
-  sumWeightsByCategory,
 } from "@/lib/produits/slaughter-form";
+import {
+  analyzeSlaughterLive,
+  getSlaughterValidationIssues,
+  isDistributionLineOver,
+  maxKgForDistributionLine,
+} from "@/lib/abattage/slaughter-live-validation";
+import { SlaughterLiveSummary } from "@/components/features/slaughter-live-summary";
+import { useSimpleMode } from "@/lib/hooks/use-simple-mode";
+import { AbattageSimpleFlow } from "@/components/simple/abattage-simple-flow";
+import { cn } from "@/lib/utils";
+import {
+  FormFieldsGridSkeleton,
+  SelectFieldSkeleton,
+} from "@/components/shared/loading-skeletons";
 
 const CategoryWeightSchema = z.object({
   categorieValeur: z.string().min(1),
@@ -42,66 +56,32 @@ const DistributionLigneSchema = z.object({
   prixVente: z.union([z.coerce.number().nonnegative(), z.literal("")]).optional(),
 });
 
-const DistributionButcherSchema = z.object({
-  boucherieId: z.string().min(1, "Requis"),
-  lignes: z.array(DistributionLigneSchema).min(1),
-});
+function buildSlaughterFormSchema(v: (key: string) => string) {
+  const DistributionButcherSchema = z.object({
+    boucherieId: z.string().min(1, v("required")),
+    lignes: z.array(DistributionLigneSchema).min(1),
+  });
 
-const SlaughterFormSchema = z
+  return z
   .object({
-    animalId: z.string().min(1, "Requis"),
-    dateAbattage: z.string().min(1, "Requis"),
+    animalId: z.string().min(1, v("required")),
+    dateAbattage: z.string().min(1, v("dateRequired")),
     categoryWeights: z.array(CategoryWeightSchema).min(1),
     notes: z.string().optional(),
     distributions: z.array(DistributionButcherSchema).min(1),
   })
   .superRefine((data, ctx) => {
-    const totalsByCat = sumWeightsByCategory(data.categoryWeights);
-    if (totalsByCat.size === 0) {
+    for (const issue of getSlaughterValidationIssues(data)) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
-        message: "atLeastOneCategory",
-        path: ["categoryWeights"],
-      });
-    }
-
-    const butcherIds = data.distributions
-      .map((d) => d.boucherieId)
-      .filter((id) => id.length > 0);
-    if (butcherIds.length > 0 && new Set(butcherIds).size !== butcherIds.length) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: "duplicateButcher",
-        path: ["distributions"],
-      });
-    }
-
-    const distByCat = sumDistributedByCategory(data.distributions);
-    for (const [cat, total] of totalsByCat) {
-      const distributed = distByCat.get(cat) ?? 0;
-      if (distributed > total) {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          message: "overDistributionCategory",
-          path: ["distributions"],
-        });
-        break;
-      }
-    }
-
-    const hasAnyDistribution = data.distributions.some((d) =>
-      d.lignes.some((l) => (Number(l.quantite) || 0) > 0),
-    );
-    if (totalsByCat.size > 0 && !hasAnyDistribution) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: "noDistribution",
-        path: ["distributions"],
+        message: issue.code,
+        path: issue.path,
       });
     }
   });
+}
 
-type SlaughterFormValues = z.infer<typeof SlaughterFormSchema>;
+type SlaughterFormValues = z.infer<ReturnType<typeof buildSlaughterFormSchema>>;
 
 function defaultDistributionLignes(
   activeCategoryCodes: string[],
@@ -114,7 +94,14 @@ function defaultDistributionLignes(
 }
 
 function AbattageEnregistrerPage() {
+  const simpleMode = useSimpleMode();
+  const router = useRouter();
   const t = useTranslations("abattage");
+  const tCommon = useTranslations("common");
+  const schema = useMemo(
+    () => buildSlaughterFormSchema((k) => tCommon(`validation.${k}`)),
+    [tCommon],
+  );
   const [audioBlobs, setAudioBlobs] = useState<Blob[]>([]);
   const queryClient = useQueryClient();
   const user = useAuthStore((s) => s.user);
@@ -129,7 +116,9 @@ function AbattageEnregistrerPage() {
     setValue,
     formState: { errors, isSubmitting },
   } = useForm<SlaughterFormValues>({
-    resolver: formResolver(SlaughterFormSchema),
+    resolver: formResolver(schema),
+    mode: "onChange",
+    reValidateMode: "onChange",
     defaultValues: {
       animalId: "",
       dateAbattage: new Date().toISOString().slice(0, 10),
@@ -149,9 +138,9 @@ function AbattageEnregistrerPage() {
     name: "distributions",
   });
 
+  const watchedAnimalId = useWatch({ control, name: "animalId" });
   const watchedCategoryWeights = useWatch({ control, name: "categoryWeights" });
   const watchedDistributions = useWatch({ control, name: "distributions" });
-
   const animauxQuery = useQuery({
     queryKey: ["animaux", "en-attente"],
     queryFn: async () =>
@@ -208,69 +197,99 @@ function AbattageEnregistrerPage() {
       .filter((c) => c.poidsKg > 0);
   }, [watchedCategoryWeights, categoryLabelByCode]);
 
-  const totalsByCat = useMemo(
-    () => sumWeightsByCategory(watchedCategoryWeights ?? []),
-    [watchedCategoryWeights],
+  const selectedAnimalPoidsVif = useMemo(() => {
+    if (!watchedAnimalId) {
+      return null;
+    }
+    const row = (animauxQuery.data ?? []).find((item) => {
+      const a = item as { id?: unknown };
+      return String(a.id ?? "") === watchedAnimalId;
+    }) as { poids_vif_kg?: unknown } | undefined;
+    const kg = Number(row?.poids_vif_kg);
+    return Number.isFinite(kg) && kg > 0 ? kg : null;
+  }, [animauxQuery.data, watchedAnimalId]);
+
+  const formSnapshot = useMemo(
+    () => ({
+      categoryWeights: watchedCategoryWeights ?? [],
+      distributions: watchedDistributions ?? [],
+    }),
+    [watchedCategoryWeights, watchedDistributions],
   );
 
-  const distributedByCat = useMemo(
-    () => sumDistributedByCategory(watchedDistributions ?? []),
-    [watchedDistributions],
+  const liveAnalysis = useMemo(
+    () =>
+      analyzeSlaughterLive(formSnapshot, {
+        animalPoidsVifKg: selectedAnimalPoidsVif,
+      }),
+    [formSnapshot, selectedAnimalPoidsVif],
   );
 
-  const totalSlaughterKg = useMemo(() => {
-    let sum = 0;
-    for (const v of totalsByCat.values()) {
-      sum += v;
-    }
-    return sum;
-  }, [totalsByCat]);
+  const notifiedIssueCodesRef = useRef<Set<string>>(new Set());
 
-  const totalDistributedKg = useMemo(() => {
-    let sum = 0;
-    for (const v of distributedByCat.values()) {
-      sum += v;
+  const toastOnLiveIssueCodes = useMemo(
+    () => new Set<"overDistributionCategory" | "duplicateButcher">([
+      "overDistributionCategory",
+      "duplicateButcher",
+    ]),
+    [],
+  );
+
+  useEffect(() => {
+    const currentCodes = new Set(
+      liveAnalysis.issues
+        .filter((i) => toastOnLiveIssueCodes.has(i.code as "overDistributionCategory" | "duplicateButcher"))
+        .map((i) => i.code),
+    );
+    for (const code of currentCodes) {
+      if (!notifiedIssueCodesRef.current.has(code)) {
+        toast.error(t(code));
+      }
     }
-    return sum;
-  }, [distributedByCat]);
+    notifiedIssueCodesRef.current = currentCodes;
+  }, [liveAnalysis.issues, t, toastOnLiveIssueCodes]);
 
   const categoryAlerts = useMemo(() => {
-    return activeCategories.map((cat) => {
-      const distributed = distributedByCat.get(cat.valeur) ?? 0;
-      if (distributed > cat.poidsKg) {
-        return {
-          valeur: cat.valeur,
-          libelle: cat.libelle,
-          tone: "destructive" as const,
-          message: t("statusOverCategoryMessage", {
-            category: cat.libelle,
-            distributed: distributed.toFixed(1),
-            available: cat.poidsKg.toFixed(1),
-          }),
-        };
-      }
-      if (distributed > 0 && distributed < cat.poidsKg) {
-        return {
-          valeur: cat.valeur,
-          libelle: cat.libelle,
-          tone: "warning" as const,
-          message: t("statusPartialCategoryMessage", {
-            category: cat.libelle,
-            remaining: (cat.poidsKg - distributed).toFixed(1),
-          }),
-        };
-      }
-      if (distributed === cat.poidsKg && cat.poidsKg > 0) {
-        return {
-          valeur: cat.valeur,
-          libelle: cat.libelle,
-          tone: "success" as const,
-          message: t("statusCompleteCategoryMessage", { category: cat.libelle }),
-        };
-      }
-      return null;
-    }).filter(Boolean);
-  }, [activeCategories, distributedByCat, t]);
+    return liveAnalysis.categoryStatuses
+      .map((cat) => {
+        const libelle =
+          categoryLabelByCode.get(cat.categorieValeur) ??
+          cat.categorieValeur.replace(/_/g, " ");
+        if (cat.state === "over") {
+          return {
+            valeur: cat.categorieValeur,
+            libelle,
+            tone: "destructive" as const,
+            message: t("statusOverCategoryMessage", {
+              category: libelle,
+              distributed: cat.distributedKg.toFixed(1),
+              available: cat.availableKg.toFixed(1),
+            }),
+          };
+        }
+        if (cat.state === "partial") {
+          return {
+            valeur: cat.categorieValeur,
+            libelle,
+            tone: "warning" as const,
+            message: t("statusPartialCategoryMessage", {
+              category: libelle,
+              remaining: cat.remainingKg.toFixed(1),
+            }),
+          };
+        }
+        if (cat.state === "complete") {
+          return {
+            valeur: cat.categorieValeur,
+            libelle,
+            tone: "success" as const,
+            message: t("statusCompleteCategoryMessage", { category: libelle }),
+          };
+        }
+        return null;
+      })
+      .filter(Boolean);
+  }, [liveAnalysis.categoryStatuses, categoryLabelByCode, t]);
 
   const distributionBoucherieOptions = useMemo(() => {
     const all = boucheriesQuery.data ?? [];
@@ -351,7 +370,7 @@ function AbattageEnregistrerPage() {
       const abRaw = await boucherieV1.abattages.create(abattageBody);
       const abattageId = String(unwrapDataObject(abRaw).id ?? "");
       if (!abattageId) {
-        throw new Error("Identifiant abattage manquant dans la réponse API.");
+        throw new Error(t("missingSlaughterIdInResponse"));
       }
 
       for (const dist of values.distributions) {
@@ -391,24 +410,10 @@ function AbattageEnregistrerPage() {
       }
 
       toast.success(t("slaughterWithDistributionToastOk"));
-      reset({
-        animalId: "",
-        dateAbattage: new Date().toISOString().slice(0, 10),
-        categoryWeights: categories.map((c) => ({
-          categorieValeur: c.valeur,
-          poidsKg: "",
-        })),
-        notes: "",
-        distributions: [
-          {
-            boucherieId: "",
-            lignes: defaultDistributionLignes(categories.map((c) => c.valeur)),
-          },
-        ],
-      });
       await queryClient.invalidateQueries({ queryKey: ["abattages"] });
       await queryClient.invalidateQueries({ queryKey: ["animaux"] });
       await queryClient.invalidateQueries({ queryKey: ["distributions"] });
+      router.push("/abattage/liste");
     } catch (error) {
       toast.error(formatError(error));
     }
@@ -428,6 +433,10 @@ function AbattageEnregistrerPage() {
       ? t("atLeastOneCategory")
       : errors.categoryWeights?.message;
 
+  if (simpleMode) {
+    return <AbattageSimpleFlow />;
+  }
+
   return (
     <div className="mx-auto w-full max-w-3xl space-y-6">
       <div className="space-y-1">
@@ -443,26 +452,30 @@ function AbattageEnregistrerPage() {
             <div className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="animalId">{t("animalSelect")}</Label>
-                <select
-                  id="animalId"
-                  className={nativeSelectClass}
-                  {...register("animalId")}
-                >
-                  <option value="">—</option>
-                  {(animauxQuery.data ?? []).map((item) => {
-                    const a = item as {
-                      id?: unknown;
-                      espece?: unknown;
-                      numero_tag?: unknown;
-                    };
-                    const id = String(a.id ?? "");
-                    return (
-                      <option key={id} value={id}>
-                        {String(a.espece ?? "—")} · {String(a.numero_tag ?? id)}
-                      </option>
-                    );
-                  })}
-                </select>
+                {animauxQuery.isPending ? (
+                  <SelectFieldSkeleton />
+                ) : (
+                  <select
+                    id="animalId"
+                    className={nativeSelectClass}
+                    {...register("animalId")}
+                  >
+                    <option value="">—</option>
+                    {(animauxQuery.data ?? []).map((item) => {
+                      const a = item as {
+                        id?: unknown;
+                        espece?: unknown;
+                        numero_tag?: unknown;
+                      };
+                      const id = String(a.id ?? "");
+                      return (
+                        <option key={id} value={id}>
+                          {String(a.espece ?? "—")} · {String(a.numero_tag ?? id)}
+                        </option>
+                      );
+                    })}
+                  </select>
+                )}
                 {errors.animalId ? (
                   <p className="text-sm text-destructive">
                     {errors.animalId.message}
@@ -494,8 +507,8 @@ function AbattageEnregistrerPage() {
                 {categoryWeightsError ? (
                   <p className="text-sm text-destructive">{categoryWeightsError}</p>
                 ) : null}
-                {categoriesRefQuery.isLoading ? (
-                  <p className="text-sm text-muted-foreground">{t("loadingCategories")}</p>
+                {categoriesRefQuery.isPending ? (
+                  <FormFieldsGridSkeleton count={6} />
                 ) : categoryFields.length === 0 ? (
                   <p className="text-sm text-destructive">{t("noCategoriesConfigured")}</p>
                 ) : (
@@ -514,30 +527,35 @@ function AbattageEnregistrerPage() {
                           <Label htmlFor={`categoryWeights.${index}.poidsKg`}>
                             {libelle} (kg)
                           </Label>
-                          <Input
+                          <FormNumberInput
+                            control={control}
+                            name={`categoryWeights.${index}.poidsKg`}
                             id={`categoryWeights.${index}.poidsKg`}
-                            type="number"
-                            step="0.01"
-                            min="0"
                             placeholder="0"
-                            {...register(`categoryWeights.${index}.poidsKg`)}
                           />
                         </div>
                       );
                     })}
                   </div>
                 )}
-                {totalSlaughterKg > 0 ? (
-                  <p className="text-sm font-medium text-muted-foreground">
-                    {t("totalSlaughterWeight", {
-                      total: totalSlaughterKg.toFixed(1),
-                    })}
-                  </p>
+                {liveAnalysis.totalSlaughterKg > 0 ? (
+                  <div className="mt-2 space-y-1">
+                    <p className="text-sm font-medium text-muted-foreground">
+                      {t("totalSlaughterWeight", {
+                        total: liveAnalysis.totalSlaughterKg.toFixed(1),
+                      })}
+                    </p>
+                    {liveAnalysis.rendementPct != null ? (
+                      <p className="text-sm text-muted-foreground">
+                        {t("liveRendement", { pct: liveAnalysis.rendementPct })}
+                      </p>
+                    ) : null}
+                  </div>
                 ) : null}
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="slaughterNotes">Notes</Label>
+                <Label htmlFor="slaughterNotes">{tCommon("notes")}</Label>
                 <Input id="slaughterNotes" {...register("notes")} />
               </div>
             </div>
@@ -568,13 +586,13 @@ function AbattageEnregistrerPage() {
                 ) : null,
               )}
 
-              {totalSlaughterKg > 0 ? (
-                <p className="mb-3 text-sm text-muted-foreground">
-                  {t("totalDistributedWeight", {
-                    distributed: totalDistributedKg.toFixed(1),
-                    total: totalSlaughterKg.toFixed(1),
-                  })}
-                </p>
+              {liveAnalysis.totalSlaughterKg > 0 ? (
+                <SlaughterLiveSummary
+                  analysis={liveAnalysis}
+                  categoryLabelByCode={categoryLabelByCode}
+                  animalPoidsVifKg={selectedAnimalPoidsVif}
+                  className="mb-4"
+                />
               ) : null}
 
               {distributionsError ? (
@@ -610,34 +628,43 @@ function AbattageEnregistrerPage() {
                         <Label htmlFor={`distributions.${distIndex}.boucherieId`}>
                           {t("selectButcher")}
                         </Label>
-                        <select
-                          id={`distributions.${distIndex}.boucherieId`}
-                          className={nativeSelectClass}
-                          {...register(`distributions.${distIndex}.boucherieId`)}
-                        >
-                          <option value="">—</option>
-                          {distributionBoucherieOptions.map((item) => {
-                            const b = item as {
-                              id?: unknown;
-                              nom?: unknown;
-                              name?: unknown;
-                              ville?: unknown;
-                            };
-                            const id = String(b.id ?? "");
-                            const nom = String(b.nom ?? b.name ?? "").trim();
-                            const ville = String(b.ville ?? "").trim();
-                            return (
-                              <option key={id} value={id}>
-                                {[nom || null, ville || null]
-                                  .filter(Boolean)
-                                  .join(" · ") || "—"}
-                              </option>
-                            );
-                          })}
-                        </select>
+                        {boucheriesQuery.isPending ? (
+                          <SelectFieldSkeleton />
+                        ) : (
+                          <select
+                            id={`distributions.${distIndex}.boucherieId`}
+                            className={nativeSelectClass}
+                            {...register(`distributions.${distIndex}.boucherieId`)}
+                          >
+                            <option value="">—</option>
+                            {distributionBoucherieOptions.map((item) => {
+                              const b = item as {
+                                id?: unknown;
+                                nom?: unknown;
+                                name?: unknown;
+                                ville?: unknown;
+                              };
+                              const id = String(b.id ?? "");
+                              const nom = String(b.nom ?? b.name ?? "").trim();
+                              const ville = String(b.ville ?? "").trim();
+                              return (
+                                <option key={id} value={id}>
+                                  {[nom || null, ville || null]
+                                    .filter(Boolean)
+                                    .join(" · ") || "—"}
+                                </option>
+                              );
+                            })}
+                          </select>
+                        )}
                         {errors.distributions?.[distIndex]?.boucherieId ? (
                           <p className="text-sm text-destructive">
                             {errors.distributions[distIndex]?.boucherieId?.message}
+                          </p>
+                        ) : null}
+                        {liveAnalysis.duplicateButcherIndices.has(distIndex) ? (
+                          <p className="text-sm text-destructive">
+                            {t("duplicateButcherInline")}
                           </p>
                         ) : null}
                       </div>
@@ -652,6 +679,17 @@ function AbattageEnregistrerPage() {
                             const libelle =
                               categoryLabelByCode.get(catCode) ??
                               catCode.replace(/_/g, " ");
+                            const maxKg = maxKgForDistributionLine(
+                              formSnapshot,
+                              distIndex,
+                              ligneIndex,
+                            );
+                            const lineOver = isDistributionLineOver(
+                              formSnapshot,
+                              distIndex,
+                              ligneIndex,
+                            );
+                            const qty = Number(ligne.quantite) || 0;
                             return (
                               <div
                                 key={`${distField.id}-${catCode}`}
@@ -672,16 +710,32 @@ function AbattageEnregistrerPage() {
                                   >
                                     {t("distributedWeight")} (kg)
                                   </Label>
-                                  <Input
+                                  <FormNumberInput
+                                    control={control}
+                                    name={`distributions.${distIndex}.lignes.${ligneIndex}.quantite`}
                                     id={`distributions.${distIndex}.lignes.${ligneIndex}.quantite`}
-                                    type="number"
-                                    step="0.01"
-                                    min="0"
                                     placeholder="0"
-                                    {...register(
-                                      `distributions.${distIndex}.lignes.${ligneIndex}.quantite`,
-                                    )}
+                                    className={lineOver ? "border-destructive" : undefined}
                                   />
+                                  {maxKg > 0 ? (
+                                    <p
+                                      className={cn(
+                                        "text-xs",
+                                        lineOver
+                                          ? "text-destructive font-medium"
+                                          : "text-muted-foreground",
+                                      )}
+                                    >
+                                      {lineOver
+                                        ? t("lineOverMax", {
+                                            max: maxKg.toFixed(1),
+                                          })
+                                        : t("lineMaxHint", {
+                                            max: maxKg.toFixed(1),
+                                            remaining: Math.max(0, maxKg - qty).toFixed(1),
+                                          })}
+                                    </p>
+                                  ) : null}
                                 </div>
                                 <div className="space-y-2">
                                   <Label
@@ -689,15 +743,12 @@ function AbattageEnregistrerPage() {
                                   >
                                     {t("salePrice")} (FCFA)
                                   </Label>
-                                  <Input
+                                  <FormNumberInput
+                                    control={control}
+                                    name={`distributions.${distIndex}.lignes.${ligneIndex}.prixVente`}
                                     id={`distributions.${distIndex}.lignes.${ligneIndex}.prixVente`}
-                                    type="number"
-                                    step="1"
-                                    min="0"
+                                    allowDecimals={false}
                                     placeholder="—"
-                                    {...register(
-                                      `distributions.${distIndex}.lignes.${ligneIndex}.prixVente`,
-                                    )}
                                   />
                                 </div>
                               </div>
@@ -723,7 +774,16 @@ function AbattageEnregistrerPage() {
             </div>
 
             <AudioRecorder onBlobsChange={setAudioBlobs} />
-            <Button type="submit" disabled={isSubmitting} className="w-full sm:w-auto">
+            {!liveAnalysis.canSubmit && liveAnalysis.totalSlaughterKg > 0 ? (
+              <p className="text-sm text-muted-foreground">{t("submitBlockedHint")}</p>
+            ) : null}
+            <Button
+              type="submit"
+              disabled={
+                isSubmitting || !watchedAnimalId || !liveAnalysis.canSubmit
+              }
+              className="w-full sm:w-auto"
+            >
               {t("submitSlaughterWithDistribution")}
             </Button>
           </div>

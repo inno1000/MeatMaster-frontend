@@ -46,6 +46,11 @@ export type RecettesListParams = {
 };
 
 export const boucherieV1 = {
+  auth: {
+    updateProfile: (body: { name?: string; email?: string }) =>
+      apiClient.patch<unknown>(v1Url("/auth/me"), body),
+  },
+
   referentiels: {
     list: (type: string) =>
       apiClient.get<unknown>(v1Url(`/referentiels/${enc(type)}`)),
@@ -131,6 +136,10 @@ export const boucherieV1 = {
       apiClient.get<unknown>(v1UrlWithQuery("/animaux", params)),
     get: (id: string) =>
       apiClient.get<unknown>(v1Url(`/animaux/${enc(id)}`)),
+    update: (id: string, body: Record<string, unknown>) =>
+      apiClient.patch<unknown>(v1Url(`/animaux/${enc(id)}`), body),
+    remove: (id: string) =>
+      apiClient.delete<unknown>(v1Url(`/animaux/${enc(id)}`)),
   },
 
   abattages: {

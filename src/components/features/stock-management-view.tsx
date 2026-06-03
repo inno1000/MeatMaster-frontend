@@ -6,12 +6,19 @@ import { useTranslations } from "next-intl";
 import { History, LayoutGrid, SlidersHorizontal, Coins, AlertTriangle, Flame } from "lucide-react";
 import { ParentCard } from "@/components/shared/parent-card";
 import { ScrollRegion } from "@/components/ui/scroll-region";
+import {
+  DesktopDataTable,
+  MobileCardList,
+  MobileDataCard,
+  MobileDataRow,
+} from "@/components/shared/mobile-data-card";
 import { cn } from "@/lib/utils";
 import { nativeSelectClass } from "@/lib/ui-classes";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { boucherieV1 } from "@/lib/api";
 import { unwrapDataArray } from "@/lib/api/unwrap";
+import { enumLabel } from "@/lib/i18n/enum-label";
 
 export const StockManagementView = () => {
   const t = useTranslations("stockManagement");
@@ -138,83 +145,153 @@ export const StockManagementView = () => {
               className={nativeSelectClass}
             >
               <option value="">{t("all")}</option>
-              <option value="reception">Réception</option>
-              <option value="vente">Vente</option>
-              <option value="ajustement">Ajustement</option>
+              <option value="reception">{enumLabel(tCommon, "reception")}</option>
+              <option value="vente">{enumLabel(tCommon, "vente")}</option>
+              <option value="ajustement">{enumLabel(tCommon, "ajustement")}</option>
             </select>
           </div>
         </div>
       </ParentCard>
 
       <ParentCard title={t("title")} titleIcon={LayoutGrid}>
-        <ScrollRegion>
-          <table className="w-full min-w-[640px] text-left text-sm">
-            <thead className="border-b border-border bg-muted/50">
-              <tr>
-                <th className="p-3 font-medium">{t("tableMeat")}</th>
-                <th className="p-3 font-medium">{t("tableStock")}</th>
-                <th className="p-3 font-medium">{t("tableThreshold")}</th>
-                <th className="p-3 font-medium">{t("tablePrice")}</th>
-                <th className="p-3 font-medium">{t("tableStatus")}</th>
-                <th className="p-3 font-medium">{t("tableDate")}</th>
-              </tr>
-            </thead>
-            <tbody>
+        {rows.length === 0 ? (
+          <p className="text-center text-sm text-muted-foreground">{tCommon("noData")}</p>
+        ) : (
+          <>
+            <MobileCardList>
               {rows.map((row) => (
-                <tr key={row.id} className="border-b border-border">
-                  <td className="p-3 font-medium">{row.name}</td>
-                  <td className="p-3">
-                    {row.currentStock} {row.unit}
-                  </td>
-                  <td className="p-3 text-muted-foreground">
-                    {row.minThreshold}
-                  </td>
-                  <td className="p-3">{row.price.toLocaleString()}</td>
-                  <td className="p-3">
+                <MobileDataCard key={row.id}>
+                  <MobileDataRow label={t("tableMeat")} value={row.name} emphasize />
+                  <MobileDataRow
+                    label={t("tableStock")}
+                    value={`${row.currentStock} ${row.unit}`}
+                    emphasize
+                  />
+                  <MobileDataRow
+                    label={t("tableThreshold")}
+                    value={String(row.minThreshold)}
+                  />
+                  <MobileDataRow
+                    label={t("tablePrice")}
+                    value={`${row.price.toLocaleString()} FCFA`}
+                  />
+                  <div className="flex items-center justify-between gap-3 text-sm">
+                    <span className="text-muted-foreground">{t("tableStatus")}</span>
                     <span
-                    className={cn(
+                      className={cn(
                         "rounded-full px-2 py-0.5 text-xs font-medium",
                         statusBadge(row.status as "critical" | "normal"),
                       )}
                     >
                       {row.status}
                     </span>
-                  </td>
-                  <td className="p-3 text-muted-foreground">
-                    {row.lastUpdated.slice(0, 10)}
-                  </td>
-                </tr>
+                  </div>
+                  <MobileDataRow
+                    label={t("tableDate")}
+                    value={row.lastUpdated.slice(0, 10)}
+                  />
+                </MobileDataCard>
               ))}
-            </tbody>
-          </table>
-        </ScrollRegion>
+            </MobileCardList>
+            <DesktopDataTable>
+              <ScrollRegion>
+                <table className="w-full min-w-[640px] text-left text-sm">
+                  <thead className="border-b border-border bg-muted/50">
+                    <tr>
+                      <th className="p-3 font-medium">{t("tableMeat")}</th>
+                      <th className="p-3 font-medium">{t("tableStock")}</th>
+                      <th className="p-3 font-medium">{t("tableThreshold")}</th>
+                      <th className="p-3 font-medium">{t("tablePrice")}</th>
+                      <th className="p-3 font-medium">{t("tableStatus")}</th>
+                      <th className="p-3 font-medium">{t("tableDate")}</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {rows.map((row) => (
+                      <tr key={row.id} className="border-b border-border">
+                        <td className="p-3 font-medium">{row.name}</td>
+                        <td className="p-3">
+                          {row.currentStock} {row.unit}
+                        </td>
+                        <td className="p-3 text-muted-foreground">
+                          {row.minThreshold}
+                        </td>
+                        <td className="p-3">{row.price.toLocaleString()}</td>
+                        <td className="p-3">
+                          <span
+                            className={cn(
+                              "rounded-full px-2 py-0.5 text-xs font-medium",
+                              statusBadge(row.status as "critical" | "normal"),
+                            )}
+                          >
+                            {row.status}
+                          </span>
+                        </td>
+                        <td className="p-3 text-muted-foreground">
+                          {row.lastUpdated.slice(0, 10)}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </ScrollRegion>
+            </DesktopDataTable>
+          </>
+        )}
       </ParentCard>
 
       <ParentCard title={t("history")} titleIcon={History}>
-        <ScrollRegion>
-          <table className="w-full min-w-[480px] text-left text-sm">
-            <thead className="border-b border-border bg-muted/50">
-              <tr>
-                <th className="p-3">{t("tableDate")}</th>
-                <th className="p-3">{t("movementType")}</th>
-                <th className="p-3">{t("tableMeat")}</th>
-                <th className="p-3">{t("tableQty")}</th>
-              </tr>
-            </thead>
-            <tbody>
+        {filteredHistory.length === 0 ? (
+          <p className="text-center text-sm text-muted-foreground">{tCommon("noData")}</p>
+        ) : (
+          <>
+            <MobileCardList>
               {filteredHistory.map((row) => (
-                <tr key={row.id} className="border-b border-border">
-                  <td className="p-3">
-                    {row.lastUpdated}
-                  </td>
-                  <td className="p-3 capitalize">{row.movementType || "—"}</td>
-                  <td className="p-3">{row.name}</td>
-                  <td className="p-3">{row.currentStock} kg</td>
-                </tr>
+                <MobileDataCard key={row.id}>
+                  <MobileDataRow label={t("tableMeat")} value={row.name} emphasize />
+                  <MobileDataRow
+                    label={t("tableQty")}
+                    value={`${row.currentStock} kg`}
+                    emphasize
+                  />
+                  <MobileDataRow label={t("tableDate")} value={row.lastUpdated} />
+                  <MobileDataRow
+                    label={t("movementType")}
+                    value={
+                      row.movementType
+                        ? enumLabel(tCommon, row.movementType)
+                        : "—"
+                    }
+                  />
+                </MobileDataCard>
               ))}
-            </tbody>
-          </table>
-        </ScrollRegion>
+            </MobileCardList>
+            <DesktopDataTable>
+              <ScrollRegion>
+                <table className="w-full min-w-[480px] text-left text-sm">
+                  <thead className="border-b border-border bg-muted/50">
+                    <tr>
+                      <th className="p-3">{t("tableDate")}</th>
+                      <th className="p-3">{t("movementType")}</th>
+                      <th className="p-3">{t("tableMeat")}</th>
+                      <th className="p-3">{t("tableQty")}</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filteredHistory.map((row) => (
+                      <tr key={row.id} className="border-b border-border">
+                        <td className="p-3">{row.lastUpdated}</td>
+                        <td className="p-3 capitalize">{row.movementType || "—"}</td>
+                        <td className="p-3">{row.name}</td>
+                        <td className="p-3">{row.currentStock} kg</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </ScrollRegion>
+            </DesktopDataTable>
+          </>
+        )}
       </ParentCard>
     </div>
   );

@@ -10,6 +10,12 @@ import { ParentCard } from "@/components/shared/parent-card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { ScrollRegion } from "@/components/ui/scroll-region";
+import {
+  DesktopDataTable,
+  MobileCardList,
+  MobileDataCard,
+  MobileDataRow,
+} from "@/components/shared/mobile-data-card";
 import { boucherieV1 } from "@/lib/api";
 import { extractBoucherieIdsFromUserSrc } from "@/lib/api/services/auth";
 import { unwrapDataArray } from "@/lib/api/unwrap";
@@ -81,41 +87,91 @@ function AdminUsersListPage() {
         !usersQuery.isPending &&
         !usersQuery.isError &&
         (usersQuery.data?.length ?? 0) > 0 ? (
-          <ScrollRegion>
-            <table className="w-full min-w-[640px] text-left text-sm">
-              <thead className="border-b border-border bg-muted/50">
-                <tr>
-                  <th className="p-3">{t("listUsersColName")}</th>
-                  <th className="p-3">{t("listUsersColEmail")}</th>
-                  <th className="p-3">{t("listUsersColRole")}</th>
-                  <th className="p-3">{t("listUsersColButcheries")}</th>
-                </tr>
-              </thead>
-              <tbody>
-                {(usersQuery.data ?? []).map((item, idx) => {
-                  const row = item as Record<string, unknown>;
-                  const ids = extractBoucherieIdsFromUserSrc(row);
-                  const resolved = ids.map((id) => butcheryNameById.get(id) ?? tCommon("noLabel"));
-                  const scope =
-                    ids.length === 0
-                      ? "—"
-                      : ids.length <= 2
-                        ? resolved.join(", ")
-                        : `${ids.length} ${t("listUsersButcheriesCount")}`;
-                  return (
-                    <tr key={String(row.id ?? row.email ?? idx)} className="border-b border-border">
-                      <td className="p-3 font-medium">{String(row.name ?? "—")}</td>
-                      <td className="p-3 text-muted-foreground">{String(row.email ?? "—")}</td>
-                      <td className="p-3">{String(row.role ?? "—")}</td>
-                      <td className="max-w-[220px] truncate p-3 text-muted-foreground" title={resolved.join(", ")}>
-                        {scope}
-                      </td>
+          <>
+            <MobileCardList>
+              {(usersQuery.data ?? []).map((item, idx) => {
+                const row = item as Record<string, unknown>;
+                const ids = extractBoucherieIdsFromUserSrc(row);
+                const resolved = ids.map(
+                  (id) => butcheryNameById.get(id) ?? tCommon("noLabel"),
+                );
+                const scope =
+                  ids.length === 0
+                    ? "—"
+                    : ids.length <= 2
+                      ? resolved.join(", ")
+                      : `${ids.length} ${t("listUsersButcheriesCount")}`;
+                return (
+                  <MobileDataCard key={String(row.id ?? row.email ?? idx)}>
+                    <MobileDataRow
+                      label={t("listUsersColName")}
+                      value={String(row.name ?? "—")}
+                      emphasize
+                    />
+                    <MobileDataRow
+                      label={t("listUsersColEmail")}
+                      value={String(row.email ?? "—")}
+                    />
+                    <MobileDataRow
+                      label={t("listUsersColRole")}
+                      value={String(row.role ?? "—")}
+                    />
+                    <MobileDataRow
+                      label={t("listUsersColButcheries")}
+                      value={scope}
+                    />
+                  </MobileDataCard>
+                );
+              })}
+            </MobileCardList>
+            <DesktopDataTable>
+              <ScrollRegion>
+                <table className="w-full min-w-[640px] text-left text-sm">
+                  <thead className="border-b border-border bg-muted/50">
+                    <tr>
+                      <th className="p-3">{t("listUsersColName")}</th>
+                      <th className="p-3">{t("listUsersColEmail")}</th>
+                      <th className="p-3">{t("listUsersColRole")}</th>
+                      <th className="p-3">{t("listUsersColButcheries")}</th>
                     </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </ScrollRegion>
+                  </thead>
+                  <tbody>
+                    {(usersQuery.data ?? []).map((item, idx) => {
+                      const row = item as Record<string, unknown>;
+                      const ids = extractBoucherieIdsFromUserSrc(row);
+                      const resolved = ids.map(
+                        (id) => butcheryNameById.get(id) ?? tCommon("noLabel"),
+                      );
+                      const scope =
+                        ids.length === 0
+                          ? "—"
+                          : ids.length <= 2
+                            ? resolved.join(", ")
+                            : `${ids.length} ${t("listUsersButcheriesCount")}`;
+                      return (
+                        <tr
+                          key={String(row.id ?? row.email ?? idx)}
+                          className="border-b border-border"
+                        >
+                          <td className="p-3 font-medium">{String(row.name ?? "—")}</td>
+                          <td className="p-3 text-muted-foreground">
+                            {String(row.email ?? "—")}
+                          </td>
+                          <td className="p-3">{String(row.role ?? "—")}</td>
+                          <td
+                            className="max-w-[220px] truncate p-3 text-muted-foreground"
+                            title={resolved.join(", ")}
+                          >
+                            {scope}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </ScrollRegion>
+            </DesktopDataTable>
+          </>
         ) : null}
       </ParentCard>
     </div>

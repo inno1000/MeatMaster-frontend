@@ -4,10 +4,10 @@ import { useForm } from "react-hook-form";
 import { formResolver } from "@/lib/form-resolver";
 import { useTranslations } from "next-intl";
 import { useRouter } from "@/i18n/navigation";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Eye, EyeOff } from "lucide-react";
 import { toast } from "sonner";
-import { LoginSchema, type LoginInput } from "@/lib/schemas/auth";
+import { buildLoginSchema, type LoginInput } from "@/lib/schemas/auth";
 import { useAuthStore } from "@/lib/stores/auth-store";
 import { formatError } from "@/lib/format-error";
 import { canAccessPath, getDefaultPathForRole } from "@/lib/authz";
@@ -25,13 +25,17 @@ export const LoginForm = () => {
   const returnUrl = useAuthStore((s) => s.returnUrl);
   const [showPassword, setShowPassword] = useState(false);
   const [apiError, setApiError] = useState<string | null>(null);
+  const schema = useMemo(
+    () => buildLoginSchema((k) => tCommon(`validation.${k}`)),
+    [tCommon],
+  );
 
   const {
     register,
     handleSubmit,
     formState: { errors, isSubmitting },
   } = useForm<LoginInput>({
-    resolver: formResolver(LoginSchema),
+    resolver: formResolver(schema),
     defaultValues: { email: "", password: "" },
   });
 

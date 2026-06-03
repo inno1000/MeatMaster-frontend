@@ -34,6 +34,9 @@ import { useAuthStore } from "@/lib/stores/auth-store";
 import { boucherieV1 } from "@/lib/api";
 import { unwrapDataArray, unwrapPaginatedRows } from "@/lib/api/unwrap";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useSimpleMode } from "@/lib/hooks/use-simple-mode";
+import { DashboardSimpleShortcuts } from "@/components/simple/dashboard-simple-shortcuts";
+import { normalizeAppRole } from "@/lib/authz";
 
 function localIsoDate(d: Date): string {
   const y = d.getFullYear();
@@ -102,7 +105,9 @@ export const DashboardContent = () => {
   const t = useTranslations("dashboard");
   const tNav = useTranslations("nav");
   const tCommon = useTranslations("common");
+  const simpleMode = useSimpleMode();
   const role = useAuthStore((s) => s.user?.role ?? "butcher");
+  const appRole = normalizeAppRole(role);
 
   const today = useMemo(() => localIsoDate(new Date()), []);
   const from7d = useMemo(() => {
@@ -496,6 +501,10 @@ export const DashboardContent = () => {
         <p className="text-sm text-muted-foreground sm:text-base">{t("subtitle")}</p>
       </div>
 
+      {simpleMode ? <DashboardSimpleShortcuts role={appRole} /> : null}
+
+      {!simpleMode ? (
+      <>
       {statsLoading ? (
         <div
           className={cn(
@@ -698,6 +707,8 @@ export const DashboardContent = () => {
           </ParentCard>
         </div>
       </div>
+      </>
+      ) : null}
     </div>
   );
 };

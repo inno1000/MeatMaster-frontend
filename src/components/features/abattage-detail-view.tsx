@@ -4,6 +4,7 @@ import { useTranslations } from "next-intl";
 import { ParentCard } from "@/components/shared/parent-card";
 import type { AbattageDetailViewModel } from "@/lib/api/mappers/abattage-detail";
 import { AttachmentAudioPlayer } from "@/components/shared/attachment-audio-player";
+import { enumLabel } from "@/lib/i18n/enum-label";
 import { Beef, Mic, Share2 } from "lucide-react";
 
 type Props = {
@@ -12,6 +13,7 @@ type Props = {
 
 export const AbattageDetailView = ({ detail }: Props) => {
   const t = useTranslations("abattage");
+  const tCommon = useTranslations("common");
 
   const fmtMoney = (n: number) =>
     new Intl.NumberFormat("fr-FR", {
@@ -42,7 +44,10 @@ export const AbattageDetailView = ({ detail }: Props) => {
 
       <ParentCard
         title={t("animal")}
-        subtitle={`${detail.date || "—"} · ${detail.poidsCarcasseKg} kg carcasse`}
+        subtitle={t("detailCarcasseSubtitle", {
+          date: detail.date || tCommon("dash"),
+          weight: detail.poidsCarcasseKg,
+        })}
         titleIcon={Beef}
       >
         <dl className="grid gap-3 text-sm sm:grid-cols-2">
@@ -51,7 +56,7 @@ export const AbattageDetailView = ({ detail }: Props) => {
             <dd className="font-medium">{detail.animalEspece}</dd>
           </div>
           <div>
-            <dt className="text-muted-foreground">Tag</dt>
+            <dt className="text-muted-foreground">{tCommon("tag")}</dt>
             <dd className="font-medium">{detail.animalTag}</dd>
           </div>
           <div>
@@ -59,30 +64,30 @@ export const AbattageDetailView = ({ detail }: Props) => {
             <dd className="font-medium">{detail.poidsCarcasseKg} kg</dd>
           </div>
           <div>
-            <dt className="text-muted-foreground">Poids vif</dt>
+            <dt className="text-muted-foreground">{t("detailLiveWeight")}</dt>
             <dd className="font-medium">
               {detail.animalPoidsVifKg != null
                 ? `${detail.animalPoidsVifKg} kg`
-                : "—"}
+                : tCommon("dash")}
             </dd>
           </div>
           <div>
-            <dt className="text-muted-foreground">Prix achat</dt>
+            <dt className="text-muted-foreground">{t("detailPurchasePrice")}</dt>
             <dd className="font-medium">
               {detail.animalPrixAchat != null
                 ? fmtMoney(detail.animalPrixAchat)
-                : "—"}
+                : tCommon("dash")}
             </dd>
           </div>
           <div>
             <dt className="text-muted-foreground">{t("yieldMeat")}</dt>
             <dd className="font-medium">
-              {rendement != null ? `${rendement}%` : "—"}
+              {rendement != null ? `${rendement}%` : tCommon("dash")}
             </dd>
           </div>
           {detail.notes ? (
             <div className="sm:col-span-2">
-              <dt className="text-muted-foreground">Notes</dt>
+              <dt className="text-muted-foreground">{tCommon("notes")}</dt>
               <dd className="font-medium">{detail.notes}</dd>
             </div>
           ) : null}
@@ -106,12 +111,14 @@ export const AbattageDetailView = ({ detail }: Props) => {
 
       <ParentCard title={t("distribution")} titleIcon={Share2}>
         <p className="mb-4 text-sm text-muted-foreground">
-          {detail.distributions.length} lot(s) · {totalDistribue.toFixed(2)} kg
-          distribués
+          {t("detailDistributionsSummary", {
+            count: detail.distributions.length,
+            kg: totalDistribue.toFixed(2),
+          })}
         </p>
         {detail.distributions.length === 0 ? (
           <p className="text-sm text-muted-foreground">
-            Aucune distribution enregistrée pour cet abattage.
+            {t("detailNoDistributions")}
           </p>
         ) : (
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
@@ -128,7 +135,10 @@ export const AbattageDetailView = ({ detail }: Props) => {
                   {d.quantite.toFixed(2)} kg
                 </p>
                 <p className="mt-1 text-sm">
-                  Statut : <span className="font-medium">{d.statut}</span>
+                  {t("detailStatusLabel")}:{" "}
+                  <span className="font-medium">
+                    {enumLabel(tCommon, d.statut) || d.statut}
+                  </span>
                 </p>
                 {d.notes ? (
                   <p className="mt-2 text-sm text-muted-foreground">{d.notes}</p>

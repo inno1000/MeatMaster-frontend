@@ -2,12 +2,13 @@
 
 import { withLocaleParams } from "@/lib/with-locale-params";
 
+import { useMemo } from "react";
 import { useForm } from "react-hook-form";
 import { formResolver } from "@/lib/form-resolver";
 import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
 import { toast } from "sonner";
-import { RegisterSchema, type RegisterInput } from "@/lib/schemas/auth";
+import { buildRegisterSchema, type RegisterInput } from "@/lib/schemas/auth";
 import { apiRegister } from "@/lib/api/services/auth";
 import { useAuthStore } from "@/lib/stores/auth-store";
 import { formatError } from "@/lib/format-error";
@@ -31,12 +32,16 @@ function RegisterPage() {
   const tLogin = useTranslations("auth.login");
   const tCommon = useTranslations("common");
   const router = useRouter();
+  const schema = useMemo(
+    () => buildRegisterSchema((k) => tCommon(`validation.${k}`)),
+    [tCommon],
+  );
   const {
     register,
     handleSubmit,
     formState: { errors, isSubmitting },
   } = useForm<RegisterInput>({
-    resolver: formResolver(RegisterSchema),
+    resolver: formResolver(schema),
     defaultValues: {
       firstName: "",
       lastName: "",

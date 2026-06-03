@@ -2,12 +2,14 @@
 
 import { withLocaleParams } from "@/lib/with-locale-params";
 
+import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { formResolver } from "@/lib/form-resolver";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
+import { useRouter } from "@/i18n/navigation";
 import { ClipboardPenLine } from "lucide-react";
 import { ParentCard } from "@/components/shared/parent-card";
 import { Button } from "@/components/ui/button";
@@ -18,26 +20,36 @@ import { boucherieV1 } from "@/lib/api";
 import { formatError } from "@/lib/format-error";
 import { unwrapDataArray } from "@/lib/api/unwrap";
 import { pickDisplayLabel } from "@/lib/display/reference-label";
+import { enumLabel } from "@/lib/i18n/enum-label";
+import { FormNumberInput } from "@/components/shared/form-number-input";
 
-const Schema = z.object({
-  stockId: z.string().min(1, "Stock requis"),
-  type: z.string().min(1, "Type de mouvement requis"),
-  declaredQty: z.coerce.number().positive("Quantité requise"),
-  reason: z.string().trim().min(1, "Motif requis"),
-});
+function buildSchema(v: (key: string) => string) {
+  return z.object({
+    stockId: z.string().min(1, v("stockRequired")),
+    type: z.string().min(1, v("movementTypeRequired")),
+    declaredQty: z.coerce.number().positive(v("qtyRequired")),
+    reason: z.string().trim().min(1, v("reasonRequired")),
+  });
+}
 
-type FormValues = z.infer<typeof Schema>;
+type FormValues = z.infer<ReturnType<typeof buildSchema>>;
 
 function StockDeclarationPage() {
   const t = useTranslations("stockDeclaration");
+  const router = useRouter();
   const tCommon = useTranslations("common");
+  const schema = useMemo(
+    () => buildSchema((k) => tCommon(`validation.${k}`)),
+    [tCommon],
+  );
   const {
     register,
+    control,
     handleSubmit,
     reset,
     formState: { errors, isSubmitting },
   } = useForm<FormValues>({
-    resolver: formResolver(Schema),
+    resolver: formResolver(schema),
     defaultValues: { stockId: "", type: "ajustement", declaredQty: 0, reason: "" },
   });
 
@@ -54,7 +66,7 @@ function StockDeclarationPage() {
         motif: values.reason,
       });
       toast.success(t("toastOk"));
-      reset();
+      router.push("/stock/management");
     } catch (error) {
       toast.error(formatError(error));
     }
@@ -69,9 +81,9 @@ function StockDeclarationPage() {
       <ParentCard title={t("title")} titleIcon={ClipboardPenLine}>
         <form onSubmit={onSubmit} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="stockId">Stock</Label>
+            <Label htmlFor="stockId">{t("stockLabel")}</Label>
             <select id="stockId" className={nativeSelectClass} {...register("stockId")}>
-              <option value="">—</option>
+              <option value="">{tCommon("selectPlaceholder")}</option>
               {(stocksQuery.data ?? []).map((item) => {
                 const stock = item as { id?: unknown; produit?: unknown };
                 const produit = (stock.produit ?? {}) as Record<string, unknown>;
@@ -92,9 +104,11 @@ function StockDeclarationPage() {
           <div className="space-y-2">
             <Label htmlFor="type">{t("movementType")}</Label>
             <select id="type" className={nativeSelectClass} {...register("type")}>
-              <option value="ajustement">Ajustement</option>
-              <option value="entree">Entrée</option>
-              <option value="sortie">Sortie</option>
+              {(["ajustement", "entree", "sortie"] as const).map((code) => (
+                <option key={code} value={code}>
+                  {enumLabel(tCommon, code)}
+                </option>
+              ))}
             </select>
             {errors.type ? (
               <p className="text-sm text-destructive">{errors.type.message}</p>
@@ -102,12 +116,10 @@ function StockDeclarationPage() {
           </div>
           <div className="space-y-2">
             <Label htmlFor="declaredQty">{t("declaredQty")}</Label>
-            <Input
+            <FormNumberInput
+              control={control}
+              name="declaredQty"
               id="declaredQty"
-              type="number"
-              step="0.01"
-              min="0.01"
-              {...register("declaredQty")}
             />
             {errors.declaredQty ? (
               <p className="text-sm text-destructive">

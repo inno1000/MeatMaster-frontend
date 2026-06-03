@@ -1,19 +1,7 @@
 import type { ReactNode } from "react";
 import type { Metadata, Viewport } from "next";
+import { fontBodyClassName } from "@/lib/fonts";
 import "./globals.css";
-import { Noto_Sans_Arabic, Poppins } from "next/font/google";
-
-const poppins = Poppins({
-  subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
-  variable: "--font-poppins",
-});
-
-const notoSansArabic = Noto_Sans_Arabic({
-  subsets: ["arabic"],
-  weight: ["400", "500", "600", "700"],
-  variable: "--font-arabic",
-});
 
 export const metadata: Metadata = {
   icons: {
@@ -31,10 +19,8 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
-    <html suppressHydrationWarning lang="fr">
-      <body
-        className={`${poppins.variable} ${notoSansArabic.variable} tap-highlight-transparent font-sans antialiased`}
-      >
+    <html lang="fr" dir="ltr" suppressHydrationWarning>
+      <body suppressHydrationWarning className={fontBodyClassName}>
         {children}
       </body>
     </html>

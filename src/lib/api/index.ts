@@ -9,6 +9,7 @@ export {
 export { v1Url, v1UrlWithQuery } from "@/lib/api/v1-url";
 export { apiClient, apiUrl, ApiError, safeApiCall } from "@/lib/api/client";
 export {
+  apiChangePassword,
   apiLogin,
   apiLogout,
   apiRegister,
@@ -18,6 +19,8 @@ export { boucherieV1 } from "@/lib/api/services/boucherie-v1";
 export {
   uploadAttachment,
   uploadAudioBlobs,
+  uploadImageFile,
+  uploadImageFiles,
   fetchAttachmentBlob,
 } from "@/lib/api/services/attachments";
 export type { AttachmentDto } from "@/lib/api/services/attachments";

@@ -16,7 +16,8 @@ export const normalizeAppRole = (role: string | undefined): UserRole => {
   return "butcher";
 };
 
-/** Fournisseur = abattages, versements (liste), rapport financier — pas ventes ni stock ni boucheries. */
+/** Fournisseur = abattages, versements (liste), rapport financier — pas ventes ni stock.
+ *  Boucher = ventes, stock, versements — pas abattages ni gestion des boucheries (réservé admin). */
 const roleRouteRules: Array<{ prefix: string; roles: UserRole[] }> = [
   { prefix: "/abattage", roles: ["supplier"] },
   { prefix: "/reports/sales", roles: ["butcher", "admin"] },
@@ -25,7 +26,6 @@ const roleRouteRules: Array<{ prefix: string; roles: UserRole[] }> = [
   { prefix: "/reports", roles: ["butcher", "admin"] },
   { prefix: "/stock", roles: ["butcher"] },
   { prefix: "/vente", roles: ["butcher"] },
-  { prefix: "/boucherie", roles: ["butcher"] },
   { prefix: "/versement/enregistrer", roles: ["butcher"] },
   { prefix: "/versement/liste", roles: ["butcher", "supplier"] },
   { prefix: "/dashboard", roles: ["butcher", "supplier", "admin"] },
@@ -60,7 +60,7 @@ export const canAccessPath = (role: UserRole, pathname: string): boolean => {
 
 export const getDefaultPathForRole = (role: UserRole): string =>
   role === "supplier"
-    ? "/abattage/liste"
+    ? "/abattage/animaux"
     : role === "admin"
       ? "/admin/users/list"
       : "/dashboard";

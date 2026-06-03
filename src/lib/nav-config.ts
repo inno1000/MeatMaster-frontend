@@ -150,6 +150,11 @@ export const mainNavigation: NavEntry[] = [
         },
         {
           titleKey: "nav.slaughterList",
+          href: "/abattage/animaux",
+          icon: CircleDot,
+        },
+        {
+          titleKey: "nav.slaughterDistributionList",
           href: "/abattage/liste",
           icon: CircleDot,
         },

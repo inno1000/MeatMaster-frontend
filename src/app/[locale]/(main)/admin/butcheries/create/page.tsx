@@ -2,10 +2,12 @@
 
 import { withLocaleParams } from "@/lib/with-locale-params";
 
+import { useMemo } from "react";
 import { useForm } from "react-hook-form";
 import { useQueryClient } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
+import { useRouter } from "@/i18n/navigation";
 import { Building2 } from "lucide-react";
 import { ParentCard } from "@/components/shared/parent-card";
 import { Button } from "@/components/ui/button";
@@ -13,7 +15,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { boucherieV1 } from "@/lib/api";
 import {
-  ButcheryCreateSchema,
+  buildButcheryCreateSchema,
   type ButcheryCreateInput,
 } from "@/lib/admin/users-forms";
 import { formatError } from "@/lib/format-error";
@@ -21,6 +23,12 @@ import { formResolver } from "@/lib/form-resolver";
 
 function AdminCreateButcheryPage() {
   const t = useTranslations("admin");
+  const tCommon = useTranslations("common");
+  const router = useRouter();
+  const schema = useMemo(
+    () => buildButcheryCreateSchema((k) => tCommon(`validation.${k}`)),
+    [tCommon],
+  );
   const queryClient = useQueryClient();
   const {
     register,
@@ -28,7 +36,7 @@ function AdminCreateButcheryPage() {
     reset,
     formState: { errors, isSubmitting },
   } = useForm<ButcheryCreateInput>({
-    resolver: formResolver(ButcheryCreateSchema),
+    resolver: formResolver(schema),
     defaultValues: {
       nom: "",
       adresse: "",
@@ -46,10 +54,10 @@ function AdminCreateButcheryPage() {
         telephone: values.telephone,
         actif: true,
       });
-      reset();
       await queryClient.invalidateQueries({ queryKey: ["admin", "boucheries"] });
       await queryClient.invalidateQueries({ queryKey: ["butchers"] });
-      toast.success("Boucherie créée.");
+      toast.success(t("butcheryCreated"));
+      router.push("/admin/butcheries/list");
     } catch (error) {
       toast.error(formatError(error));
     }
@@ -68,28 +76,28 @@ function AdminCreateButcheryPage() {
         <form onSubmit={onSubmit} className="space-y-4">
           <div className="grid gap-3 sm:grid-cols-2">
             <div className="space-y-2">
-              <Label htmlFor="butcheryNom">Nom</Label>
+              <Label htmlFor="butcheryNom">{t("butcheryNom")}</Label>
               <Input id="butcheryNom" {...register("nom")} />
               {errors.nom ? (
                 <p className="text-sm text-destructive">{errors.nom.message}</p>
               ) : null}
             </div>
             <div className="space-y-2">
-              <Label htmlFor="butcheryVille">Ville</Label>
+              <Label htmlFor="butcheryVille">{t("butcheryCity")}</Label>
               <Input id="butcheryVille" {...register("ville")} />
               {errors.ville ? (
                 <p className="text-sm text-destructive">{errors.ville.message}</p>
               ) : null}
             </div>
             <div className="space-y-2 sm:col-span-2">
-              <Label htmlFor="butcheryAdresse">Adresse</Label>
+              <Label htmlFor="butcheryAdresse">{t("butcheryAddress")}</Label>
               <Input id="butcheryAdresse" {...register("adresse")} />
               {errors.adresse ? (
                 <p className="text-sm text-destructive">{errors.adresse.message}</p>
               ) : null}
             </div>
             <div className="space-y-2">
-              <Label htmlFor="butcheryTelephone">Téléphone</Label>
+              <Label htmlFor="butcheryTelephone">{t("butcheryPhone")}</Label>
               <Input id="butcheryTelephone" {...register("telephone")} />
               {errors.telephone ? (
                 <p className="text-sm text-destructive">{errors.telephone.message}</p>
@@ -97,7 +105,7 @@ function AdminCreateButcheryPage() {
             </div>
           </div>
           <Button type="submit" disabled={isSubmitting}>
-            Créer boucherie
+            {t("createButcheryButton")}
           </Button>
         </form>
       </ParentCard>

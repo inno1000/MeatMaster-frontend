@@ -4,15 +4,17 @@ import { z } from "zod";
 export const RoleSchema = z.enum(["butcher", "supplier", "admin"]);
 export type UserRole = z.infer<typeof RoleSchema>;
 
-export const LoginSchema = z.object({
-  email: z.string().email("Adresse e-mail invalide"),
-  password: z
-    .string()
-    .min(1, "Le mot de passe est requis")
-    .max(128, "Mot de passe trop long"),
-});
+export function buildLoginSchema(v: (key: string) => string) {
+  return z.object({
+    email: z.string().email(v("emailInvalid")),
+    password: z
+      .string()
+      .min(1, v("passwordRequired"))
+      .max(128, v("passwordTooLong")),
+  });
+}
 
-export type LoginInput = z.infer<typeof LoginSchema>;
+export type LoginInput = z.infer<ReturnType<typeof buildLoginSchema>>;
 
 export const LoginResponseSchema = z.object({
   accessToken: z.string(),
@@ -26,15 +28,16 @@ export const LaravelLoginResponseSchema = z
   })
   .passthrough();
 
-export const RegisterSchema = z.object({
-  firstName: z.string().min(1, "Prénom requis"),
-  lastName: z.string().min(1, "Nom requis"),
-  email: z.string().email("E-mail invalide"),
-  /** Aligné API Laravel (`password` min 8). */
-  password: z.string().min(8, "Au moins 8 caractères"),
-});
+export function buildRegisterSchema(v: (key: string) => string) {
+  return z.object({
+    firstName: z.string().min(1, v("firstNameRequired")),
+    lastName: z.string().min(1, v("lastNameRequired")),
+    email: z.string().email(v("emailInvalid")),
+    password: z.string().min(8, v("passwordMin8")),
+  });
+}
 
-export type RegisterInput = z.infer<typeof RegisterSchema>;
+export type RegisterInput = z.infer<ReturnType<typeof buildRegisterSchema>>;
 
 export const UserSchema = z.object({
   token: z.string(),
